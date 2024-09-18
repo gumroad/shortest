@@ -1,18 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Copy, Check } from "lucide-react";
 
 export function Terminal() {
   const [terminalStep, setTerminalStep] = useState(0);
   const [copied, setCopied] = useState(false);
   const terminalSteps = [
-    'git clone https://github.com/leerob/next-saas-starter',
-    'pnpm install',
-    'pnpm db:setup',
-    'pnpm db:migrate',
-    'pnpm db:seed',
-    'pnpm dev 🎉',
+    "- name: Run tests with Shortest",
+    "  env:",
+    "    RAILS_ENV: test",
+    "    RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}",
+    "    RUBY_YJIT_ENABLE: 1",
+    "  run: |",
+    "    bundle exec shortest run --confidence 80",
+    "    bundle exec shortest run --confidence 95",
+    "    bundle exec shortest run --confidence 99",
+    "    bundle exec shortest run --confidence 99.9",
+    "    bundle exec shortest run --confidence 100",
+    "  timeout-minutes: 10",
   ];
 
   useEffect(() => {
@@ -26,9 +32,14 @@ export function Terminal() {
   }, [terminalStep]);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(terminalSteps.join('\n'));
+    navigator.clipboard.writeText(terminalSteps.join("\n"));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const addSpacing = (step: string) => {
+    const leadingSpaces = step.match(/^\s*/)?.[0].length || 0;
+    return "\u00A0".repeat(leadingSpaces) + step.trimLeft();
   };
 
   return (
@@ -56,9 +67,11 @@ export function Terminal() {
           {terminalSteps.map((step, index) => (
             <div
               key={index}
-              className={`${index > terminalStep ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+              className={`${
+                index > terminalStep ? "opacity-0" : "opacity-100"
+              } transition-opacity duration-300`}
             >
-              <span className="text-green-400">$</span> {step}
+              {addSpacing(step)}
             </div>
           ))}
         </div>
