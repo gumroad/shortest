@@ -11,7 +11,7 @@ export function Terminal() {
     "  env:",
     "    RAILS_ENV: test",
     "    RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}",
-    "    RUBY_YJIT_ENABLE: 1",
+    "    SHORTEST_API_KEY: ${{ secrets.SHORTEST_API_KEY }}",
     "  run: |",
     "    bundle exec shortest run --confidence 80",
     "    bundle exec shortest run --confidence 95",
