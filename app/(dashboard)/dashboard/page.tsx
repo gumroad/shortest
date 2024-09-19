@@ -1,19 +1,11 @@
-import { redirect } from 'next/navigation';
-import { Settings } from './settings';
-import { getTeamForUser, getUser } from '@/lib/db/queries';
+import { auth } from "@clerk/nextjs";
 
-export default async function SettingsPage() {
-  const user = await getUser();
+export default async function DashboardPage() {
+  const { userId } = auth();
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  const teamData = await getTeamForUser(user.id);
-
-  if (!teamData) {
-    throw new Error('Team not found');
-  }
-
-  return <Settings teamData={teamData} />;
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Dashboard</h1>
+    </div>
+  );
 }
