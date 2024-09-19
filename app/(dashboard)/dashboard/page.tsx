@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SignInButton } from "@clerk/nextjs";
 import {
   GitBranch,
   CheckCircle,
@@ -13,12 +12,13 @@ import {
   Plus,
   Trash2,
   FileText,
-  X,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import TestUpdateSheet from "./TestUpdateSheet";
 
 export default function DashboardPage() {
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [sheetMode, setSheetMode] = useState<"write" | "update">("write");
 
   // Placeholder data
   const repos = [
@@ -60,8 +60,10 @@ export default function DashboardPage() {
     },
   ];
 
-  const handleWriteNewTests = (pr: PullRequest) => {
+  const handleOpenSheet = (pr: PullRequest, mode: "write" | "update") => {
     setSelectedPR(pr);
+    setSheetMode(mode);
+    setIsSheetOpen(true);
   };
 
   if (repos.length === 0) {
@@ -76,11 +78,9 @@ export default function DashboardPage() {
               No repositories connected. Please connect your GitHub account to
               view your repositories and pull requests.
             </p>
-            <SignInButton mode="modal">
-              <Button className="mt-4 bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
-                Connect GitHub repositories
-              </Button>
-            </SignInButton>
+            <Button className="mt-4 bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
+              Connect GitHub repositories
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -112,7 +112,6 @@ export default function DashboardPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <h4 className="font-medium text-md mb-2">Pull Requests:</h4>
                 {repo.pullRequests.length > 0 ? (
                   <ul className="space-y-4">
                     {repo.pullRequests.map((pr) => (
@@ -144,45 +143,22 @@ export default function DashboardPage() {
                             </span>
                           </span>
                           {pr.buildStatus === "success" ? (
-                            <Sheet>
-                              <SheetTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  className="bg-green-500 hover:bg-green-600 text-white"
-                                  onClick={() => handleWriteNewTests(pr)}
-                                >
-                                  <PlusCircle className="mr-2 h-4 w-4" />
-                                  Write new tests
-                                </Button>
-                              </SheetTrigger>
-                              <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-                                <SheetHeader>
-                                  <SheetTitle>Write New Tests</SheetTitle>
-                                </SheetHeader>
-                                {selectedPR && (
-                                  <div className="mt-4">
-                                    <h3 className="font-semibold mb-2">
-                                      PR: {selectedPR.title} (#{selectedPR.number})
-                                    </h3>
-                                    <p className="mb-4">
-                                      An expert software engineer will analyze the PR diff and suggest new specs to write.
-                                    </p>
-                                    <div className="bg-gray-100 p-4 rounded-lg">
-                                      <p className="text-sm text-gray-600">
-                                        Expert suggestions will appear here...
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </SheetContent>
-                            </Sheet>
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                              onClick={() => handleOpenSheet(pr, "write")}
+                            >
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                              Write new tests
+                            </Button>
                           ) : (
                             <Button
                               size="sm"
                               className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                              onClick={() => handleOpenSheet(pr, "update")}
                             >
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit tests to fix
+                              Update tests to fix
                             </Button>
                           )}
                         </div>
@@ -197,6 +173,14 @@ export default function DashboardPage() {
           </ul>
         </CardContent>
       </Card>
+      {selectedPR && (
+        <TestUpdateSheet
+          isOpen={isSheetOpen}
+          onClose={() => setIsSheetOpen(false)}
+          pullRequest={selectedPR}
+          mode={sheetMode}
+        />
+      )}
     </div>
   );
 }
