@@ -1,10 +1,6 @@
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db/drizzle";
-import { users } from "@/lib/db/schema";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, handleSubscriptionChange } from "@/lib/payments/stripe";
-import Stripe from "stripe";
 
 export async function GET(request: NextRequest) {
   const { userId } = auth();
