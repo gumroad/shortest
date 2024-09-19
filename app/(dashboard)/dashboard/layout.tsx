@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Home, Settings, Shield, Activity, Menu } from "lucide-react";
+import { GitBranch, Settings, Menu } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -15,7 +15,7 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
-    { href: "/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/dashboard", icon: GitBranch, label: "Repos and Pull Requests" },
     { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   ];
 
