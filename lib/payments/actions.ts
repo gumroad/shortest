@@ -2,12 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
-import { currentUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 
 export const checkoutAction = async (formData) => {
   const user = await currentUser();
   const priceId = formData.get("priceId") as string;
-  await createCheckoutSession({ team: user, priceId });
+  await createCheckoutSession({ user: user, priceId });
 };
 
 export const customerPortalAction = async () => {
