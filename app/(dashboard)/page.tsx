@@ -89,10 +89,9 @@ export default function HomePage() {
                   Seamless Integration
                 </h2>
                 <p className="mt-2 text-base text-gray-500">
-                  Integrates with your existing GitHub workflow and development
-                  process{" "}
+                  Integrates with your existing GitHub workflow,{" "}
                   <span className="font-bold text-green-500">
-                    suggesting improvements as you go
+                    suggesting changes as you go
                   </span>
                   .
                 </p>
