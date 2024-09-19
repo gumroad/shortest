@@ -9,7 +9,6 @@ export default async function DashboardPage() {
   if (repos.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
         <Card>
           <CardHeader>
             <CardTitle>Your GitHub Repositories and Pull Requests</CardTitle>

@@ -1,34 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { customerPortalAction } from "@/lib/payments/actions";
-import { currentUser } from "@clerk/nextjs/server";
-import { Suspense } from "react";
 
-async function getTeamData() {
-  const user = await currentUser();
-  return {
-    planName: user?.publicMetadata?.planName || "Free",
-    subscriptionStatus:
-      user?.publicMetadata?.subscriptionStatus || "No active subscription",
-  };
-}
-
-async function TeamSubscriptionContent() {
-  const teamData = await getTeamData();
-
+function SubscriptionContent() {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <div className="mb-4 sm:mb-0">
-          <p className="font-medium">Current Plan: {teamData.planName}</p>
-          <p className="text-sm text-muted-foreground">
-            {teamData.subscriptionStatus === "active"
-              ? "Billed monthly"
-              : teamData.subscriptionStatus === "trialing"
-              ? "Trial period"
-              : "No active subscription"}
-          </p>
-        </div>
+      <div className="flex">
         <form action={customerPortalAction}>
           <Button
             type="submit"
@@ -46,12 +23,10 @@ export default function SettingsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Team Subscription</CardTitle>
+        <CardTitle>Subscription</CardTitle>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<div>Loading subscription details...</div>}>
-          <TeamSubscriptionContent />
-        </Suspense>
+        <SubscriptionContent />
       </CardContent>
     </Card>
   );
