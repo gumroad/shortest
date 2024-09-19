@@ -19,13 +19,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   Shortest
                 </span>
               </Link>
-              <div className="flex items-center space-x-4">
-                <Link
-                  href="/pricing"
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                  Pricing
-                </Link>
+              <div className="flex items-center space-x-8">
+                <Link href="/pricing">Pricing</Link>
                 <SignedOut>
                   <SignInButton />
                 </SignedOut>

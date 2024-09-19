@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, GitBranch, Clock, Zap } from "lucide-react";
 import { Terminal } from "./terminal";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 
 export default function HomePage() {
   return (
@@ -19,12 +20,22 @@ export default function HomePage() {
                 run serially, for more efficient and informative testing.
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
-                <a href="https://github.com/gumroad/shortest" target="_blank">
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
-                    View on GitHub
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </a>
+                <SignedOut>
+                  <a href="https://github.com/gumroad/shortest" target="_blank">
+                    <Button className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
+                      View on GitHub
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </a>
+                </SignedOut>
+                <SignedIn>
+                  <a href="/dashboard">
+                    <Button className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
+                      View Dashboard
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </a>
+                </SignedIn>
               </div>
             </div>
             <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
