@@ -14,11 +14,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <body>
           <header className="border-b border-gray-200">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <Link href="/" className="flex items-center">
-                <span className="ml-2 text-xl font-semibold text-gray-900">
-                  Shortest
-                </span>
-              </Link>
+              <SignedIn>
+                <Link href="/dashboard" className="flex items-center">
+                  <span className="ml-2 text-xl font-semibold text-gray-900">
+                    Shortest
+                  </span>
+                </Link>
+              </SignedIn>
+              <SignedOut>
+                <Link href="/" className="flex items-center">
+                  <span className="ml-2 text-xl font-semibold text-gray-900">
+                    Shortest
+                  </span>
+                </Link>
+              </SignedOut>
               <div className="flex items-center space-x-8">
                 <Link href="/pricing">Pricing</Link>
                 <SignedOut>

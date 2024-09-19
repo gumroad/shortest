@@ -11,18 +11,14 @@ export async function getGitHubRepos() {
       throw new Error("No GitHub token found");
     }
 
-    const response = await fetch('https://api.github.com/user/repos', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+    const octokit = new Octokit({ auth: token });
+
+    const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
+      per_page: 100,
+      sort: "updated",
+      direction: "desc",
     });
 
-    if (!response.ok) {
-      throw new Error(`GitHub API responded with status ${response.status}`);
-    }
-
-    const repos = await response.json();
     return repos;
   } catch (error) {
     console.error("Error fetching GitHub repos:", error);
@@ -46,7 +42,7 @@ export async function getGitHubPullRequests(owner: string, repo: string) {
   const octokit = new Octokit({ auth: token });
 
   try {
-    const { data } = await octokit.pulls.list({
+    const { data } = await octokit.rest.pulls.list({
       owner,
       repo,
       state: "open",
