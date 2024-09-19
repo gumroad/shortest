@@ -13,61 +13,33 @@ export default async function PricingPage() {
     getStripeProducts(),
   ]);
 
-  const freePlan = products.find((product) => product.name === 'Free');
-  const basePlan = products.find((product) => product.name === 'Base');
-  const plusPlan = products.find((product) => product.name === 'Plus');
+  const standardPlan = products.find((product) => product.name === 'Standard');
 
-  const basePrice = prices.find((price) => price.productId === basePlan?.id);
-  const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
+  const standardPrice = prices.find((price) => price.productId === standardPlan?.id);
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold text-center mb-8">Shortest Pricing</h1>
-      <p className="text-center mb-12 text-gray-600">Run your CI suite faster and more efficiently with Shortest</p>
-      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <p className="text-center mb-12 text-gray-600">Streamline your pull request workflow with intelligent test assistance</p>
+      <div className="max-w-3xl mx-auto">
         <PricingCard
-          name="Free"
-          price={0}
+          name={standardPlan?.name || 'Standard'}
+          price={1000} // $10 per user per month
           interval="month"
+          trialDays={standardPrice?.trialPeriodDays || 14}
           features={[
-            '10 builds per day',
-            '1 user',
-            'Basic support',
-            'Confidence interval testing'
+            'Automated test writing for new features',
+            'Intelligent test fixing for broken tests',
+            'Seamless GitHub integration',
+            'Unlimited pull requests',
+            'Priority support'
           ]}
-        />
-        <PricingCard
-          name={basePlan?.name || 'Base'}
-          price={basePrice?.unitAmount || 2900}
-          interval={basePrice?.interval || 'month'}
-          trialDays={basePrice?.trialPeriodDays || 14}
-          features={[
-            'Up to 100 builds per day',
-            'Up to 10 users',
-            'Email support',
-            'Advanced CI optimization',
-            'Detailed test analytics'
-          ]}
-          priceId={basePrice?.id}
-        />
-        <PricingCard
-          name={plusPlan?.name || 'Plus'}
-          price={plusPrice?.unitAmount || 9900}
-          interval={plusPrice?.interval || 'month'}
-          trialDays={plusPrice?.trialPeriodDays || 14}
-          features={[
-            'Up to 1,000 builds per day',
-            'Up to 100 users',
-            'Priority support',
-            'Custom CI workflows',
-            'Advanced reporting and insights'
-          ]}
-          priceId={plusPrice?.id}
+          priceId={standardPrice?.id}
         />
       </div>
       <div className="mt-12 text-center">
         <h2 className="text-2xl font-semibold mb-4">Enterprise</h2>
-        <p className="mb-4">Need more? Our enterprise plan offers unlimited builds, users, and custom solutions.</p>
+        <p className="mb-4">Need a custom solution? Our enterprise plan offers tailored features and support.</p>
         <Link href="mailto:sales@shortest.com" className="text-orange-500 hover:text-orange-600 font-medium">
           Contact our sales team
         </Link>
@@ -102,7 +74,7 @@ function PricingCard({
       <p className="text-4xl font-medium text-gray-900 mb-6">
         ${price / 100}{' '}
         <span className="text-xl font-normal text-gray-600">
-          /{interval}
+          /user/{interval}
         </span>
       </p>
       <ul className="space-y-4 mb-8">
@@ -119,8 +91,8 @@ function PricingCard({
           <SubmitButton />
         </form>
       ) : (
-        <button className="w-full bg-gray-100 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-200 transition-colors">
-          Current Plan
+        <button className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors">
+          Get Started
         </button>
       )}
     </div>

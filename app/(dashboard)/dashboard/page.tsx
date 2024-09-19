@@ -4,16 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  GitBranch,
+  GitPullRequestDraft,
+  GitPullRequest,
   CheckCircle,
   XCircle,
   Edit,
   PlusCircle,
   Plus,
   Trash2,
-  FileText,
 } from "lucide-react";
 import TestUpdateSheet from "./TestUpdateSheet";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
@@ -30,7 +31,6 @@ export default function DashboardPage() {
           id: 101,
           title: "Feature: Add new login page",
           number: 42,
-          state: "open",
           buildStatus: "success",
           isDraft: false,
         },
@@ -38,7 +38,6 @@ export default function DashboardPage() {
           id: 102,
           title: "Fix: Resolve CSS issues",
           number: 43,
-          state: "open",
           buildStatus: "failure",
           isDraft: true,
         },
@@ -52,7 +51,6 @@ export default function DashboardPage() {
           id: 201,
           title: "Refactor: Improve performance",
           number: 15,
-          state: "open",
           buildStatus: "success",
           isDraft: false,
         },
@@ -118,18 +116,19 @@ export default function DashboardPage() {
                       <li key={pr.id} className="bg-gray-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <span className="flex items-center">
-                            <GitBranch className="mr-2 h-4 w-4" />
+                            {pr.isDraft ? (
+                              <GitPullRequestDraft className="mr-2 h-4 w-4 text-gray-400" />
+                            ) : (
+                              <GitPullRequest className="mr-2 h-4 w-4" />
+                            )}
                             <span className="font-medium">{pr.title}</span>
                           </span>
-                          <span className="text-sm text-gray-600">
-                            #{pr.number} - {pr.state}
-                            {pr.isDraft && (
-                              <span className="ml-2 text-gray-500">
-                                <FileText className="inline-block mr-1 h-4 w-4" />
-                                Draft
-                              </span>
-                            )}
-                          </span>
+                          <Link
+                            href={`https://github.com/${repo.name}/pull/${pr.number}`}
+                            className="text-sm text-gray-600 underline"
+                          >
+                            #{pr.number}
+                          </Link>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="flex items-center">
@@ -189,7 +188,6 @@ interface PullRequest {
   id: number;
   title: string;
   number: number;
-  state: string;
   buildStatus: string;
   isDraft: boolean;
 }

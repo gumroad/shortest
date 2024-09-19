@@ -272,7 +272,7 @@ end
                 ))}
                 <Button
                   onClick={handleConfirmChanges}
-                  className="w-full mb-6"
+                  className="w-full mb-6 mt-0"
                   disabled={!isAnyFileSelected}
                 >
                   <Check className="mr-2 h-4 w-4" />
