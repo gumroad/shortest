@@ -24,7 +24,7 @@ async function getGitHubRepos() {
     return data.map((repo) => ({ id: repo.id, name: repo.name }));
   } catch (error) {
     console.error("Error fetching GitHub repos:", error);
-    if (error.status === 404) {
+    if (error instanceof Error && "status" in error && error.status === 404) {
       throw new Error(
         "GitHub API endpoint not found. Please check your API configuration."
       );
@@ -47,6 +47,11 @@ export async function GitHubReposServer() {
     );
   } catch (error) {
     console.error("Error in GitHubReposServer:", error);
-    return <div>Error: {error.message}</div>;
+    return (
+      <div>
+        Error:{" "}
+        {error instanceof Error ? error.message : "An unknown error occurred"}
+      </div>
+    );
   }
 }
