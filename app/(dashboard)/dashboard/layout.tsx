@@ -15,7 +15,7 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navItems = [
-    { href: "/dashboard", icon: GitBranch, label: "Repos and Pull Requests" },
+    { href: "/dashboard", icon: GitBranch, label: "Pull Requests" },
     { href: "/dashboard/settings", icon: Settings, label: "Settings" },
   ];
 
