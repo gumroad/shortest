@@ -22,10 +22,10 @@ export default function DashboardPage() {
   const [sheetMode, setSheetMode] = useState<"write" | "update">("write");
 
   // Placeholder data
-  const repos = [
+  const [repos, setRepos] = useState([
     {
       id: 1,
-      name: "user/repo1",
+      name: "gumroad/shortest",
       pullRequests: [
         {
           id: 101,
@@ -45,7 +45,7 @@ export default function DashboardPage() {
     },
     {
       id: 2,
-      name: "user/repo2",
+      name: "gumroad/flexile",
       pullRequests: [
         {
           id: 201,
@@ -56,12 +56,16 @@ export default function DashboardPage() {
         },
       ],
     },
-  ];
+  ]);
 
   const handleOpenSheet = (pr: PullRequest, mode: "write" | "update") => {
     setSelectedPR(pr);
     setSheetMode(mode);
     setIsSheetOpen(true);
+  };
+
+  const handleRemoveRepo = (repoId: number) => {
+    setRepos(repos.filter((repo) => repo.id !== repoId));
   };
 
   if (repos.length === 0) {
@@ -89,13 +93,9 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Your GitHub Repositories and Pull Requests</CardTitle>
+          <CardTitle className="text-xl">Your GitHub Repositories and Pull Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button className="w-full mb-6 bg-blue-500 hover:bg-blue-600 text-white">
-            <Plus className="mr-2 h-4 w-4" />
-            Add New GitHub Repository
-          </Button>
           <ul className="space-y-8">
             {repos.map((repo) => (
               <li key={repo.id}>
@@ -106,6 +106,7 @@ export default function DashboardPage() {
                     variant="ghost"
                     className="text-red-500 hover:text-red-700"
                     title="Remove repository"
+                    onClick={() => handleRemoveRepo(repo.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -170,6 +171,10 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
+          <Button className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white">
+            <Plus className="mr-2 h-4 w-4" />
+            Add New GitHub Repository
+          </Button>
         </CardContent>
       </Card>
       {selectedPR && (

@@ -29,8 +29,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SignedOut>
               <div className="flex items-center space-x-8">
-                <Link href="/pricing">Pricing</Link>
                 <SignedOut>
+                  <Link href="/pricing">Pricing</Link>
                   <SignInButton />
                 </SignedOut>
                 <SignedIn>
