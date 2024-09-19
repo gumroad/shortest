@@ -40,6 +40,7 @@
     "postcss": "^8.4.45",
     "postgres": "^3.4.4",
     "react": "19.0.0-rc-7771d3a7-20240827",
+    "react-diff-viewer": "^3.1.1",
     "react-dom": "19.0.0-rc-7771d3a7-20240827",
     "server-only": "^0.0.1",
     "stripe": "^16.10.0",
