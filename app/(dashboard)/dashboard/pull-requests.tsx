@@ -3,20 +3,35 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useClerk } from "@clerk/nextjs";
 
 export function PullRequests() {
   const [prs, setPRs] = useState([]);
+  const { user } = useClerk();
 
   useEffect(() => {
-    // Fetch PRs from GitHub API
-    // Update setPRs with the fetched data
-  }, []);
+    async function fetchPRs() {
+      try {
+        const response = await fetch('/api/github/pull-requests', {
+          headers: {
+            Authorization: `Bearer ${user?.primaryEmailAddress?.emailAddress}`,
+          },
+        });
+        const data = await response.json();
+        setPRs(data);
+      } catch (error) {
+        console.error('Failed to fetch pull requests:', error);
+      }
+    }
 
-  const handleWriteTests = (prId) => {
+    fetchPRs();
+  }, [user]);
+
+  const handleWriteTests = (prId: string) => {
     // Implement logic to write new tests for successful builds
   };
 
-  const handleEditTests = (prId) => {
+  const handleEditTests = (prId: string) => {
     // Implement logic to edit tests for failing builds
   };
 
@@ -27,7 +42,7 @@ export function PullRequests() {
       </CardHeader>
       <CardContent>
         <ul>
-          {prs.map((pr) => (
+          {prs.map((pr: { id: string; title: string; state: string; buildStatus: string }) => (
             <li key={pr.id}>
               {pr.title}
               {pr.state === 'open' && pr.buildStatus === 'success' && (

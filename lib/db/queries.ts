@@ -1,58 +1,52 @@
-import { desc, and, eq, isNull } from 'drizzle-orm';
-import { db } from './drizzle';
-import { activityLogs, users } from './schema';
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth/session';
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+import { db } from "./drizzle";
+import { users } from "./schema";
 
-export async function getUser() {
-  const sessionCookie = cookies().get('session');
-  if (!sessionCookie || !sessionCookie.value) {
-    return null;
+export async function getGitHubRepos() {
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error("User not authenticated");
   }
 
-  const sessionData = await verifyToken(sessionCookie.value);
-  if (
-    !sessionData ||
-    !sessionData.user ||
-    typeof sessionData.user.id !== 'number'
-  ) {
-    return null;
+  const user = await currentUser();
+  if (!user) {
+    throw new Error("User not authenticated");
   }
 
-  if (new Date(sessionData.expires) < new Date()) {
-    return null;
+  const githubToken = user.publicMetadata.githubToken;
+  if (!githubToken) {
+    throw new Error("GitHub token not found");
   }
 
-  const user = await db
-    .select()
-    .from(users)
-    .where(and(eq(users.id, sessionData.user.id), isNull(users.deletedAt)))
-    .limit(1);
+  const response = await fetch("https://api.github.com/user/repos", {
+    headers: {
+      Authorization: `token ${githubToken}`,
+    },
+  });
 
-  if (user.length === 0) {
-    return null;
+  if (!response.ok) {
+    throw new Error("Failed to fetch GitHub repositories");
   }
 
-  return user[0];
+  const repos = await response.json();
+  return repos;
 }
 
-export async function getActivityLogs() {
-  const user = await getUser();
-  if (!user) {
-    throw new Error('User not authenticated');
+export async function updateUserSubscription(
+  clerkId: string,
+  subscriptionData: {
+    stripeSubscriptionId: string | null;
+    stripeProductId: string | null;
+    planName: string | null;
+    subscriptionStatus: string;
   }
-
-  return await db
-    .select({
-      id: activityLogs.id,
-      action: activityLogs.action,
-      timestamp: activityLogs.timestamp,
-      ipAddress: activityLogs.ipAddress,
-      userName: users.name,
+) {
+  await db
+    .update(users)
+    .set({
+      ...subscriptionData,
+      updatedAt: new Date(),
     })
-    .from(activityLogs)
-    .leftJoin(users, eq(activityLogs.userId, users.id))
-    .where(eq(activityLogs.userId, user.id))
-    .orderBy(desc(activityLogs.timestamp))
-    .limit(10);
+    .where(eq(users.clerkId, clerkId));
 }
