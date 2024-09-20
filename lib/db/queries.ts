@@ -29,3 +29,17 @@ export async function getUserByClerkId(clerkId: string): Promise<User | null> {
 
   return result[0] || null;
 }
+
+export async function getUserWithGithubToken(clerkId: string): Promise<User | null> {
+  const result = await db.query.users.findFirst({
+    where: eq(users.clerkId, clerkId),
+  });
+
+  return result || null;
+}
+
+export async function updateUserGithubToken(clerkId: string, accessToken: string) {
+  await db.update(users)
+    .set({ githubAccessToken: accessToken })
+    .where(eq(users.clerkId, clerkId));
+}
