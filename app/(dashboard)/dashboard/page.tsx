@@ -125,11 +125,11 @@ export default function DashboardPage() {
 
         mockTestFiles.push({
           name: "login_spec.rb",
-          oldContent: "",
+          oldContent:
+            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\nend",
           newContent:
-            "it 'allows existing user to log in' do\n  visit '/login'\n  fill_in 'Email', with: 'user@example.com'\n  fill_in 'Password', with: 'password123'\n  click_button 'Log In'\n  expect(page).to have_content('Welcome back!')\nend",
+            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\n\n\n  it 'shows error message for invalid credentials' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'wrongpassword'\n    click_button 'Log In'\n    expect(page).to have_content('Invalid email or password')\n  end\nend",
           isEntirelyNew: false,
-          startingLineNumber: 73,
         });
       } else if (mode === "update") {
         mockTestFiles.push({
@@ -355,7 +355,6 @@ export default function DashboardPage() {
                                             oldValue={file.oldContent || ""}
                                             newValue={file.newContent || ""}
                                             splitView={true}
-                                            showDiffOnly={false}
                                             leftStartingLineNumber={
                                               file.startingLineNumber
                                                 ? file.startingLineNumber
