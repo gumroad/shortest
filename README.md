@@ -15,12 +15,12 @@
 ```bash
 npm install -g pnpm
 pnpm install
-pnpm db:setup
+pnpm drizzle-kit generate
 pnpm db:migrate
-pnpm db:seed
+pnpm db:seed # creates stripe products
 ```
 
-Running the setup script will create your `.env` file locally.
+Run vercel env pull .env.development.local to make the latest environment variables available to your project locally.
 
 ## Running locally
 
@@ -37,6 +37,12 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+
+## Migrations
+
+```bash
+pnpm db:migrate
+```
 
 ## Testing payments
 
@@ -64,10 +70,4 @@ When you're ready to deploy your SaaS application to production, follow these st
 
 ### Add environment variables
 
-In your Vercel project settings (or during deployment), add all the necessary environment variables. Make sure to update the values for the production environment, including:
-
-1. `BASE_URL`: Set this to your production domain.
-2. `STRIPE_SECRET_KEY`: Use your Stripe secret key for the production environment.
-3. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
-4. `POSTGRES_URL`: Set this to your production database URL.
-5. `CLERK_SECRET_KEY`: Set this to your Clerk secret key for the production environment.
+In your Vercel project settings (or during deployment), add all the necessary environment variables. Make sure to update the values for the production environment.
