@@ -356,8 +356,6 @@ export default function DashboardPage() {
                                             newValue={file.newContent || ""}
                                             splitView={true}
                                             showDiffOnly={false}
-                                            leftLineNumberColor="#ccc"
-                                            rightLineNumberColor="#ccc"
                                             leftStartingLineNumber={
                                               file.startingLineNumber
                                                 ? file.startingLineNumber
