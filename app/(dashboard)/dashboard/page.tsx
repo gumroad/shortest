@@ -111,6 +111,7 @@ export default function DashboardPage() {
     setLoading(true);
 
     // Simulating API call to get test files
+    // TODO: update this to dynamically generate based on the PR diff and spec file directory
     setTimeout(() => {
       const mockTestFiles: TestFile[] = [];
 
@@ -330,6 +331,8 @@ function PullRequestList({
     {}
   );
   const [analyzing, setAnalyzing] = useState(false);
+
+  // TODO: update this to get pull requests for each repo dynamically, including build status and draft status
 
   useEffect(() => {
     fetchPRs();
