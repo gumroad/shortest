@@ -159,6 +159,8 @@ export default function DashboardPage() {
     }, 1000);
   };
 
+  // TODO: update this to update the repo monitoring status in the database
+
   const handleRemoveRepo = (repoId: number) => {
     setRepos((prevRepos) => prevRepos.filter((repo) => repo.id !== repoId));
   };
