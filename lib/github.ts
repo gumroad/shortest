@@ -6,6 +6,7 @@ import {
   getUserByClerkId,
   updateUserGithubToken,
   createUser,
+  saveRepos,
 } from "./db/queries";
 import { PullRequest } from "./db/schema";
 
@@ -88,7 +89,9 @@ export async function getGitHubRepos() {
   try {
     const octokit = await getOctokit();
     const { data: repos } = await octokit.repos.listForAuthenticatedUser();
-    return repos;
+    // Save all repos to the database
+    await saveRepos(repos);
+    return { success: true };
   } catch (error) {
     console.error("Error fetching GitHub repos:", error);
     return { error: "Failed to fetch GitHub repositories" };

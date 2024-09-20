@@ -115,3 +115,20 @@ export async function getMonitoringRepos(): Promise<Repo[]> {
     .from(repos)
     .where(and(eq(repos.userId, user.id), eq(repos.isMonitoring, true)));
 }
+
+export async function getNonMonitoringRepos(): Promise<Repo[]> {
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+
+  const user = await getUserByClerkId(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return db
+    .select()
+    .from(repos)
+    .where(and(eq(repos.userId, user.id), eq(repos.isMonitoring, false)));
+}

@@ -42,9 +42,9 @@ const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
 
 import { getGitHubRepos, getGitHubPullRequests } from "@/lib/github";
 import {
-  saveRepos,
   updateRepoMonitoring,
   getMonitoringRepos,
+  getNonMonitoringRepos,
 } from "@/lib/db/queries";
 
 interface Repo {
@@ -80,9 +80,6 @@ export default function DashboardPage() {
           setError(data.error);
           setRepos([]);
         } else {
-          // Save all repos to the database as non-monitoring
-          await saveRepos(data);
-
           // Fetch only monitoring repos for display
           const monitoringRepos = await getMonitoringRepos();
           setRepos(
@@ -604,9 +601,27 @@ function ComboboxComponent({
 }) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
+  const [nonMonitoringRepos, setNonMonitoringRepos] = React.useState<Repo[]>(
+    []
+  );
 
   useEffect(() => {
     setOpen(true);
+    const fetchNonMonitoringRepos = async () => {
+      try {
+        const repos = await getNonMonitoringRepos();
+        setNonMonitoringRepos(
+          repos.map((repo) => ({
+            ...repo,
+            full_name: repo.fullName,
+            owner: { login: repo.fullName.split("/")[0] },
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching non-monitoring repos:", error);
+      }
+    };
+    fetchNonMonitoringRepos();
   }, []);
 
   return (
@@ -619,7 +634,7 @@ function ComboboxComponent({
           className="w-full justify-between mt-6"
         >
           {value
-            ? repos.find((repo) => repo.name === value)?.name
+            ? nonMonitoringRepos.find((repo) => repo.name === value)?.name
             : "Select repository..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -630,27 +645,25 @@ function ComboboxComponent({
           <CommandList>
             <CommandEmpty>No repository found.</CommandEmpty>
             <CommandGroup>
-              {repos
-                .filter((repo) => !repo.isMonitoring)
-                .map((repo) => (
-                  <CommandItem
-                    key={repo.id}
-                    value={repo.name}
-                    onSelect={() => {
-                      setValue(repo.name);
-                      setOpen(false);
-                      onSelect(repo.id);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === repo.name ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {repo.name}
-                  </CommandItem>
-                ))}
+              {nonMonitoringRepos.map((repo) => (
+                <CommandItem
+                  key={repo.id}
+                  value={repo.name}
+                  onSelect={() => {
+                    setValue(repo.name);
+                    setOpen(false);
+                    onSelect(repo.id);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === repo.name ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {repo.name}
+                </CommandItem>
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>
