@@ -300,6 +300,7 @@ function PullRequestList({
 }) {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
@@ -317,9 +318,28 @@ function PullRequestList({
   }, [owner, repoName]);
 
   const fetchPRs = async () => {
-    const prs = await getGitHubPullRequests(owner, repoName);
-    setPullRequests(prs);
-    setLoading(false);
+    try {
+      const prs = await getGitHubPullRequests(owner, repoName);
+      if (Array.isArray(prs)) {
+        setPullRequests(
+          prs.map((pr) => ({
+            ...pr,
+            buildStatus: "", // TODO: update this
+            isDraft: false, // TODO: update this
+          }))
+        );
+        setError(null);
+      } else {
+        setError(prs.error || "Failed to fetch pull requests");
+        setPullRequests([]);
+      }
+    } catch (error) {
+      console.error("Error fetching pull requests:", error);
+      setError("An error occurred while fetching pull requests");
+      setPullRequests([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
@@ -406,6 +426,15 @@ function PullRequestList({
     return (
       <div className="flex justify-center items-center h-20">
         <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-20">
+        <AlertCircle className="h-6 w-6 text-red-500 mb-2" />
+        <p className="text-sm text-red-500">{error}</p>
       </div>
     );
   }

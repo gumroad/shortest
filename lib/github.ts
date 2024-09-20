@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
 import { getUserWithGithubToken, updateUserGithubToken } from "./db/queries";
+import { PullRequest } from "./db/schema";
 
 async function getOctokit() {
   const { userId } = auth();
@@ -39,14 +40,20 @@ export async function exchangeCodeForAccessToken(
   if (!response.ok) {
     const errorData = await response.json();
     console.error("GitHub API error:", errorData);
-    throw new Error(`Failed to exchange code for access token: ${errorData.error_description || response.statusText}`);
+    throw new Error(
+      `Failed to exchange code for access token: ${
+        errorData.error_description || response.statusText
+      }`
+    );
   }
 
   const data = await response.json();
 
   if (data.error) {
     console.error("GitHub OAuth error:", data);
-    throw new Error(`GitHub OAuth error: ${data.error_description || data.error}`);
+    throw new Error(
+      `GitHub OAuth error: ${data.error_description || data.error}`
+    );
   }
 
   if (!data.access_token) {
@@ -77,7 +84,10 @@ export async function getGitHubRepos() {
   }
 }
 
-export async function getGitHubPullRequests(owner: string, repo: string) {
+export async function getGitHubPullRequests(
+  owner: string,
+  repo: string
+): Promise<PullRequest[] | { error: string }> {
   if (!owner || !repo) {
     return { error: "Missing owner or repo parameter" };
   }
@@ -89,7 +99,19 @@ export async function getGitHubPullRequests(owner: string, repo: string) {
       repo,
       state: "open",
     });
-    return pullRequests;
+
+    return pullRequests.map((pr) => ({
+      id: pr.id,
+      repoId: 0, // TODO: update this
+      githubId: pr.id,
+      number: pr.number,
+      title: pr.title,
+      state: pr.state,
+      createdAt: new Date(pr.created_at),
+      updatedAt: new Date(pr.updated_at),
+      buildStatus: "", // TODO: update this
+      isDraft: false, // TODO: update this
+    }));
   } catch (error) {
     console.error("Error fetching GitHub pull requests:", error);
     return { error: "Failed to fetch GitHub pull requests" };
