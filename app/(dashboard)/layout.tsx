@@ -16,15 +16,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
               <SignedIn>
                 <Link href="/dashboard" className="flex items-center">
-                  <span className="ml-2 text-xl font-semibold text-gray-900">
-                    Shortest
+                  <span className="ml-2 font-semibold text-gray-900 flex items-center">
+                    <span className="text-2xl transform scale-y-75">S</span>
+                    <span className="text-xl">hortest</span>
                   </span>
                 </Link>
               </SignedIn>
               <SignedOut>
                 <Link href="/" className="flex items-center">
-                  <span className="ml-2 text-xl font-semibold text-gray-900">
-                    Shortest
+                  <span className="ml-2 font-semibold text-gray-900 flex items-center">
+                    <span className="text-2xl transform scale-y-75">S</span>
+                    <span className="text-xl">hortest</span>
                   </span>
                 </Link>
               </SignedOut>
