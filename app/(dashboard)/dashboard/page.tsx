@@ -34,9 +34,11 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const ReactDiffViewer = dynamic(() => import('react-diff-viewer'), { ssr: false });
+const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
+  ssr: false,
+});
 
 import { getGitHubRepos, getGitHubPullRequests } from "@/lib/github";
 
@@ -57,8 +59,12 @@ export default function DashboardPage() {
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [isAddingRepo, setIsAddingRepo] = useState(false);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
   const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
@@ -183,10 +189,22 @@ export default function DashboardPage() {
 
   const handleReconnectGitHub = async () => {
     try {
-      window.location.href = "/api/github/auth/reconnect";
+      // Redirect to GitHub OAuth flow to get new permissions
+      // Make sure NEXT_PUBLIC_GITHUB_CLIENT_ID is properly set in your environment variables
+      const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!clientId) {
+        throw new Error("GitHub Client ID is not set");
+      }
+      if (!baseUrl) {
+        throw new Error("Base URL is not set");
+      }
+      const redirectUri = `${baseUrl}/api/github/callback`;
+      const encodedRedirectUri = encodeURIComponent(redirectUri);
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&scope=repo,user`;
     } catch (error) {
-      console.error("Error reconnecting GitHub account:", error);
-      setError("Failed to reconnect GitHub account. Please try again.");
+      console.error("Error redirecting to GitHub:", error);
+      setError("Failed to redirect to GitHub. Please try again.");
     }
   };
 
@@ -204,7 +222,7 @@ export default function DashboardPage() {
         <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
         <p className="text-lg mb-4">{error}</p>
         <Button onClick={handleReconnectGitHub}>
-          Reconnect GitHub Account
+          Reconnect GitHub account
         </Button>
       </div>
     );
@@ -273,13 +291,23 @@ interface TestFile {
   isEntirelyNew: boolean;
 }
 
-function PullRequestList({ owner, repoName }: { owner: string; repoName: string }) {
+function PullRequestList({
+  owner,
+  repoName,
+}: {
+  owner: string;
+  repoName: string;
+}) {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
   const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {

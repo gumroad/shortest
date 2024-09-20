@@ -137,6 +137,10 @@ importers:
       zod:
         specifier: ^3.23.8
         version: 3.23.8
+    devDependencies:
+      smee-client:
+        specifier: ^2.0.3
+        version: 2.0.3
 
 packages:
 
@@ -1518,6 +1522,10 @@ packages:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
 
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
+
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
     engines: {node: '>= 6'}
@@ -1738,6 +1746,10 @@ packages:
   escape-string-regexp@1.0.5:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
     engines: {node: '>=0.8.0'}
+
+  eventsource@2.0.2:
+    resolution: {integrity: sha512-IzUmBGPR3+oUG9dUeXynyNmf91/3zUSJg1lCktzKw47OXuhco54U3r9B7O4XX+Rb1Itm9OZ2b0RkTs10bICOxA==}
+    engines: {node: '>=12.0.0'}
 
   fast-glob@3.3.2:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
@@ -2250,6 +2262,10 @@ packages:
   simple-swizzle@0.2.2:
     resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
 
+  smee-client@2.0.3:
+    resolution: {integrity: sha512-W5tQKHzZFe+IMBlaAJ8Ho32Y2wbUbzriHAA2DAFXpITId+0dYHJJbAX36a/HMrGjW7yFjhcKCNPwRBAiIrlZGQ==}
+    hasBin: true
+
   snake-case@3.0.4:
     resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
 
@@ -2428,6 +2444,10 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  validator@13.12.0:
+    resolution: {integrity: sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg==}
+    engines: {node: '>= 0.10'}
 
   vaul@0.9.4:
     resolution: {integrity: sha512-pcyIy1nEk6798ReNQpbVH/T/dYnoJ3bwyq7jmSp134s+bSvpWoSWQthm3/jfsQRvHNYIEK4ZKbkHUJ3YfLfw1w==}
@@ -3702,6 +3722,8 @@ snapshots:
       color-string: 1.9.1
     optional: true
 
+  commander@12.1.0: {}
+
   commander@4.1.1: {}
 
   convert-source-map@1.9.0: {}
@@ -3872,6 +3894,8 @@ snapshots:
   escalade@3.2.0: {}
 
   escape-string-regexp@1.0.5: {}
+
+  eventsource@2.0.2: {}
 
   fast-glob@3.3.2:
     dependencies:
@@ -4378,6 +4402,12 @@ snapshots:
       is-arrayish: 0.3.2
     optional: true
 
+  smee-client@2.0.3:
+    dependencies:
+      commander: 12.1.0
+      eventsource: 2.0.2
+      validator: 13.12.0
+
   snake-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
@@ -4552,6 +4582,8 @@ snapshots:
       react: 19.0.0-rc-7771d3a7-20240827
 
   util-deprecate@1.0.2: {}
+
+  validator@13.12.0: {}
 
   vaul@0.9.4(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827):
     dependencies:
