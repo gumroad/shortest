@@ -77,7 +77,7 @@ export default function DashboardPage() {
       try {
         const data = await getGitHubRepos();
         if ("error" in data) {
-          setError(data.error);
+          setError(data.error as string);
           setRepos([]);
         } else {
           // Fetch only monitoring repos for display
@@ -103,8 +103,6 @@ export default function DashboardPage() {
     };
 
     fetchAndSetRepos();
-    const interval = setInterval(fetchAndSetRepos, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
@@ -604,24 +602,33 @@ function ComboboxComponent({
   const [nonMonitoringRepos, setNonMonitoringRepos] = React.useState<Repo[]>(
     []
   );
+  const [loading, setLoading] = React.useState(false);
+
+  const fetchRepos = async () => {
+    setLoading(true);
+    try {
+      // First, fetch and update all GitHub repos
+      await getGitHubRepos();
+
+      // Then, fetch the non-monitoring repos
+      const repos = await getNonMonitoringRepos();
+      setNonMonitoringRepos(
+        repos.map((repo) => ({
+          ...repo,
+          full_name: repo.fullName,
+          owner: { login: repo.fullName.split("/")[0] },
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching repos:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     setOpen(true);
-    const fetchNonMonitoringRepos = async () => {
-      try {
-        const repos = await getNonMonitoringRepos();
-        setNonMonitoringRepos(
-          repos.map((repo) => ({
-            ...repo,
-            full_name: repo.fullName,
-            owner: { login: repo.fullName.split("/")[0] },
-          }))
-        );
-      } catch (error) {
-        console.error("Error fetching non-monitoring repos:", error);
-      }
-    };
-    fetchNonMonitoringRepos();
+    fetchRepos();
   }, []);
 
   return (
@@ -632,10 +639,19 @@ function ComboboxComponent({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between mt-6"
+          onClick={fetchRepos}
+          disabled={loading}
         >
-          {value
-            ? nonMonitoringRepos.find((repo) => repo.name === value)?.full_name
-            : "Select repository..."}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Fetching repositories...
+            </>
+          ) : value ? (
+            nonMonitoringRepos.find((repo) => repo.name === value)?.full_name
+          ) : (
+            "Select repository..."
+          )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
