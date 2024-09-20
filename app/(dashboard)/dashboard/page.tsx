@@ -41,6 +41,11 @@ const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
 });
 
 import { getGitHubRepos, getGitHubPullRequests } from "@/lib/github";
+import {
+  saveRepos,
+  updateRepoMonitoring,
+  getMonitoringRepos,
+} from "@/lib/db/queries";
 
 interface Repo {
   id: number;
@@ -75,7 +80,18 @@ export default function DashboardPage() {
           setError(data.error);
           setRepos([]);
         } else {
-          setRepos(data);
+          // Save all repos to the database as non-monitoring
+          await saveRepos(data);
+
+          // Fetch only monitoring repos for display
+          const monitoringRepos = await getMonitoringRepos();
+          setRepos(
+            monitoringRepos.map((repo) => ({
+              ...repo,
+              full_name: repo.fullName,
+              owner: { login: repo.fullName.split("/")[0] },
+            }))
+          );
           setError(null);
         }
         setLoading(false);
@@ -151,13 +167,22 @@ export default function DashboardPage() {
     setRepos((prevRepos) => prevRepos.filter((repo) => repo.id !== repoId));
   };
 
-  const handleAddRepo = (repoName: string) => {
-    setRepos((prevRepos) =>
-      prevRepos.map((repo) =>
-        repo.name === repoName ? { ...repo, isMonitoring: true } : repo
-      )
-    );
-    setIsAddingRepo(false);
+  const handleAddRepo = async (repoId: number) => {
+    try {
+      await updateRepoMonitoring(repoId, true);
+      const updatedRepos = await getMonitoringRepos();
+      setRepos(
+        updatedRepos.map((repo) => ({
+          ...repo,
+          full_name: repo.fullName,
+          owner: { login: repo.fullName.split("/")[0] },
+        }))
+      );
+      setIsAddingRepo(false);
+    } catch (error) {
+      console.error("Error updating repo monitoring status:", error);
+      setError("Failed to add repository for monitoring");
+    }
   };
 
   const handleFileToggle = (fileName: string) => {
@@ -575,7 +600,7 @@ function ComboboxComponent({
   onSelect,
 }: {
   repos: Repo[];
-  onSelect: (repoName: string) => void;
+  onSelect: (repoId: number) => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
@@ -611,10 +636,10 @@ function ComboboxComponent({
                   <CommandItem
                     key={repo.id}
                     value={repo.name}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue === value ? "" : currentValue);
+                    onSelect={() => {
+                      setValue(repo.name);
                       setOpen(false);
-                      onSelect(currentValue);
+                      onSelect(repo.id);
                     }}
                   >
                     <Check

@@ -36,16 +36,26 @@ export const users = pgTable(
   })
 );
 
-export const repos = pgTable("repos", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  githubId: integer("github_id").notNull(),
-  name: varchar("name", { length: 255 }).notNull(),
-  fullName: varchar("full_name", { length: 255 }).notNull(),
-  isPrivate: boolean("is_private").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+export const repos = pgTable(
+  "repos",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull(),
+    githubId: integer("github_id").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    fullName: varchar("full_name", { length: 255 }).notNull(),
+    isPrivate: boolean("is_private").notNull(),
+    isMonitoring: boolean("is_monitoring").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userGithubIdIdx: uniqueIndex("user_github_id_idx").on(
+      table.userId,
+      table.githubId
+    ),
+  })
+);
 
 export const pullRequests = pgTable("pull_requests", {
   id: serial("id").primaryKey(),
