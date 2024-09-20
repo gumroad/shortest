@@ -355,16 +355,6 @@ export default function DashboardPage() {
                                             oldValue={file.oldContent || ""}
                                             newValue={file.newContent || ""}
                                             splitView={true}
-                                            leftStartingLineNumber={
-                                              file.startingLineNumber
-                                                ? file.startingLineNumber
-                                                : 1
-                                            }
-                                            rightStartingLineNumber={
-                                              file.startingLineNumber
-                                                ? file.startingLineNumber
-                                                : 1
-                                            }
                                           />
                                         </div>
                                       </div>
@@ -423,7 +413,6 @@ interface TestFile {
   oldContent: string;
   newContent: string;
   isEntirelyNew: boolean;
-  startingLineNumber?: number;
 }
 
 function ComboboxComponent({
