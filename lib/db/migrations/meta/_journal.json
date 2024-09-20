@@ -8,6 +8,13 @@
       "when": 1726856800372,
       "tag": "0000_messy_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1726858416396,
+      "tag": "0001_bizarre_gauntlet",
+      "breakpoints": true
     }
   ]
 }

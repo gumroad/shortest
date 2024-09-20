@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "./drizzle";
-import { users, User } from "./schema";
+import { users, User, NewUser } from "./schema";
 
 export async function updateUserSubscription(
   clerkId: string,
@@ -30,8 +30,22 @@ export async function getUserByClerkId(clerkId: string): Promise<User | null> {
   return result[0] || null;
 }
 
-export async function updateUserGithubToken(clerkId: string, accessToken: string) {
-  await db.update(users)
+export async function updateUserGithubToken(
+  clerkId: string,
+  accessToken: string
+) {
+  await db
+    .update(users)
     .set({ githubAccessToken: accessToken })
     .where(eq(users.clerkId, clerkId));
+}
+
+export async function createUser(clerkId: string): Promise<User> {
+  const newUser: NewUser = {
+    clerkId,
+    role: "member",
+  };
+
+  const [createdUser] = await db.insert(users).values(newUser).returning();
+  return createdUser;
 }

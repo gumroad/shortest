@@ -2,7 +2,11 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
-import { getUserByClerkId, updateUserGithubToken } from "./db/queries";
+import {
+  getUserByClerkId,
+  updateUserGithubToken,
+  createUser,
+} from "./db/queries";
 import { PullRequest } from "./db/schema";
 
 async function getOctokit() {
@@ -11,9 +15,16 @@ async function getOctokit() {
     throw new Error("User not authenticated");
   }
 
-  const user = await getUserByClerkId(userId);
+  let user = await getUserByClerkId(userId);
 
-  if (!user || !user.githubAccessToken) {
+  if (!user) {
+    // Create a new user if they don't exist
+    user = await createUser(userId);
+  }
+
+  console.log("User:", user);
+
+  if (!user.githubAccessToken) {
     throw new Error("GitHub access token not found");
   }
 

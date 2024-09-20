@@ -16,10 +16,11 @@
 npm install -g pnpm
 pnpm install
 pnpm drizzle-kit generate
+pnpm db:migrate
 pnpm db:seed # creates stripe products
 ```
 
-Running the setup script will create your `.env` file locally.
+Run vercel env pull .env.development.local to make the latest environment variables available to your project locally.
 
 ## Running locally
 
