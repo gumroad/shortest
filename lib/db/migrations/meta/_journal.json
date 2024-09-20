@@ -15,6 +15,20 @@
       "when": 1726858416396,
       "tag": "0001_bizarre_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1726861023879,
+      "tag": "0002_legal_victor_mancha",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1726861331690,
+      "tag": "0003_exotic_goliath",
+      "breakpoints": true
     }
   ]
 }
