@@ -192,7 +192,7 @@ export default function DashboardPage() {
       // Redirect to GitHub OAuth flow to get new permissions
       // Make sure NEXT_PUBLIC_GITHUB_CLIENT_ID is properly set in your environment variables
       const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
-      const baseUrl = process.env.BASE_URL;
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
       if (!clientId) {
         throw new Error("GitHub Client ID is not set");
       }
