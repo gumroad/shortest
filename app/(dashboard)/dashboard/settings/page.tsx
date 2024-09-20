@@ -23,7 +23,7 @@ export default function SettingsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Subscription</CardTitle>
+        <CardTitle className="text-2xl font-bold">Subscription</CardTitle>
       </CardHeader>
       <CardContent>
         <SubscriptionContent />

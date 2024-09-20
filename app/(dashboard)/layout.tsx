@@ -28,12 +28,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </span>
                 </Link>
               </SignedOut>
-              <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-4">
                 <SignedOut>
                   <Link href="/pricing">Pricing</Link>
                   <SignInButton />
                 </SignedOut>
                 <SignedIn>
+                  <Link href="/dashboard/settings">Settings</Link>
                   <UserButton />
                 </SignedIn>
               </div>
