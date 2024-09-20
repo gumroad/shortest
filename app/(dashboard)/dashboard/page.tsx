@@ -634,7 +634,7 @@ function ComboboxComponent({
           className="w-full justify-between mt-6"
         >
           {value
-            ? nonMonitoringRepos.find((repo) => repo.name === value)?.name
+            ? nonMonitoringRepos.find((repo) => repo.name === value)?.full_name
             : "Select repository..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -648,9 +648,9 @@ function ComboboxComponent({
               {nonMonitoringRepos.map((repo) => (
                 <CommandItem
                   key={repo.id}
-                  value={repo.name}
+                  value={repo.full_name}
                   onSelect={() => {
-                    setValue(repo.name);
+                    setValue(repo.full_name);
                     setOpen(false);
                     onSelect(repo.id);
                   }}
@@ -658,10 +658,10 @@ function ComboboxComponent({
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === repo.name ? "opacity-100" : "opacity-0"
+                      value === repo.full_name ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {repo.name}
+                  {repo.full_name}
                 </CommandItem>
               ))}
             </CommandGroup>
