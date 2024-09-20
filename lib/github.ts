@@ -42,10 +42,10 @@ export async function exchangeCodeForAccessToken(
       Accept: "application/json",
     },
     body: JSON.stringify({
-      client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID, // Use NEXT_PUBLIC_ prefix
+      client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
       client_secret: process.env.GITHUB_CLIENT_SECRET,
       code,
-      redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/github/callback`, // Add redirect_uri
+      redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/github/callback`,
     }),
   });
 
@@ -88,33 +88,18 @@ export async function saveGitHubAccessToken(accessToken: string) {
 export async function getGitHubRepos() {
   try {
     const octokit = await getOctokit();
-    let allRepos: Awaited<
-      ReturnType<typeof octokit.rest.repos.listForAuthenticatedUser>
-    >["data"] = [];
-    let page = 1;
-    let hasNextPage = true;
+    const allRepos = await octokit.paginate(
+      octokit.rest.repos.listForAuthenticatedUser,
+      {
+        per_page: 100,
+        sort: "updated",
+        direction: "desc",
+        affiliation: "owner,collaborator,organization_member",
+      }
+    );
 
-    while (hasNextPage) {
-      const { data: repos, headers } =
-        await octokit.repos.listForAuthenticatedUser({
-          per_page: 100,
-          page: page,
-          type: "all", // This will fetch both public and private repos
-        });
-
-      allRepos = allRepos.concat(repos);
-
-      // Check if there's a next page
-      const links = parseLinkHeader(headers.link ?? null);
-      hasNextPage = !!links.next;
-      page++;
-
-      // TODO: this needs to get private and public and get all of them, not just 100
-
-      console.log("Repos:", allRepos);
-      console.log("Headers:", headers);
-      console.log("Length of repos:", allRepos.length);
-    }
+    console.log("Repos:", allRepos);
+    console.log("Length of repos:", allRepos.length);
 
     // Save all repos to the database
     await saveRepos(allRepos);
@@ -123,18 +108,6 @@ export async function getGitHubRepos() {
     console.error("Error fetching GitHub repos:", error);
     return { error: "Failed to fetch GitHub repositories" };
   }
-}
-
-// Helper function to parse the Link header
-function parseLinkHeader(header: string | null): { [key: string]: string } {
-  if (!header) return {};
-  const links = header.split(",");
-  const parsed: { [key: string]: string } = {};
-  links.forEach((link) => {
-    const match = link.match(/<(.+)>;\s*rel="(\w+)"/);
-    if (match) parsed[match[2]] = match[1];
-  });
-  return parsed;
 }
 
 export async function getGitHubPullRequests(
@@ -147,10 +120,11 @@ export async function getGitHubPullRequests(
 
   try {
     const octokit = await getOctokit();
-    const { data: pullRequests } = await octokit.pulls.list({
+    const pullRequests = await octokit.paginate(octokit.rest.pulls.list, {
       owner,
       repo,
       state: "open",
+      per_page: 100,
     });
 
     return pullRequests.map((pr) => ({
@@ -163,7 +137,7 @@ export async function getGitHubPullRequests(
       createdAt: new Date(pr.created_at),
       updatedAt: new Date(pr.updated_at),
       buildStatus: "", // TODO: update this
-      isDraft: false, // TODO: update this
+      isDraft: pr.draft || false,
     }));
   } catch (error) {
     console.error("Error fetching GitHub pull requests:", error);
