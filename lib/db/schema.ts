@@ -10,7 +10,7 @@ import {
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  clerkId: varchar("clerk_id", { length: 255 }).unique(),
+  clerkId: varchar("clerk_id", { length: 255 }).notNull().unique(),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 255 }),
   stripeProductId: varchar("stripe_product_id", { length: 255 }),

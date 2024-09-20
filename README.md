@@ -69,5 +69,5 @@ In your Vercel project settings (or during deployment), add all the necessary en
 1. `BASE_URL`: Set this to your production domain.
 2. `STRIPE_SECRET_KEY`: Use your Stripe secret key for the production environment.
 3. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
-4. `POSTGRES_URL`: Set this to your production database URL.
+4. `SUPABASE_POSTGRES_URL`: Set this to your production database URL.
 5. `CLERK_SECRET_KEY`: Set this to your Clerk secret key for the production environment.
