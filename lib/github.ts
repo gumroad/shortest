@@ -1,91 +1,147 @@
+"use server";
+
 import { auth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
 import { Octokit } from "@octokit/rest";
+import {
+  getUserByClerkId,
+  updateUserGithubToken,
+  createUser,
+  saveRepos,
+} from "./db/queries";
+import { PullRequest } from "./db/schema";
 
-export async function getGitHubRepos() {
-  try {
-    const { getToken } = auth();
-    const token = await getToken({ template: "github-oauth-token" });
-
-    if (!token) {
-      throw new Error("No GitHub token found");
-    }
-
-    const octokit = new Octokit({ auth: token });
-
-    const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser({
-      per_page: 100,
-      sort: "updated",
-      direction: "desc",
-    });
-
-    return repos;
-  } catch (error) {
-    console.error("Error fetching GitHub repos:", error);
-    return []; // Return an empty array instead of throwing
-  }
-}
-
-export async function getGitHubPullRequests(owner: string, repo: string) {
-  const { userId, getToken } = auth();
-
+async function getOctokit() {
+  const { userId } = auth();
   if (!userId) {
     throw new Error("User not authenticated");
   }
 
-  const token = await getToken({ template: "github" });
+  let user = await getUserByClerkId(userId);
 
-  if (!token) {
-    throw new Error("GitHub token not found");
+  if (!user) {
+    // Create a new user if they don't exist
+    user = await createUser(userId);
   }
 
-  const octokit = new Octokit({ auth: token });
+  console.log("User:", user);
 
+  if (!user.githubAccessToken) {
+    throw new Error("GitHub access token not found");
+  }
+
+  return new Octokit({ auth: user.githubAccessToken });
+}
+
+export async function exchangeCodeForAccessToken(
+  code: string
+): Promise<string> {
+  const response = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
+      client_secret: process.env.GITHUB_CLIENT_SECRET,
+      code,
+      redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/github/callback`,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("GitHub API error:", errorData);
+    throw new Error(
+      `Failed to exchange code for access token: ${
+        errorData.error_description || response.statusText
+      }`
+    );
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+    console.error("GitHub OAuth error:", data);
+    throw new Error(
+      `GitHub OAuth error: ${data.error_description || data.error}`
+    );
+  }
+
+  if (!data.access_token) {
+    console.error("Unexpected response from GitHub:", data);
+    throw new Error("Access token not found in GitHub response");
+  }
+
+  return data.access_token;
+}
+
+export async function saveGitHubAccessToken(accessToken: string) {
+  const { userId } = auth();
+  if (!userId) {
+    throw new Error("User not authenticated");
+  }
+
+  await updateUserGithubToken(userId, accessToken);
+}
+
+// TODO: update this to get ALL repos for an authenticated user, currently only gets first 100
+export async function getGitHubRepos() {
   try {
-    const { data } = await octokit.rest.pulls.list({
-      owner,
-      repo,
-      state: "open",
-      sort: "updated",
-      direction: "desc",
-      per_page: 10,
-    });
+    const octokit = await getOctokit();
+    const allRepos = await octokit.paginate(
+      octokit.rest.repos.listForAuthenticatedUser,
+      {
+        per_page: 100,
+        sort: "updated",
+        direction: "desc",
+        affiliation: "owner,collaborator,organization_member",
+      }
+    );
 
-    return data.map((pr) => ({
-      id: pr.id,
-      title: pr.title,
-      state: pr.state,
-      number: pr.number,
-      html_url: pr.html_url,
-    }));
+    console.log("Repos:", allRepos);
+    console.log("Length of repos:", allRepos.length);
+
+    // Save all repos to the database
+    await saveRepos(allRepos);
+    return { success: true };
   } catch (error) {
-    console.error("Error fetching GitHub pull requests:", error);
-    throw new Error("Failed to fetch GitHub pull requests");
+    console.error("Error fetching GitHub repos:", error);
+    return { error: "Failed to fetch GitHub repositories" };
   }
 }
 
-export async function handleGitHubApiRequest(request: NextRequest) {
+export async function getGitHubPullRequests(
+  owner: string,
+  repo: string
+): Promise<PullRequest[] | { error: string }> {
+  if (!owner || !repo) {
+    return { error: "Missing owner or repo parameter" };
+  }
+
   try {
-    const path = request.nextUrl.pathname;
-    if (path.endsWith("/repos")) {
-      const repos = await getGitHubRepos();
-      return NextResponse.json(repos);
-    } else if (path.endsWith("/pull-requests")) {
-      const [owner, repo] = path.split("/").slice(-3, -1);
-      const prs = await getGitHubPullRequests(owner, repo);
-      return NextResponse.json(prs);
-    } else {
-      return NextResponse.json({ error: "Invalid endpoint" }, { status: 404 });
-    }
+    const octokit = await getOctokit();
+    const pullRequests = await octokit.paginate(octokit.rest.pulls.list, {
+      owner,
+      repo,
+      state: "open",
+      per_page: 100,
+    });
+
+    return pullRequests.map((pr) => ({
+      id: pr.id,
+      repoId: 0, // TODO: update this
+      githubId: pr.id,
+      number: pr.number,
+      title: pr.title,
+      state: pr.state,
+      createdAt: new Date(pr.created_at),
+      updatedAt: new Date(pr.updated_at),
+      buildStatus: "", // TODO: update this
+      isDraft: pr.draft || false,
+    }));
   } catch (error) {
-    console.error("Error handling GitHub API request:", error);
-    if (error instanceof Error && error.message === "User not authenticated") {
-      return NextResponse.redirect(new URL("/login", request.url));
-    } else {
-      return NextResponse.json(
-        { error: "Internal server error" },
-        { status: 500 }
-      );
-    }
+    console.error("Error fetching GitHub pull requests:", error);
+    return { error: "Failed to fetch GitHub pull requests" };
   }
 }

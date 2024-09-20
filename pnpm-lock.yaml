@@ -59,6 +59,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.0
+      '@vercel/postgres':
+        specifier: ^0.10.0
+        version: 0.10.0
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.20(postcss@8.4.45)
@@ -82,7 +85,7 @@ importers:
         version: 0.24.2
       drizzle-orm:
         specifier: ^0.33.0
-        version: 0.33.0(@types/react@18.3.5)(postgres@3.4.4)(react@19.0.0-rc-7771d3a7-20240827)
+        version: 0.33.0(@neondatabase/serverless@0.9.5)(@types/pg@8.11.6)(@types/react@18.3.5)(@vercel/postgres@0.10.0)(postgres@3.4.4)(react@19.0.0-rc-7771d3a7-20240827)
       jose:
         specifier: ^5.8.0
         version: 5.8.0
@@ -137,6 +140,10 @@ importers:
       zod:
         specifier: ^3.23.8
         version: 3.23.8
+    devDependencies:
+      smee-client:
+        specifier: ^2.0.3
+        version: 2.0.3
 
 packages:
 
@@ -674,6 +681,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
+
+  '@neondatabase/serverless@0.9.5':
+    resolution: {integrity: sha512-siFas6gItqv6wD/pZnvdu34wEqgG3nSE6zWZdq5j2DEsa+VvX8i/5HXJOo06qrw5axPXn+lGCxeR+NLaSPIXug==}
 
   '@next/env@15.0.0-canary.152':
     resolution: {integrity: sha512-Vq+BvhYvLREoHguMwBBtsOrRNRWRW+Yz0SQuiaVBjKNt3Vup7I0Bt8D8ysVNTPuPJl4XXvohy/tWcP4C9B+QTw==}
@@ -1358,6 +1368,9 @@ packages:
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
 
+  '@types/pg@8.11.6':
+    resolution: {integrity: sha512-/2WmmBXHLsfRqzfHW7BNZ8SbYzE8OSk7i3WjFYvfgRHj7S1xj+16Je5fUKv3lVdVzk/zn9TXOqf+avFCFIE0yQ==}
+
   '@types/prop-types@15.7.12':
     resolution: {integrity: sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==}
 
@@ -1369,6 +1382,10 @@ packages:
 
   '@types/react@18.3.5':
     resolution: {integrity: sha512-WeqMfGJLGuLCqHGYRGHxnKrXcTitc6L/nBUWfWPcTarG3t9PsquqUMuVeXZeca+mglY4Vo5GZjCi0A3Or2lnxA==}
+
+  '@vercel/postgres@0.10.0':
+    resolution: {integrity: sha512-fSD23DxGND40IzSkXjcFcxr53t3Tiym59Is0jSYIFpG4/0f0KO9SGtcp1sXiebvPaGe7N/tU05cH4yt2S6/IPg==}
+    engines: {node: '>=18.14'}
 
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
@@ -1448,6 +1465,10 @@ packages:
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
 
+  bufferutil@4.0.8:
+    resolution: {integrity: sha512-4T53u4PdgsXqKaIctwF8ifXlRTTmEPJ8iEPWFdGZvcf7sbwYo6FKFEX9eNNAnzFZ7EzJAQ3CJeOtCRA4rDp7Pw==}
+    engines: {node: '>=6.14.2'}
+
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
     engines: {node: '>=10.16.0'}
@@ -1517,6 +1538,10 @@ packages:
   color@4.2.3:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
@@ -1738,6 +1763,10 @@ packages:
   escape-string-regexp@1.0.5:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
     engines: {node: '>=0.8.0'}
+
+  eventsource@2.0.2:
+    resolution: {integrity: sha512-IzUmBGPR3+oUG9dUeXynyNmf91/3zUSJg1lCktzKw47OXuhco54U3r9B7O4XX+Rb1Itm9OZ2b0RkTs10bICOxA==}
+    engines: {node: '>=12.0.0'}
 
   fast-glob@3.3.2:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
@@ -1975,6 +2004,10 @@ packages:
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
 
+  node-gyp-build@4.8.2:
+    resolution: {integrity: sha512-IRUxE4BVsHWXkV/SFOut4qTlagw2aM8T5/vnTsmrHJvVoKueJHRc/JaFND7QDDc61kLYUJ6qlZM3sqTSyx2dTw==}
+    hasBin: true
+
   node-releases@2.0.18:
     resolution: {integrity: sha512-d9VeXT4SJ7ZeOqGX6R5EM022wpL+eWPooLI+5UpWn2jCT1aosUQEhQP214x33Wkwx3JQMvIm+tIoVOdodFS40g==}
 
@@ -1997,6 +2030,9 @@ packages:
   object-inspect@1.13.2:
     resolution: {integrity: sha512-IRZSRuzJiynemAXPYtPe5BoI/RESNYR7TYm50MC5Mqbd3Jmw5y790sErYw3V6SryFJD64b74qQQs9wn5Bg/k3g==}
     engines: {node: '>= 0.4'}
+
+  obuf@1.1.2:
+    resolution: {integrity: sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==}
 
   package-json-from-dist@1.0.0:
     resolution: {integrity: sha512-dATvCeZN/8wQsGywez1mzHtTlP22H8OEfPrVMLNr4/eGa+ijtLn/6M5f0dY8UKNrC2O9UCU6SSoG3qRKnt7STw==}
@@ -2023,6 +2059,21 @@ packages:
   path-type@4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
+
+  pg-int8@1.0.1:
+    resolution: {integrity: sha512-WCtabS6t3c8SkpDBUlb1kjOs7l66xsGdKpIPZsg4wR+B3+u9UAum2odSsF9tnvxg80h4ZxLWMy4pRjOsFIqQpw==}
+    engines: {node: '>=4.0.0'}
+
+  pg-numeric@1.0.2:
+    resolution: {integrity: sha512-BM/Thnrw5jm2kKLE5uJkXqqExRUY/toLHda65XgFTBTFYZyopbKjBe29Ii3RbkvlsMoFwD+tHeGaCjjv0gHlyw==}
+    engines: {node: '>=4'}
+
+  pg-protocol@1.7.0:
+    resolution: {integrity: sha512-hTK/mE36i8fDDhgDFjy6xNOG+LCorxLG3WO17tku+ij6sVHXh1jQUJ8hYAnRhNla4QVD2H8er/FOjc/+EgC6yQ==}
+
+  pg-types@4.0.2:
+    resolution: {integrity: sha512-cRL3JpS3lKMGsKaWndugWQoLOCoP+Cic8oseVcbr0qhPzYD5DWXK+RZ9LY9wxRf7RQia4SCwQlXk0q6FCPrVng==}
+    engines: {node: '>=10'}
 
   picocolors@1.1.0:
     resolution: {integrity: sha512-TQ92mBOW0l3LeMeyLV6mzy/kWr8lkd/hp3mTg7wYK7zJhuBStmGMBG0BdeDZS/dZx1IukaX6Bk11zcln25o1Aw==}
@@ -2083,6 +2134,25 @@ packages:
   postcss@8.4.45:
     resolution: {integrity: sha512-7KTLTdzdZZYscUc65XmjFiB73vBhBfbPztCYdUNvlaso9PrzjzcmjqBPR0lNGkcVlcO4BjiO5rK/qNz+XAen1Q==}
     engines: {node: ^10 || ^12 || >=14}
+
+  postgres-array@3.0.2:
+    resolution: {integrity: sha512-6faShkdFugNQCLwucjPcY5ARoW1SlbnrZjmGl0IrrqewpvxvhSLHimCVzqeuULCbG0fQv7Dtk1yDbG3xv7Veog==}
+    engines: {node: '>=12'}
+
+  postgres-bytea@3.0.0:
+    resolution: {integrity: sha512-CNd4jim9RFPkObHSjVHlVrxoVQXz7quwNFpz7RY1okNNme49+sVyiTvTRobiLV548Hx/hb1BG+iE7h9493WzFw==}
+    engines: {node: '>= 6'}
+
+  postgres-date@2.1.0:
+    resolution: {integrity: sha512-K7Juri8gtgXVcDfZttFKVmhglp7epKb1K4pgrkLxehjqkrgPhfG6OO8LHLkfaqkbpjNRnra018XwAr1yQFWGcA==}
+    engines: {node: '>=12'}
+
+  postgres-interval@3.0.0:
+    resolution: {integrity: sha512-BSNDnbyZCXSxgA+1f5UU2GmwhoI0aU5yMxRGO8CdFEcY2BQF9xm/7MqKnYoM1nJDk8nONNWDk9WeSmePFhQdlw==}
+    engines: {node: '>=12'}
+
+  postgres-range@1.1.4:
+    resolution: {integrity: sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==}
 
   postgres@3.4.4:
     resolution: {integrity: sha512-IbyN+9KslkqcXa8AO9fxpk97PA4pzewvpi2B3Dwy9u4zpV32QicaEdgmF3eSQUzdRk7ttDHQejNgAEr4XoeH4A==}
@@ -2249,6 +2319,10 @@ packages:
 
   simple-swizzle@0.2.2:
     resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
+
+  smee-client@2.0.3:
+    resolution: {integrity: sha512-W5tQKHzZFe+IMBlaAJ8Ho32Y2wbUbzriHAA2DAFXpITId+0dYHJJbAX36a/HMrGjW7yFjhcKCNPwRBAiIrlZGQ==}
+    hasBin: true
 
   snake-case@3.0.4:
     resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
@@ -2429,6 +2503,10 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  validator@13.12.0:
+    resolution: {integrity: sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg==}
+    engines: {node: '>= 0.10'}
+
   vaul@0.9.4:
     resolution: {integrity: sha512-pcyIy1nEk6798ReNQpbVH/T/dYnoJ3bwyq7jmSp134s+bSvpWoSWQthm3/jfsQRvHNYIEK4ZKbkHUJ3YfLfw1w==}
     peerDependencies:
@@ -2447,6 +2525,18 @@ packages:
   wrap-ansi@8.1.0:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
+
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   yaml@1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
@@ -2871,6 +2961,10 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  '@neondatabase/serverless@0.9.5':
+    dependencies:
+      '@types/pg': 8.11.6
 
   '@next/env@15.0.0-canary.152': {}
 
@@ -3517,6 +3611,12 @@ snapshots:
 
   '@types/parse-json@4.0.2': {}
 
+  '@types/pg@8.11.6':
+    dependencies:
+      '@types/node': 22.5.4
+      pg-protocol: 1.7.0
+      pg-types: 4.0.2
+
   '@types/prop-types@15.7.12': {}
 
   '@types/react-dom@18.3.0':
@@ -3534,6 +3634,14 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.12
       csstype: 3.1.3
+
+  '@vercel/postgres@0.10.0':
+    dependencies:
+      '@neondatabase/serverless': 0.9.5
+      bufferutil: 4.0.8
+      ws: 8.18.0(bufferutil@4.0.8)
+    transitivePeerDependencies:
+      - utf-8-validate
 
   ansi-regex@5.0.1: {}
 
@@ -3620,6 +3728,10 @@ snapshots:
 
   buffer-from@1.1.2: {}
 
+  bufferutil@4.0.8:
+    dependencies:
+      node-gyp-build: 4.8.2
+
   busboy@1.6.0:
     dependencies:
       streamsearch: 1.1.0
@@ -3702,6 +3814,8 @@ snapshots:
       color-string: 1.9.1
     optional: true
 
+  commander@12.1.0: {}
+
   commander@4.1.1: {}
 
   convert-source-map@1.9.0: {}
@@ -3780,9 +3894,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.33.0(@types/react@18.3.5)(postgres@3.4.4)(react@19.0.0-rc-7771d3a7-20240827):
+  drizzle-orm@0.33.0(@neondatabase/serverless@0.9.5)(@types/pg@8.11.6)(@types/react@18.3.5)(@vercel/postgres@0.10.0)(postgres@3.4.4)(react@19.0.0-rc-7771d3a7-20240827):
     optionalDependencies:
+      '@neondatabase/serverless': 0.9.5
+      '@types/pg': 8.11.6
       '@types/react': 18.3.5
+      '@vercel/postgres': 0.10.0
       postgres: 3.4.4
       react: 19.0.0-rc-7771d3a7-20240827
 
@@ -3872,6 +3989,8 @@ snapshots:
   escalade@3.2.0: {}
 
   escape-string-regexp@1.0.5: {}
+
+  eventsource@2.0.2: {}
 
   fast-glob@3.3.2:
     dependencies:
@@ -4093,6 +4212,8 @@ snapshots:
       lower-case: 2.0.2
       tslib: 2.7.0
 
+  node-gyp-build@4.8.2: {}
+
   node-releases@2.0.18: {}
 
   normalize-path@3.0.0: {}
@@ -4104,6 +4225,8 @@ snapshots:
   object-hash@3.0.0: {}
 
   object-inspect@1.13.2: {}
+
+  obuf@1.1.2: {}
 
   package-json-from-dist@1.0.0: {}
 
@@ -4128,6 +4251,22 @@ snapshots:
       minipass: 7.1.2
 
   path-type@4.0.0: {}
+
+  pg-int8@1.0.1: {}
+
+  pg-numeric@1.0.2: {}
+
+  pg-protocol@1.7.0: {}
+
+  pg-types@4.0.2:
+    dependencies:
+      pg-int8: 1.0.1
+      pg-numeric: 1.0.2
+      postgres-array: 3.0.2
+      postgres-bytea: 3.0.0
+      postgres-date: 2.1.0
+      postgres-interval: 3.0.0
+      postgres-range: 1.1.4
 
   picocolors@1.1.0: {}
 
@@ -4179,6 +4318,18 @@ snapshots:
       nanoid: 3.3.7
       picocolors: 1.1.0
       source-map-js: 1.2.1
+
+  postgres-array@3.0.2: {}
+
+  postgres-bytea@3.0.0:
+    dependencies:
+      obuf: 1.1.2
+
+  postgres-date@2.1.0: {}
+
+  postgres-interval@3.0.0: {}
+
+  postgres-range@1.1.4: {}
 
   postgres@3.4.4: {}
 
@@ -4378,6 +4529,12 @@ snapshots:
       is-arrayish: 0.3.2
     optional: true
 
+  smee-client@2.0.3:
+    dependencies:
+      commander: 12.1.0
+      eventsource: 2.0.2
+      validator: 13.12.0
+
   snake-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
@@ -4553,6 +4710,8 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
+  validator@13.12.0: {}
+
   vaul@0.9.4(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827):
     dependencies:
       '@radix-ui/react-dialog': 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.5)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
@@ -4577,6 +4736,10 @@ snapshots:
       ansi-styles: 6.2.1
       string-width: 5.1.2
       strip-ansi: 7.1.0
+
+  ws@8.18.0(bufferutil@4.0.8):
+    optionalDependencies:
+      bufferutil: 4.0.8
 
   yaml@1.10.2: {}
 
