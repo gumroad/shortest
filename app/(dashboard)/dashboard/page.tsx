@@ -14,6 +14,7 @@ import {
   Check,
   ChevronsUpDown,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -34,8 +35,22 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import ReactDiffViewer from "react-diff-viewer";
+import { getGitHubRepos, getGitHubPullRequests } from "@/lib/github";
+
+interface Repo {
+  id: number;
+  name: string;
+  full_name: string;
+  owner: {
+    login: string;
+  };
+  isMonitoring?: boolean;
+}
 
 export default function DashboardPage() {
+  const [repos, setRepos] = useState<Repo[] | { error: string }>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [isAddingRepo, setIsAddingRepo] = useState(false);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
@@ -46,64 +61,33 @@ export default function DashboardPage() {
     {}
   );
   const [analyzing, setAnalyzing] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  // Placeholder data
-  const [repos, setRepos] = useState([
-    {
-      id: 1,
-      name: "gumroad/shortest",
-      pullRequests: [
-        {
-          id: 101,
-          title: "Feature: Add new login page",
-          number: 42,
-          buildStatus: "success",
-          isDraft: false,
-        },
-        {
-          id: 102,
-          title: "Fix: Resolve CSS issues",
-          number: 43,
-          buildStatus: "failure",
-          isDraft: true,
-        },
-      ],
-      isMonitoring: true,
-    },
-    {
-      id: 2,
-      name: "gumroad/flexile",
-      pullRequests: [
-        {
-          id: 201,
-          title: "Refactor: Improve performance",
-          number: 15,
-          buildStatus: "success",
-          isDraft: false,
-        },
-      ],
-      isMonitoring: true,
-    },
-    {
-      id: 3,
-      name: "gumroad/gumroad",
-      pullRequests: [],
-      isMonitoring: false,
-    },
-    {
-      id: 4,
-      name: "gumroad/iffy",
-      pullRequests: [],
-      isMonitoring: false,
-    },
-    {
-      id: 5,
-      name: "gumroad/helper",
-      pullRequests: [],
-      isMonitoring: false,
-    },
-  ]);
+  useEffect(() => {
+    const fetchAndSetRepos = async () => {
+      try {
+        const data = await getGitHubRepos();
+        if ("error" in data) {
+          setError(data.error);
+          setRepos([]);
+        } else {
+          setRepos(data);
+          setError(null);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching repos:", error);
+        setLoading(false);
+        setError(
+          "Failed to fetch repositories. Please reconnect your GitHub account."
+        );
+        setRepos([]);
+      }
+    };
+
+    fetchAndSetRepos();
+    const interval = setInterval(fetchAndSetRepos, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
     setSelectedPR(pr);
@@ -200,19 +184,31 @@ export default function DashboardPage() {
     setExpandedFiles({});
   };
 
-  if (repos.length === 0) {
+  const handleReconnectGitHub = async () => {
+    try {
+      window.location.href = "/api/auth/github/reconnect";
+    } catch (error) {
+      console.error("Error reconnecting GitHub account:", error);
+      setError("Failed to reconnect GitHub account. Please try again.");
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4">Pull Requests</h2>
-          <p>
-            No repositories connected. Please connect your GitHub account to
-            view your repositories and pull requests.
-          </p>
-          <Button className="mt-4 bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
-            Connect GitHub repositories
-          </Button>
-        </div>
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <p className="text-lg mb-4">{error}</p>
+        <Button onClick={handleReconnectGitHub}>
+          Reconnect GitHub Account
+        </Button>
       </div>
     );
   }
@@ -220,13 +216,12 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="p-6">
-        <ul className="space-y-8">
-          {repos
-            .filter((repo) => repo.isMonitoring)
-            .map((repo) => (
+        {Array.isArray(repos) && repos.length > 0 ? (
+          <ul className="space-y-8">
+            {repos.map((repo) => (
               <li key={repo.id}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-lg">{repo.name}</h3>
+                  <h3 className="font-semibold text-lg">{repo.full_name}</h3>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -237,155 +232,21 @@ export default function DashboardPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                {repo.pullRequests.length > 0 ? (
-                  <ul className="space-y-4">
-                    {repo.pullRequests.map((pr) => (
-                      <li
-                        key={pr.id}
-                        className="bg-white p-4 rounded-lg shadow-md"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="flex items-center">
-                            {pr.isDraft ? (
-                              <GitPullRequestDraft className="mr-2 h-4 w-4 text-gray-400" />
-                            ) : (
-                              <GitPullRequest className="mr-2 h-4 w-4" />
-                            )}
-                            <span className="font-medium">{pr.title}</span>
-                          </span>
-                          <Link
-                            href={`https://github.com/${repo.name}/pull/${pr.number}`}
-                            className="text-sm text-gray-600 underline"
-                          >
-                            #{pr.number}
-                          </Link>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="flex items-center">
-                            {pr.buildStatus === "success" ? (
-                              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                            ) : (
-                              <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                            )}
-                            <Link
-                              href={`https://github.com/${repo.name}/actions/runs/placeholder-run-id`}
-                              className="text-sm underline text-gray-600"
-                            >
-                              Build: {pr.buildStatus}
-                            </Link>
-                          </span>
-                          {selectedPR && selectedPR.id === pr.id ? (
-                            <Button
-                              size="sm"
-                              className="bg-white hover:bg-gray-100 text-black border border-gray-200"
-                              onClick={handleCancelChanges}
-                            >
-                              Cancel
-                            </Button>
-                          ) : pr.buildStatus === "success" ? (
-                            <Button
-                              size="sm"
-                              className="bg-green-500 hover:bg-green-600 text-white"
-                              onClick={() => handleOpenTests(pr, "write")}
-                            >
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Write new tests
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                              onClick={() => handleOpenTests(pr, "update")}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Update tests to fix
-                            </Button>
-                          )}
-                        </div>
-                        {selectedPR && selectedPR.id === pr.id && (
-                          <div className="mt-4">
-                            <h4 className="font-semibold mb-2">Test Files</h4>
-                            {analyzing ? (
-                              <div className="flex items-center justify-center h-20">
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                                <span className="ml-2">
-                                  Analyzing PR diff...
-                                </span>
-                              </div>
-                            ) : loading ? (
-                              <div className="flex items-center justify-center h-20">
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                {testFiles.map((file) => (
-                                  <div
-                                    key={file.name}
-                                    className="border rounded-lg p-4"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center">
-                                        <Checkbox
-                                          id={file.name}
-                                          checked={selectedFiles[file.name]}
-                                          onCheckedChange={() =>
-                                            handleFileToggle(file.name)
-                                          }
-                                        />
-                                        <label
-                                          htmlFor={file.name}
-                                          className="ml-2 font-medium cursor-pointer"
-                                        >
-                                          {file.name}
-                                        </label>
-                                        {file.isEntirelyNew && (
-                                          <Badge
-                                            variant="outline"
-                                            className="ml-2"
-                                          >
-                                            New
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {expandedFiles[file.name] && (
-                                      <div className="mt-2">
-                                        <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-                                          <ReactDiffViewer
-                                            oldValue={file.oldContent || ""}
-                                            newValue={file.newContent || ""}
-                                            splitView={true}
-                                          />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                                <Button
-                                  className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                                  onClick={handleConfirmChanges}
-                                  disabled={Object.values(selectedFiles).every(
-                                    (value) => !value
-                                  )}
-                                >
-                                  <Check className="mr-2 h-4 w-4" />
-                                  Commit Changes
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-600">No open pull requests</p>
-                )}
+                <PullRequestList
+                  owner={repo.owner.login}
+                  repoName={repo.name}
+                />
               </li>
             ))}
-        </ul>
+          </ul>
+        ) : (
+          <p>No repositories found. Try adding a new repository.</p>
+        )}
         {isAddingRepo ? (
-          <ComboboxComponent repos={repos} onSelect={handleAddRepo} />
+          <ComboboxComponent
+            repos={Array.isArray(repos) ? repos : []}
+            onSelect={handleAddRepo}
+          />
         ) : (
           <Button
             className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white"
@@ -397,6 +258,161 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function PullRequestList({ owner, repoName }) {
+  const [pullRequests, setPullRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPRs();
+    const interval = setInterval(fetchPRs, 10000);
+    return () => clearInterval(interval);
+  }, [owner, repoName]);
+
+  const fetchPRs = async () => {
+    const prs = await getGitHubPullRequests(owner, repoName);
+    setPullRequests(prs);
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-20">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <ul className="space-y-4">
+      {pullRequests.map((pr) => (
+        <li key={pr.id} className="bg-white p-4 rounded-lg shadow-md">
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center">
+              {pr.isDraft ? (
+                <GitPullRequestDraft className="mr-2 h-4 w-4 text-gray-400" />
+              ) : (
+                <GitPullRequest className="mr-2 h-4 w-4" />
+              )}
+              <span className="font-medium">{pr.title}</span>
+            </span>
+            <Link
+              href={`https://github.com/${owner}/${repoName}/pull/${pr.number}`}
+              className="text-sm text-gray-600 underline"
+            >
+              #{pr.number}
+            </Link>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center">
+              {pr.buildStatus === "success" ? (
+                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="mr-2 h-4 w-4 text-red-500" />
+              )}
+              <Link
+                href={`https://github.com/${owner}/${repoName}/actions/runs/placeholder-run-id`}
+                className="text-sm underline text-gray-600"
+              >
+                Build: {pr.buildStatus}
+              </Link>
+            </span>
+            {selectedPR && selectedPR.id === pr.id ? (
+              <Button
+                size="sm"
+                className="bg-white hover:bg-gray-100 text-black border border-gray-200"
+                onClick={handleCancelChanges}
+              >
+                Cancel
+              </Button>
+            ) : pr.buildStatus === "success" ? (
+              <Button
+                size="sm"
+                className="bg-green-500 hover:bg-green-600 text-white"
+                onClick={() => handleOpenTests(pr, "write")}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Write new tests
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                onClick={() => handleOpenTests(pr, "update")}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Update tests to fix
+              </Button>
+            )}
+          </div>
+          {selectedPR && selectedPR.id === pr.id && (
+            <div className="mt-4">
+              <h4 className="font-semibold mb-2">Test Files</h4>
+              {analyzing ? (
+                <div className="flex items-center justify-center h-20">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Analyzing PR diff...</span>
+                </div>
+              ) : loading ? (
+                <div className="flex items-center justify-center h-20">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {testFiles.map((file) => (
+                    <div key={file.name} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Checkbox
+                            id={file.name}
+                            checked={selectedFiles[file.name]}
+                            onCheckedChange={() => handleFileToggle(file.name)}
+                          />
+                          <label
+                            htmlFor={file.name}
+                            className="ml-2 font-medium cursor-pointer"
+                          >
+                            {file.name}
+                          </label>
+                          {file.isEntirelyNew && (
+                            <Badge variant="outline" className="ml-2">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {expandedFiles[file.name] && (
+                        <div className="mt-2">
+                          <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+                            <ReactDiffViewer
+                              oldValue={file.oldContent || ""}
+                              newValue={file.newContent || ""}
+                              splitView={true}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={handleConfirmChanges}
+                    disabled={Object.values(selectedFiles).every(
+                      (value) => !value
+                    )}
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Commit Changes
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -419,7 +435,7 @@ function ComboboxComponent({
   repos,
   onSelect,
 }: {
-  repos: any[];
+  repos: Repo[];
   onSelect: (repoName: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
