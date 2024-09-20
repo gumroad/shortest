@@ -34,7 +34,10 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import ReactDiffViewer from "react-diff-viewer";
+import dynamic from 'next/dynamic';
+
+const ReactDiffViewer = dynamic(() => import('react-diff-viewer'), { ssr: false });
+
 import { getGitHubRepos, getGitHubPullRequests } from "@/lib/github";
 
 interface Repo {
@@ -48,18 +51,14 @@ interface Repo {
 }
 
 export default function DashboardPage() {
-  const [repos, setRepos] = useState<Repo[] | { error: string }>([]);
+  const [repos, setRepos] = useState<Repo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [isAddingRepo, setIsAddingRepo] = useState(false);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
@@ -143,17 +142,15 @@ export default function DashboardPage() {
   };
 
   const handleRemoveRepo = (repoId: number) => {
-    setRepos(repos.filter((repo) => repo.id !== repoId));
+    setRepos((prevRepos) => prevRepos.filter((repo) => repo.id !== repoId));
   };
 
   const handleAddRepo = (repoName: string) => {
-    const updatedRepos = repos.map((repo) => {
-      if (repo.name === repoName) {
-        return { ...repo, isMonitoring: true };
-      }
-      return repo;
-    });
-    setRepos(updatedRepos);
+    setRepos((prevRepos) =>
+      prevRepos.map((repo) =>
+        repo.name === repoName ? { ...repo, isMonitoring: true } : repo
+      )
+    );
     setIsAddingRepo(false);
   };
 
@@ -186,7 +183,7 @@ export default function DashboardPage() {
 
   const handleReconnectGitHub = async () => {
     try {
-      window.location.href = "/api/auth/github/reconnect";
+      window.location.href = "/api/github/auth/reconnect";
     } catch (error) {
       console.error("Error reconnecting GitHub account:", error);
       setError("Failed to reconnect GitHub account. Please try again.");
@@ -261,9 +258,29 @@ export default function DashboardPage() {
   );
 }
 
-function PullRequestList({ owner, repoName }) {
-  const [pullRequests, setPullRequests] = useState([]);
+interface PullRequest {
+  id: number;
+  title: string;
+  number: number;
+  buildStatus: string;
+  isDraft: boolean;
+}
+
+interface TestFile {
+  name: string;
+  oldContent: string;
+  newContent: string;
+  isEntirelyNew: boolean;
+}
+
+function PullRequestList({ owner, repoName }: { owner: string; repoName: string }) {
+  const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
+  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     fetchPRs();
@@ -275,6 +292,86 @@ function PullRequestList({ owner, repoName }) {
     const prs = await getGitHubPullRequests(owner, repoName);
     setPullRequests(prs);
     setLoading(false);
+  };
+
+  const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
+    setSelectedPR(pr);
+    setAnalyzing(true);
+    setLoading(true);
+
+    // Simulating API call to get test files
+    setTimeout(() => {
+      const mockTestFiles: TestFile[] = [];
+
+      if (mode === "write") {
+        mockTestFiles.push({
+          name: "signup_spec.rb",
+          oldContent: "",
+          newContent:
+            "describe 'Signup' do\n  it 'allows new user to sign up' do\n    # Test code here\n  end\nend",
+          isEntirelyNew: true,
+        });
+
+        mockTestFiles.push({
+          name: "login_spec.rb",
+          oldContent:
+            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\nend",
+          newContent:
+            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\n\n\n  it 'shows error message for invalid credentials' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'wrongpassword'\n    click_button 'Log In'\n    expect(page).to have_content('Invalid email or password')\n  end\nend",
+          isEntirelyNew: false,
+        });
+      } else if (mode === "update") {
+        mockTestFiles.push({
+          name: "logic_spec.rb",
+          oldContent:
+            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies discount' do\n    expect(apply_discount(100, 0.1)).to eq(90)\n  end\nend",
+          newContent:
+            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies percentage discount' do\n    expect(apply_percentage_discount(100, 10)).to eq(90)\n  end\n\n  it 'applies flat discount' do\n    expect(apply_flat_discount(100, 10)).to eq(90)\n  end\nend",
+          isEntirelyNew: false,
+        });
+      }
+
+      setTestFiles(mockTestFiles);
+      const newSelectedFiles: Record<string, boolean> = {};
+      const newExpandedFiles: Record<string, boolean> = {};
+      mockTestFiles.forEach((file) => {
+        newExpandedFiles[file.name] = true;
+        if (mode === "update") {
+          newSelectedFiles[file.name] = true;
+        }
+      });
+      setSelectedFiles(newSelectedFiles);
+      setExpandedFiles(newExpandedFiles);
+      setAnalyzing(false);
+      setLoading(false);
+    }, 1000);
+  };
+
+  const handleFileToggle = (fileName: string) => {
+    setSelectedFiles((prev) => ({
+      ...prev,
+      [fileName]: !prev[fileName],
+    }));
+    setExpandedFiles((prev) => ({
+      ...prev,
+      [fileName]: !prev[fileName],
+    }));
+  };
+
+  const handleConfirmChanges = () => {
+    // TODO: Implement logic to push changes as a commit to the pull request branch
+    console.log("Confirming changes:", selectedFiles);
+    setSelectedPR(null);
+    setTestFiles([]);
+    setSelectedFiles({});
+    setExpandedFiles({});
+  };
+
+  const handleCancelChanges = () => {
+    setSelectedPR(null);
+    setTestFiles([]);
+    setSelectedFiles({});
+    setExpandedFiles({});
   };
 
   if (loading) {
@@ -414,21 +511,6 @@ function PullRequestList({ owner, repoName }) {
       ))}
     </ul>
   );
-}
-
-interface PullRequest {
-  id: number;
-  title: string;
-  number: number;
-  buildStatus: string;
-  isDraft: boolean;
-}
-
-interface TestFile {
-  name: string;
-  oldContent: string;
-  newContent: string;
-  isEntirelyNew: boolean;
 }
 
 function ComboboxComponent({
