@@ -85,6 +85,7 @@ export async function saveGitHubAccessToken(accessToken: string) {
   await updateUserGithubToken(userId, accessToken);
 }
 
+// TODO: update this to get ALL repos for an authenticated user, currently only gets first 100
 export async function getGitHubRepos() {
   try {
     const octokit = await getOctokit();
