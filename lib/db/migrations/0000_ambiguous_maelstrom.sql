@@ -22,17 +22,26 @@ CREATE TABLE IF NOT EXISTS "repos" (
 	CONSTRAINT "repos_github_id_unique" UNIQUE("github_id")
 );
 --> statement-breakpoint
-DROP TABLE "activity_logs";--> statement-breakpoint
-DROP TABLE "invitations";--> statement-breakpoint
-DROP TABLE "team_members";--> statement-breakpoint
-DROP TABLE "teams";--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "clerk_id" varchar(255) NOT NULL;--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "stripe_customer_id" varchar(255);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "stripe_subscription_id" varchar(255);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "stripe_product_id" varchar(255);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "plan_name" varchar(100);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "subscription_status" varchar(20);--> statement-breakpoint
-ALTER TABLE "users" ADD COLUMN "github_access_token" varchar(255);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"clerk_id" varchar(255) NOT NULL,
+	"stripe_customer_id" varchar(255),
+	"stripe_subscription_id" varchar(255),
+	"stripe_product_id" varchar(255),
+	"plan_name" varchar(100),
+	"subscription_status" varchar(20),
+	"name" varchar(100),
+	"email" varchar(255) NOT NULL,
+	"password_hash" text NOT NULL,
+	"role" varchar(20) DEFAULT 'member' NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"deleted_at" timestamp,
+	"github_access_token" varchar(255),
+	CONSTRAINT "users_clerk_id_unique" UNIQUE("clerk_id"),
+	CONSTRAINT "users_email_unique" UNIQUE("email")
+);
+--> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "pull_requests" ADD CONSTRAINT "pull_requests_repo_id_repos_id_fk" FOREIGN KEY ("repo_id") REFERENCES "public"."repos"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
@@ -44,5 +53,3 @@ DO $$ BEGIN
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
---> statement-breakpoint
-ALTER TABLE "users" ADD CONSTRAINT "users_clerk_id_unique" UNIQUE("clerk_id");
