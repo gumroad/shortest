@@ -100,12 +100,13 @@ export async function getAssignedPullRequests() {
     const pullRequests = await Promise.all(
       data.items.map(async (pr) => {
         const [owner, repo] = pr.repository_url.split("/").slice(-2);
-        const buildStatus = await fetchBuildStatus(
-          octokit,
-          owner,
-          repo,
-          pr.head?.sha ?? pr.sha
-        );
+        // const buildStatus = await fetchBuildStatus(
+        //   octokit,
+        //   owner,
+        //   repo,
+        //   pr.head?.sha ?? pr.sha
+        // );
+        const buildStatus = "unknown"; // TODO: Implement build status
 
         return {
           id: pr.id,
