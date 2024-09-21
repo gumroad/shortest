@@ -10,6 +10,7 @@ import {
   Edit,
   PlusCircle,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -67,7 +68,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         mode,
         pr_id: pr.id,
         pr_diff: diff,
-        existing_test_files: testFiles,
+        test_files: testFiles,
       });
 
       // Wait for the object to be generated
@@ -185,6 +186,8 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         <span className="flex items-center">
           {pullRequest.buildStatus === "success" ? (
             <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+          ) : pullRequest.buildStatus === "pending" ? (
+            <AlertCircle className="mr-2 h-4 w-4 text-yellow-500" />
           ) : (
             <XCircle className="mr-2 h-4 w-4 text-red-500" />
           )}
