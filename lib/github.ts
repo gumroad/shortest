@@ -215,3 +215,46 @@ export async function commitChangesToPullRequest(
     sha: newCommit.sha,
   });
 }
+
+export async function getPullRequestInfo(
+  owner: string,
+  repo: string,
+  pullNumber: number
+) {
+  const octokit = await getOctokit();
+
+  try {
+    const [diffResponse, filesResponse] = await Promise.all([
+      octokit.pulls.get({
+        owner,
+        repo,
+        pull_number: pullNumber,
+        mediaType: { format: "diff" },
+      }),
+      octokit.pulls.listFiles({
+        owner,
+        repo,
+        pull_number: pullNumber,
+      }),
+    ]);
+
+    const testFiles = filesResponse.data
+      .filter(
+        (file) =>
+          file.filename.toLowerCase().includes("test") ||
+          file.filename.toLowerCase().includes("spec")
+      )
+      .map((file) => ({
+        name: file.filename,
+        content: file.patch || "",
+      }));
+
+    return {
+      diff: diffResponse.data,
+      testFiles,
+    };
+  } catch (error) {
+    console.error("Error fetching PR info:", error);
+    throw new Error("Failed to fetch PR info");
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   GitPullRequestDraft,
@@ -18,6 +18,8 @@ import dynamic from "next/dynamic";
 import { PullRequest, TestFile } from "./types";
 import { experimental_useObject as useObject } from "ai/react";
 import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
+import { useToast } from "@/hooks/use-toast";
+import { commitChangesToPullRequest, getPullRequestInfo } from "@/lib/github";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -39,31 +41,12 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPR, setLoadingPR] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [prDiff, setPrDiff] = useState<string | null>(null);
-  const [existingTestFiles, setExistingTestFiles] = useState<TestFile[]>([]);
+  const { toast } = useToast();
 
   const { object, submit } = useObject({
     api: "/api/generate-tests",
     schema: generateTestsResponseSchema,
   });
-
-  const fetchPRInfo = useCallback(async (pr: PullRequest) => {
-    try {
-      console.log("fetching PR info", pr);
-      const response = await fetch(
-        `/api/get-pr-info?repo=${pr.repository.full_name}&pullNumber=${pr.number}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch PR info");
-      }
-      const data = await response.json();
-      setPrDiff(data.diff);
-      setExistingTestFiles(data.testFiles);
-    } catch (error) {
-      console.error("Error fetching PR info:", error);
-      setError("Failed to fetch PR info. Please try again.");
-    }
-  }, []);
 
   const handleOpenTests = async (pr: PullRequest, mode: "write" | "update") => {
     setSelectedPR(pr);
@@ -72,13 +55,19 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     setError(null);
 
     try {
-      await fetchPRInfo(pr);
+      console.log("fetching PR info", pr);
+      const { diff, testFiles } = await getPullRequestInfo(
+        pr.repository.owner.login,
+        pr.repository.name,
+        pr.number
+      );
+      console.log("PR info", { diff, testFiles });
 
       submit({
         mode,
         pr_id: pr.id,
-        pr_diff: prDiff,
-        existing_test_files: existingTestFiles,
+        pr_diff: diff,
+        existing_test_files: testFiles,
       });
 
       // Wait for the object to be generated
@@ -126,7 +115,14 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       const filesToCommit = testFiles.filter(
         (file) => selectedFiles[file.name]
       );
-      // TODO: await commitChangesToPullRequest(selectedPR, filesToCommit);
+
+      await commitChangesToPullRequest(selectedPR, filesToCommit);
+
+      toast({
+        title: "Changes committed successfully",
+        description: "The test files have been added to the pull request.",
+      });
+
       // Reset state after successful commit
       setSelectedPR(null);
       setTestFiles([]);
@@ -135,6 +131,11 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     } catch (error) {
       console.error("Error committing changes:", error);
       setError("Failed to commit changes. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to commit changes. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoadingPR(null);
     }
