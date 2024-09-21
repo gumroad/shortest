@@ -85,63 +85,52 @@ export async function saveGitHubAccessToken(accessToken: string) {
   await updateUserGithubToken(userId, accessToken);
 }
 
-// TODO: update this to get ALL repos for an authenticated user, currently only gets first 100
-export async function getGitHubRepos() {
+export async function getAssignedPullRequests() {
   try {
     const octokit = await getOctokit();
-    const allRepos = await octokit.paginate(
-      octokit.rest.repos.listForAuthenticatedUser,
-      {
-        per_page: 100,
-        sort: "updated",
-        direction: "desc",
-        affiliation: "owner,collaborator,organization_member",
-      }
-    );
-
-    console.log("Repos:", allRepos);
-    console.log("Length of repos:", allRepos.length);
-
-    // Save all repos to the database
-    await saveRepos(allRepos);
-    return { success: true };
-  } catch (error) {
-    console.error("Error fetching GitHub repos:", error);
-    return { error: "Failed to fetch GitHub repositories" };
-  }
-}
-
-export async function getGitHubPullRequests(
-  owner: string,
-  repo: string
-): Promise<PullRequest[] | { error: string }> {
-  if (!owner || !repo) {
-    return { error: "Missing owner or repo parameter" };
-  }
-
-  try {
-    const octokit = await getOctokit();
-    const pullRequests = await octokit.paginate(octokit.rest.pulls.list, {
-      owner,
-      repo,
-      state: "open",
+    const { data } = await octokit.search.issuesAndPullRequests({
+      q: "is:open is:pr assignee:@me",
       per_page: 100,
+      sort: "updated",
+      order: "desc",
     });
 
-    return pullRequests.map((pr) => ({
-      id: pr.id,
-      repoId: 0, // TODO: update this
-      githubId: pr.id,
-      number: pr.number,
-      title: pr.title,
-      state: pr.state,
-      createdAt: new Date(pr.created_at),
-      updatedAt: new Date(pr.updated_at),
-      buildStatus: "", // TODO: update this
-      isDraft: pr.draft || false,
-    }));
+    console.log("GitHub API response:", data);
+
+    const pullRequests = await Promise.all(
+      data.items.map(async (item) => {
+        const [owner, repo] = item.repository_url.split("/").slice(-2);
+        const { data: prData } = await octokit.pulls.get({
+          owner,
+          repo,
+          pull_number: item.number,
+        });
+
+        return {
+          id: item.id,
+          repoId: item.repository_url,
+          githubId: item.id,
+          number: item.number,
+          title: item.title,
+          state: item.state,
+          createdAt: new Date(item.created_at),
+          updatedAt: new Date(item.updated_at),
+          buildStatus: "", // TODO: Fetch build status if needed
+          isDraft: prData.draft || false,
+          owner,
+          repo,
+        };
+      })
+    );
+
+    console.log("Assigned Pull Requests:", pullRequests);
+    console.log("Number of assigned PRs:", pullRequests.length);
+
+    // TODO: Update database schema and queries to store pull requests instead of repos
+    // await savePullRequests(pullRequests);
+    return pullRequests;
   } catch (error) {
-    console.error("Error fetching GitHub pull requests:", error);
-    return { error: "Failed to fetch GitHub pull requests" };
+    console.error("Error fetching assigned GitHub pull requests:", error);
+    return { error: "Failed to fetch assigned GitHub pull requests" };
   }
 }
