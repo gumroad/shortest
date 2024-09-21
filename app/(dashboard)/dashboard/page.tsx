@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { PullRequestItem } from "./pull-request";
 import { PullRequest, TestFile } from "./types";
 import {
@@ -19,8 +16,12 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPR, setLoadingPR] = useState<number | null>(null);
 
@@ -144,7 +145,7 @@ export default function DashboardPage() {
       const filesToCommit = testFiles.filter(
         (file) => selectedFiles[file.name]
       );
-      await commitChangesToPullRequest(selectedPR, filesToCommit);
+      // TODO: await commitChangesToPullRequest(selectedPR, filesToCommit);
       // Reset state after successful commit
       setSelectedPR(null);
       setTestFiles([]);
