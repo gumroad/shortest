@@ -56,6 +56,7 @@ export default function DashboardPage() {
     {}
   );
   const [analyzing, setAnalyzing] = useState(false);
+  const [loadingPR, setLoadingPR] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchAndSetPullRequests = async () => {
@@ -97,7 +98,7 @@ export default function DashboardPage() {
   const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
     setSelectedPR(pr);
     setAnalyzing(true);
-    setLoading(true);
+    setLoadingPR(pr.id);
 
     // Simulating API call to get test files
     // TODO: update this to dynamically generate based on the PR diff and spec file directory
@@ -144,7 +145,7 @@ export default function DashboardPage() {
       setSelectedFiles(newSelectedFiles);
       setExpandedFiles(newExpandedFiles);
       setAnalyzing(false);
-      setLoading(false);
+      setLoadingPR(null);
     }, 1000);
   };
 
@@ -172,7 +173,7 @@ export default function DashboardPage() {
   const handleConfirmChanges = async () => {
     if (!selectedPR) return;
 
-    setLoading(true);
+    setLoadingPR(selectedPR.id);
     try {
       const filesToCommit = testFiles.filter(
         (file) => selectedFiles[file.name]
@@ -187,7 +188,7 @@ export default function DashboardPage() {
       console.error("Error committing changes:", error);
       setError("Failed to commit changes. Please try again.");
     } finally {
-      setLoading(false);
+      setLoadingPR(null);
     }
   };
 
@@ -248,6 +249,7 @@ export default function DashboardPage() {
                     setSelectedFiles({});
                     setExpandedFiles({});
                   }}
+                  loadingPR={loadingPR}
                 />
               </li>
             ))}
@@ -278,6 +280,7 @@ function PullRequestItem({
   onFileToggle,
   onConfirmChanges,
   onCancelChanges,
+  loadingPR,
 }: {
   pullRequest: PullRequest;
   onOpenTests: (pr: PullRequest, mode: "write" | "update") => void;
@@ -289,8 +292,9 @@ function PullRequestItem({
   onFileToggle: (fileName: string) => void;
   onConfirmChanges: () => void;
   onCancelChanges: () => void;
+  loadingPR: number | null;
 }) {
-  const [loading, setLoading] = useState(false);
+  const isLoading = loadingPR === pullRequest.id;
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md">
@@ -329,6 +333,7 @@ function PullRequestItem({
             size="sm"
             className="bg-white hover:bg-gray-100 text-black border border-gray-200"
             onClick={onCancelChanges}
+            disabled={isLoading}
           >
             Cancel
           </Button>
@@ -337,18 +342,28 @@ function PullRequestItem({
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
             onClick={() => onOpenTests(pullRequest, "write")}
+            disabled={isLoading}
           >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Write new tests
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <PlusCircle className="mr-2 h-4 w-4" />
+            )}
+            {isLoading ? "Loading..." : "Write new tests"}
           </Button>
         ) : (
           <Button
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
             onClick={() => onOpenTests(pullRequest, "update")}
+            disabled={isLoading}
           >
-            <Edit className="mr-2 h-4 w-4" />
-            Update tests to fix
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Edit className="mr-2 h-4 w-4" />
+            )}
+            {isLoading ? "Loading..." : "Update tests to fix"}
           </Button>
         )}
       </div>
@@ -402,15 +417,15 @@ function PullRequestItem({
                 onClick={onConfirmChanges}
                 disabled={
                   Object.values(selectedFiles).every((value) => !value) ||
-                  loading
+                  isLoading
                 }
               >
-                {loading ? (
+                {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <CheckCircle className="mr-2 h-4 w-4" />
                 )}
-                {loading ? "Committing Changes..." : "Commit Changes"}
+                {isLoading ? "Committing Changes..." : "Commit Changes"}
               </Button>
             </div>
           )}
