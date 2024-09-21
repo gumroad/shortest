@@ -61,39 +61,6 @@ export async function createUser(clerkId: string): Promise<User> {
   return createdUser;
 }
 
-export async function savePullRequests(githubPullRequests: any[]) {
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
-
-  const user = await getUserByClerkId(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  const pullRequestsToInsert = githubPullRequests.map((pr) => ({
-    userId: user.id,
-    githubId: pr.id,
-    number: pr.number,
-    title: pr.title,
-    state: pr.state,
-  }));
-
-  await db
-    .insert(pullRequests)
-    .values(pullRequestsToInsert)
-    .onConflictDoUpdate({
-      target: [pullRequests.userId, pullRequests.githubId],
-      set: {
-        number: sql`EXCLUDED.number`,
-        title: sql`EXCLUDED.title`,
-        state: sql`EXCLUDED.state`,
-        updatedAt: sql`CURRENT_TIMESTAMP`,
-      },
-    });
-}
-
 export async function getPullRequests(): Promise<PullRequest[]> {
   const { userId } = auth();
   if (!userId) {
