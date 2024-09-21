@@ -6,7 +6,12 @@ import { generateTestsResponseSchema, GenerateTestsInput } from "./schema";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { mode, pr_diff, existing_test_files }: GenerateTestsInput = await req.json();
+  const { mode, pr_diff, test_files } =
+    (await req.json()) as GenerateTestsInput;
+
+  console.log("mode", mode);
+  console.log("pr_diff", pr_diff);
+  console.log("test_files", test_files);
 
   const result = await streamObject({
     model: openai("gpt-4-turbo"),
@@ -16,10 +21,14 @@ export async function POST(req: Request) {
     ${pr_diff}
 
     Existing test files:
-    ${existing_test_files.map(file => `${file.name}:\n${file.content}`).join('\n\n')}
+    ${test_files
+      .map((file) => `${file.name}${file.content ? `: ${file.content}` : ""}`)
+      .join("\n")}
 
-    Generate appropriate test content based on the diff, mode, and existing test files.`,
+    Generate appropriate test content based on the diff and mode.`,
   });
+
+  console.log("result", result);
 
   return result.toTextStreamResponse();
 }

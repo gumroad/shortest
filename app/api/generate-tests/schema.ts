@@ -4,10 +4,10 @@ const generateTestsSchema = z.object({
   mode: z.enum(["write", "update"]),
   pr_id: z.number(),
   pr_diff: z.string(),
-  existing_test_files: z.array(
+  test_files: z.array(
     z.object({
       name: z.string(),
-      content: z.string(),
+      content: z.string().optional(),
     })
   ),
 });
