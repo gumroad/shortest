@@ -89,10 +89,7 @@ export async function saveRepos(githubRepos: any[]) {
     });
 }
 
-export async function updateRepoMonitoring(
-  repoId: number,
-  isMonitoring: boolean
-) {
+export async function updateRepoMonitoring(repoId: number, isMonitoring: boolean) {
   await db
     .update(repos)
     .set({ isMonitoring, updatedAt: new Date() })
