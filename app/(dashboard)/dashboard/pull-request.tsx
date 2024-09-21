@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   GitPullRequestDraft,
@@ -14,6 +16,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
 import { PullRequest, TestFile } from "./types";
+import { experimental_useObject as useObject } from "ai/react";
+import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -34,64 +38,90 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   );
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPR, setLoadingPR] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [prDiff, setPrDiff] = useState<string | null>(null);
+  const [existingTestFiles, setExistingTestFiles] = useState<TestFile[]>([]);
 
-  const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
+  const { object, submit } = useObject({
+    api: "/api/generate-tests",
+    schema: generateTestsResponseSchema,
+  });
+
+  const fetchPRInfo = useCallback(async (pr: PullRequest) => {
+    try {
+      console.log("fetching PR info", pr);
+      const response = await fetch(
+        `/api/get-pr-info?repo=${pr.repository.full_name}&pullNumber=${pr.number}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch PR info");
+      }
+      const data = await response.json();
+      setPrDiff(data.diff);
+      setExistingTestFiles(data.testFiles);
+    } catch (error) {
+      console.error("Error fetching PR info:", error);
+      setError("Failed to fetch PR info. Please try again.");
+    }
+  }, []);
+
+  const handleOpenTests = async (pr: PullRequest, mode: "write" | "update") => {
     setSelectedPR(pr);
     setAnalyzing(true);
     setLoadingPR(pr.id);
+    setError(null);
 
-    // Simulating API call to get test files
-    // TODO: update this to dynamically generate based on the PR diff and spec file directory
-    setTimeout(() => {
-      const mockTestFiles: TestFile[] = [];
+    try {
+      await fetchPRInfo(pr);
 
-      if (mode === "write") {
-        mockTestFiles.push({
-          name: "signup_spec.rb",
-          oldContent: "",
-          newContent:
-            "describe 'Signup' do\n  it 'allows new user to sign up' do\n    # Test code here\n  end\nend",
-          isEntirelyNew: true,
-        });
+      submit({
+        mode,
+        pr_id: pr.id,
+        pr_diff: prDiff,
+        existing_test_files: existingTestFiles,
+      });
 
-        mockTestFiles.push({
-          name: "login_spec.rb",
-          oldContent:
-            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\nend",
-          newContent:
-            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\n\n\n  it 'shows error message for invalid credentials' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'wrongpassword'\n    click_button 'Log In'\n    expect(page).to have_content('Invalid email or password')\n  end\nend",
-          isEntirelyNew: false,
-        });
-      } else if (mode === "update") {
-        mockTestFiles.push({
-          name: "logic_spec.rb",
-          oldContent:
-            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies discount' do\n    expect(apply_discount(100, 0.1)).to eq(90)\n  end\nend",
-          newContent:
-            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies percentage discount' do\n    expect(apply_percentage_discount(100, 10)).to eq(90)\n  end\n\n  it 'applies flat discount' do\n    expect(apply_flat_discount(100, 10)).to eq(90)\n  end\nend",
-          isEntirelyNew: false,
-        });
+      // Wait for the object to be generated
+      while (!object) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      setTestFiles(mockTestFiles);
-      const newSelectedFiles: Record<string, boolean> = {};
-      const newExpandedFiles: Record<string, boolean> = {};
-      mockTestFiles.forEach((file) => {
-        newExpandedFiles[file.name] = true;
-        if (mode === "update") {
-          newSelectedFiles[file.name] = true;
-        }
-      });
-      setSelectedFiles(newSelectedFiles);
-      setExpandedFiles(newExpandedFiles);
+      console.log("object", object);
+
+      if (object.testFiles) {
+        setTestFiles(
+          object.testFiles.filter(
+            (file): file is TestFile => file !== undefined
+          )
+        );
+        const newSelectedFiles: Record<string, boolean> = {};
+        const newExpandedFiles: Record<string, boolean> = {};
+        object.testFiles.forEach((file) => {
+          const fileName = file?.name ?? `file_${Math.random()}`;
+          newExpandedFiles[fileName] = true;
+          if (mode === "update") {
+            newSelectedFiles[fileName] = true;
+          }
+        });
+        setSelectedFiles(newSelectedFiles);
+        setExpandedFiles(newExpandedFiles);
+      }
+    } catch (error) {
+      console.error("Error generating test files:", error);
+      setError(
+        "Failed to generate test files. Please check your OpenAI API key."
+      );
+    } finally {
       setAnalyzing(false);
       setLoadingPR(null);
-    }, 1000);
+    }
   };
+
   const handleConfirmChanges = async () => {
     if (!selectedPR) return;
 
     setLoadingPR(selectedPR.id);
+    setError(null);
     try {
       const filesToCommit = testFiles.filter(
         (file) => selectedFiles[file.name]
@@ -104,7 +134,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       setExpandedFiles({});
     } catch (error) {
       console.error("Error committing changes:", error);
-      // Handle error (e.g., show an error message to the user)
+      setError("Failed to commit changes. Please try again.");
     } finally {
       setLoadingPR(null);
     }
@@ -115,6 +145,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     setTestFiles([]);
     setSelectedFiles({});
     setExpandedFiles({});
+    setError(null);
   };
 
   const handleFileToggle = (fileName: string) => {
@@ -201,6 +232,11 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           </Button>
         )}
       </div>
+      {error && (
+        <div className="mt-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
       {selectedPR && selectedPR.id === pullRequest.id && (
         <div className="mt-4">
           <h4 className="font-semibold mb-2">Test Files</h4>
