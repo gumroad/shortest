@@ -100,13 +100,22 @@ export async function getAssignedPullRequests() {
     const pullRequests = await Promise.all(
       data.items.map(async (pr) => {
         const [owner, repo] = pr.repository_url.split("/").slice(-2);
-        // const buildStatus = await fetchBuildStatus(
-        //   octokit,
-        //   owner,
-        //   repo,
-        //   pr.head?.sha ?? pr.sha
-        // );
-        const buildStatus = "unknown"; // TODO: Implement build status
+
+        // Get the latest commit for this pull request
+        const { data: pullRequestData } = await octokit.pulls.get({
+          owner,
+          repo,
+          pull_number: pr.number,
+        });
+
+        const latestCommitSha = pullRequestData.head.sha;
+
+        const buildStatus = await fetchBuildStatus(
+          octokit,
+          owner,
+          repo,
+          latestCommitSha
+        );
 
         return {
           id: pr.id,
@@ -136,15 +145,16 @@ async function fetchBuildStatus(
   octokit: Octokit,
   owner: string,
   repo: string,
-  sha: string
-) {
+  ref: string
+): Promise<string> {
   try {
-    const { data: statuses } = await octokit.repos.getCombinedStatusForRef({
+    const { data } = await octokit.rest.repos.getCombinedStatusForRef({
       owner,
       repo,
-      ref: sha,
+      ref,
     });
-    return statuses.state;
+
+    return data.state;
   } catch (error) {
     console.error("Error fetching build status:", error);
     return "unknown";
