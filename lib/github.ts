@@ -6,9 +6,8 @@ import {
   getUserByClerkId,
   updateUserGithubToken,
   createUser,
-  saveRepos,
 } from "./db/queries";
-import { PullRequest } from "./db/schema";
+import { PullRequest, TestFile } from "./db/schema";
 
 async function getOctokit() {
   const { userId } = auth();
@@ -19,7 +18,6 @@ async function getOctokit() {
   let user = await getUserByClerkId(userId);
 
   if (!user) {
-    // Create a new user if they don't exist
     user = await createUser(userId);
   }
 
@@ -88,49 +86,119 @@ export async function saveGitHubAccessToken(accessToken: string) {
 export async function getAssignedPullRequests() {
   try {
     const octokit = await getOctokit();
-    const { data } = await octokit.search.issuesAndPullRequests({
-      q: "is:open is:pr assignee:@me",
-      per_page: 100,
+
+    const { data } = await octokit.rest.search.issuesAndPullRequests({
+      q: "is:pr is:open assignee:@me",
       sort: "updated",
       order: "desc",
+      per_page: 100,
     });
 
     console.log("GitHub API response:", data);
+    console.log(`Found ${data.total_count} pull requests`);
 
     const pullRequests = await Promise.all(
-      data.items.map(async (item) => {
-        const [owner, repo] = item.repository_url.split("/").slice(-2);
-        const { data: prData } = await octokit.pulls.get({
+      data.items.map(async (pr) => {
+        const [owner, repo] = pr.repository_url.split("/").slice(-2);
+        const buildStatus = await fetchBuildStatus(
+          octokit,
           owner,
           repo,
-          pull_number: item.number,
-        });
+          pr.head?.sha ?? pr.sha
+        );
 
         return {
-          id: item.id,
-          repoId: item.repository_url,
-          githubId: item.id,
-          number: item.number,
-          title: item.title,
-          state: item.state,
-          createdAt: new Date(item.created_at),
-          updatedAt: new Date(item.updated_at),
-          buildStatus: "", // TODO: Fetch build status if needed
-          isDraft: prData.draft || false,
+          id: pr.id,
+          repoId: pr.repository_url,
+          githubId: pr.id,
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          createdAt: new Date(pr.created_at),
+          updatedAt: new Date(pr.updated_at),
+          buildStatus,
+          isDraft: pr.draft || false,
           owner,
           repo,
         };
       })
     );
 
-    console.log("Assigned Pull Requests:", pullRequests);
-    console.log("Number of assigned PRs:", pullRequests.length);
-
-    // TODO: Update database schema and queries to store pull requests instead of repos
-    // await savePullRequests(pullRequests);
     return pullRequests;
   } catch (error) {
     console.error("Error fetching assigned GitHub pull requests:", error);
     return { error: "Failed to fetch assigned GitHub pull requests" };
   }
+}
+
+async function fetchBuildStatus(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  sha: string
+) {
+  try {
+    const { data: statuses } = await octokit.repos.getCombinedStatusForRef({
+      owner,
+      repo,
+      ref: sha,
+    });
+    return statuses.state;
+  } catch (error) {
+    console.error("Error fetching build status:", error);
+    return "unknown";
+  }
+}
+
+export async function commitChangesToPullRequest(
+  pullRequest: PullRequest,
+  filesToCommit: TestFile[]
+) {
+  const octokit = await getOctokit();
+  const { owner, repo } = pullRequest;
+
+  // Get the current commit SHA
+  const { data: pr } = await octokit.pulls.get({
+    owner,
+    repo,
+    pull_number: pullRequest.number,
+  });
+
+  const baseSha = pr.base.sha;
+
+  // Create a new tree with the updated files
+  const tree = await Promise.all(
+    filesToCommit.map(async (file) => {
+      return {
+        path: file.name,
+        mode: "100644" as const,
+        type: "blob" as const,
+        content: file.newContent,
+      };
+    })
+  );
+
+  const { data: newTree } = await octokit.git.createTree({
+    owner,
+    repo,
+    base_tree: baseSha,
+    tree,
+  });
+
+  // Create a new commit
+  const { data: newCommit } = await octokit.git.createCommit({
+    owner,
+    repo,
+    message: "Update test files",
+    tree: newTree.sha,
+    parents: [baseSha],
+  });
+
+  // Update the reference of the branch
+  await octokit.git.updateRef({
+    owner,
+    repo,
+    ref: `heads/${pr.head.ref}`,
+    sha: newCommit.sha,
+  });
 }

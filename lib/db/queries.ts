@@ -2,8 +2,14 @@
 
 import { eq } from "drizzle-orm";
 import { db } from "./drizzle";
-import { users, User, NewUser } from "./schema";
-import { repos, Repo } from "./schema";
+import {
+  users,
+  User,
+  NewUser,
+  pullRequests,
+  PullRequest,
+  NewPullRequest,
+} from "./schema";
 import { auth } from "@clerk/nextjs/server";
 import { and, sql } from "drizzle-orm";
 
@@ -55,7 +61,7 @@ export async function createUser(clerkId: string): Promise<User> {
   return createdUser;
 }
 
-export async function saveRepos(githubRepos: any[]) {
+export async function savePullRequests(githubPullRequests: any[]) {
   const { userId } = auth();
   if (!userId) {
     throw new Error("User not authenticated");
@@ -66,37 +72,29 @@ export async function saveRepos(githubRepos: any[]) {
     throw new Error("User not found");
   }
 
-  const reposToInsert = githubRepos.map((repo) => ({
+  const pullRequestsToInsert = githubPullRequests.map((pr) => ({
     userId: user.id,
-    githubId: repo.id,
-    name: repo.name,
-    fullName: repo.full_name,
-    isPrivate: repo.private,
-    isMonitoring: false,
+    githubId: pr.id,
+    number: pr.number,
+    title: pr.title,
+    state: pr.state,
   }));
 
   await db
-    .insert(repos)
-    .values(reposToInsert)
+    .insert(pullRequests)
+    .values(pullRequestsToInsert)
     .onConflictDoUpdate({
-      target: [repos.userId, repos.githubId],
+      target: [pullRequests.userId, pullRequests.githubId],
       set: {
-        name: sql`EXCLUDED.name`,
-        fullName: sql`EXCLUDED.full_name`,
-        isPrivate: sql`EXCLUDED.is_private`,
+        number: sql`EXCLUDED.number`,
+        title: sql`EXCLUDED.title`,
+        state: sql`EXCLUDED.state`,
         updatedAt: sql`CURRENT_TIMESTAMP`,
       },
     });
 }
 
-export async function updateRepoMonitoring(repoId: number, isMonitoring: boolean) {
-  await db
-    .update(repos)
-    .set({ isMonitoring, updatedAt: new Date() })
-    .where(eq(repos.id, repoId));
-}
-
-export async function getMonitoringRepos(): Promise<Repo[]> {
+export async function getPullRequests(): Promise<PullRequest[]> {
   const { userId } = auth();
   if (!userId) {
     throw new Error("User not authenticated");
@@ -107,25 +105,5 @@ export async function getMonitoringRepos(): Promise<Repo[]> {
     throw new Error("User not found");
   }
 
-  return db
-    .select()
-    .from(repos)
-    .where(and(eq(repos.userId, user.id), eq(repos.isMonitoring, true)));
-}
-
-export async function getNonMonitoringRepos(): Promise<Repo[]> {
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
-
-  const user = await getUserByClerkId(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return db
-    .select()
-    .from(repos)
-    .where(and(eq(repos.userId, user.id), eq(repos.isMonitoring, false)));
+  return db.select().from(pullRequests).where(eq(pullRequests.userId, user.id));
 }

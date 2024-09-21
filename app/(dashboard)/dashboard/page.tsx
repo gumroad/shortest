@@ -22,19 +22,29 @@ const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
 });
 
-import { getAssignedPullRequests } from "@/lib/github";
+import {
+  getAssignedPullRequests,
+  commitChangesToPullRequest,
+} from "@/lib/github";
 
-interface Repo {
+interface PullRequest {
   id: number;
-  name: string;
-  full_name: string;
-  owner: {
-    login: string;
+  title: string;
+  number: number;
+  buildStatus: string;
+  isDraft: boolean;
+  repository: {
+    id: number;
+    name: string;
+    full_name: string;
+    owner: {
+      login: string;
+    };
   };
 }
 
 export default function DashboardPage() {
-  const [repos, setRepos] = useState<Repo[]>([]);
+  const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
@@ -48,28 +58,40 @@ export default function DashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
-    const fetchAndSetRepos = async () => {
+    const fetchAndSetPullRequests = async () => {
       try {
         const data = await getAssignedPullRequests();
         if ("error" in data) {
           setError(data.error as string);
-          setRepos([]);
+          setPullRequests([]);
         } else {
-          setRepos(data);
+          setPullRequests(
+            data.map((pr) => ({
+              ...pr,
+              repository: {
+                id: parseInt(pr.repoId, 10),
+                name: pr.repo,
+                full_name: `${pr.owner}/${pr.repo}`,
+                owner: {
+                  login: pr.owner,
+                },
+              },
+            }))
+          );
           setError(null);
         }
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching repos:", error);
+        console.error("Error fetching pull requests:", error);
         setLoading(false);
         setError(
-          "Failed to fetch repositories. Please reconnect your GitHub account."
+          "Failed to fetch pull requests. Please reconnect your GitHub account."
         );
-        setRepos([]);
+        setPullRequests([]);
       }
     };
 
-    fetchAndSetRepos();
+    fetchAndSetPullRequests();
   }, []);
 
   const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
@@ -147,6 +169,28 @@ export default function DashboardPage() {
     }
   };
 
+  const handleConfirmChanges = async () => {
+    if (!selectedPR) return;
+
+    setLoading(true);
+    try {
+      const filesToCommit = testFiles.filter(
+        (file) => selectedFiles[file.name]
+      );
+      await commitChangesToPullRequest(selectedPR, filesToCommit);
+      // Reset state after successful commit
+      setSelectedPR(null);
+      setTestFiles([]);
+      setSelectedFiles({});
+      setExpandedFiles({});
+    } catch (error) {
+      console.error("Error committing changes:", error);
+      setError("Failed to commit changes. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -170,34 +214,50 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="p-6">
-        {Array.isArray(repos) && repos.length > 0 ? (
+        {pullRequests.length > 0 ? (
           <ul className="space-y-8">
-            {repos.map((repo) => (
-              <li key={repo.id}>
+            {pullRequests.map((pr) => (
+              <li key={pr.id}>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-lg">{repo.full_name}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {pr.repository.full_name}
+                  </h3>
                 </div>
-                <PullRequestList
-                  owner={repo.owner.login}
-                  repoName={repo.name}
+                <PullRequestItem
+                  pullRequest={pr}
+                  onOpenTests={handleOpenTests}
+                  selectedPR={selectedPR}
+                  testFiles={testFiles}
+                  selectedFiles={selectedFiles}
+                  expandedFiles={expandedFiles}
+                  analyzing={analyzing}
+                  onFileToggle={(fileName) => {
+                    setSelectedFiles((prev) => ({
+                      ...prev,
+                      [fileName]: !prev[fileName],
+                    }));
+                    setExpandedFiles((prev) => ({
+                      ...prev,
+                      [fileName]: !prev[fileName],
+                    }));
+                  }}
+                  onConfirmChanges={handleConfirmChanges}
+                  onCancelChanges={() => {
+                    setSelectedPR(null);
+                    setTestFiles([]);
+                    setSelectedFiles({});
+                    setExpandedFiles({});
+                  }}
                 />
               </li>
             ))}
           </ul>
         ) : (
-          <p>No repositories found with assigned pull requests.</p>
+          <p>No pull requests found.</p>
         )}
       </div>
     </div>
   );
-}
-
-interface PullRequest {
-  id: number;
-  title: string;
-  number: number;
-  buildStatus: string;
-  isDraft: boolean;
 }
 
 interface TestFile {
@@ -207,286 +267,155 @@ interface TestFile {
   isEntirelyNew: boolean;
 }
 
-function PullRequestList({
-  owner,
-  repoName,
+function PullRequestItem({
+  pullRequest,
+  onOpenTests,
+  selectedPR,
+  testFiles,
+  selectedFiles,
+  expandedFiles,
+  analyzing,
+  onFileToggle,
+  onConfirmChanges,
+  onCancelChanges,
 }: {
-  owner: string;
-  repoName: string;
+  pullRequest: PullRequest;
+  onOpenTests: (pr: PullRequest, mode: "write" | "update") => void;
+  selectedPR: PullRequest | null;
+  testFiles: TestFile[];
+  selectedFiles: Record<string, boolean>;
+  expandedFiles: Record<string, boolean>;
+  analyzing: boolean;
+  onFileToggle: (fileName: string) => void;
+  onConfirmChanges: () => void;
+  onCancelChanges: () => void;
 }) {
-  const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
-  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [analyzing, setAnalyzing] = useState(false);
-
-  // TODO: update this to get pull requests for each repo dynamically, including build status and draft status
-
-  useEffect(() => {
-    fetchPRs();
-    const interval = setInterval(fetchPRs, 10000);
-    return () => clearInterval(interval);
-  }, [owner, repoName]);
-
-  const fetchPRs = async () => {
-    try {
-      const prs = await getAssignedPullRequests(owner, repoName);
-      if (Array.isArray(prs)) {
-        setPullRequests(
-          prs.map((pr) => ({
-            ...pr,
-            buildStatus: "", // TODO: update this
-            isDraft: false, // TODO: update this
-          }))
-        );
-        setError(null);
-      } else {
-        setError(prs.error || "Failed to fetch pull requests");
-        setPullRequests([]);
-      }
-    } catch (error) {
-      console.error("Error fetching pull requests:", error);
-      setError("An error occurred while fetching pull requests");
-      setPullRequests([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
-    setSelectedPR(pr);
-    setAnalyzing(true);
-    setLoading(true);
-
-    // Simulating API call to get test files
-
-    // TODO: update this to dynamically generate based on the PR diff and spec file directory
-
-    setTimeout(() => {
-      const mockTestFiles: TestFile[] = [];
-
-      if (mode === "write") {
-        mockTestFiles.push({
-          name: "signup_spec.rb",
-          oldContent: "",
-          newContent:
-            "describe 'Signup' do\n  it 'allows new user to sign up' do\n    # Test code here\n  end\nend",
-          isEntirelyNew: true,
-        });
-
-        mockTestFiles.push({
-          name: "login_spec.rb",
-          oldContent:
-            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\nend",
-          newContent:
-            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\n\n\n  it 'shows error message for invalid credentials' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'wrongpassword'\n    click_button 'Log In'\n    expect(page).to have_content('Invalid email or password')\n  end\nend",
-          isEntirelyNew: false,
-        });
-      } else if (mode === "update") {
-        mockTestFiles.push({
-          name: "logic_spec.rb",
-          oldContent:
-            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies discount' do\n    expect(apply_discount(100, 0.1)).to eq(90)\n  end\nend",
-          newContent:
-            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies percentage discount' do\n    expect(apply_percentage_discount(100, 10)).to eq(90)\n  end\n\n  it 'applies flat discount' do\n    expect(apply_flat_discount(100, 10)).to eq(90)\n  end\nend",
-          isEntirelyNew: false,
-        });
-      }
-
-      setTestFiles(mockTestFiles);
-      const newSelectedFiles: Record<string, boolean> = {};
-      const newExpandedFiles: Record<string, boolean> = {};
-      mockTestFiles.forEach((file) => {
-        newExpandedFiles[file.name] = true;
-        if (mode === "update") {
-          newSelectedFiles[file.name] = true;
-        }
-      });
-      setSelectedFiles(newSelectedFiles);
-      setExpandedFiles(newExpandedFiles);
-      setAnalyzing(false);
-      setLoading(false);
-    }, 1000);
-  };
-
-  const handleFileToggle = (fileName: string) => {
-    setSelectedFiles((prev) => ({
-      ...prev,
-      [fileName]: !prev[fileName],
-    }));
-    setExpandedFiles((prev) => ({
-      ...prev,
-      [fileName]: !prev[fileName],
-    }));
-  };
-
-  const handleConfirmChanges = () => {
-    // TODO: Implement logic to push changes as a commit to the pull request branch
-    console.log("Confirming changes:", selectedFiles);
-    setSelectedPR(null);
-    setTestFiles([]);
-    setSelectedFiles({});
-    setExpandedFiles({});
-  };
-
-  const handleCancelChanges = () => {
-    setSelectedPR(null);
-    setTestFiles([]);
-    setSelectedFiles({});
-    setExpandedFiles({});
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-20">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-20">
-        <AlertCircle className="h-6 w-6 text-red-500 mb-2" />
-        <p className="text-sm text-red-500">{error}</p>
-      </div>
-    );
-  }
+  const [loading, setLoading] = useState(false);
 
   return (
-    <ul className="space-y-4">
-      {pullRequests.map((pr) => (
-        <li key={pr.id} className="bg-white p-4 rounded-lg shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <span className="flex items-center">
-              {pr.isDraft ? (
-                <GitPullRequestDraft className="mr-2 h-4 w-4 text-gray-400" />
-              ) : (
-                <GitPullRequest className="mr-2 h-4 w-4" />
-              )}
-              <span className="font-medium">{pr.title}</span>
-            </span>
-            <Link
-              href={`https://github.com/${owner}/${repoName}/pull/${pr.number}`}
-              className="text-sm text-gray-600 underline"
-            >
-              #{pr.number}
-            </Link>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center">
-              {pr.buildStatus === "success" ? (
-                <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-              ) : (
-                <XCircle className="mr-2 h-4 w-4 text-red-500" />
-              )}
-              <Link
-                href={`https://github.com/${owner}/${repoName}/actions/runs/placeholder-run-id`}
-                className="text-sm underline text-gray-600"
-              >
-                Build: {pr.buildStatus}
-              </Link>
-            </span>
-            {selectedPR && selectedPR.id === pr.id ? (
-              <Button
-                size="sm"
-                className="bg-white hover:bg-gray-100 text-black border border-gray-200"
-                onClick={handleCancelChanges}
-              >
-                Cancel
-              </Button>
-            ) : pr.buildStatus === "success" ? (
-              <Button
-                size="sm"
-                className="bg-green-500 hover:bg-green-600 text-white"
-                onClick={() => handleOpenTests(pr, "write")}
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Write new tests
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                onClick={() => handleOpenTests(pr, "update")}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Update tests to fix
-              </Button>
-            )}
-          </div>
-          {selectedPR && selectedPR.id === pr.id && (
-            <div className="mt-4">
-              <h4 className="font-semibold mb-2">Test Files</h4>
-              {analyzing ? (
-                <div className="flex items-center justify-center h-20">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  <span className="ml-2">Analyzing PR diff...</span>
-                </div>
-              ) : loading ? (
-                <div className="flex items-center justify-center h-20">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {testFiles.map((file) => (
-                    <div key={file.name} className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <Checkbox
-                            id={file.name}
-                            checked={selectedFiles[file.name]}
-                            onCheckedChange={() => handleFileToggle(file.name)}
-                          />
-                          <label
-                            htmlFor={file.name}
-                            className="ml-2 font-medium cursor-pointer"
-                          >
-                            {file.name}
-                          </label>
-                          {file.isEntirelyNew && (
-                            <Badge variant="outline" className="ml-2">
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      {expandedFiles[file.name] && (
-                        <div className="mt-2">
-                          <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-                            <ReactDiffViewer
-                              oldValue={file.oldContent || ""}
-                              newValue={file.newContent || ""}
-                              splitView={true}
-                            />
-                          </div>
-                        </div>
+    <div className="bg-white p-4 rounded-lg shadow-md">
+      <div className="flex items-center justify-between mb-2">
+        <span className="flex items-center">
+          {pullRequest.isDraft ? (
+            <GitPullRequestDraft className="mr-2 h-4 w-4 text-gray-400" />
+          ) : (
+            <GitPullRequest className="mr-2 h-4 w-4" />
+          )}
+          <span className="font-medium">{pullRequest.title}</span>
+        </span>
+        <Link
+          href={`https://github.com/${pullRequest.repository.full_name}/pull/${pullRequest.number}`}
+          className="text-sm text-gray-600 underline"
+        >
+          #{pullRequest.number}
+        </Link>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="flex items-center">
+          {pullRequest.buildStatus === "success" ? (
+            <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+          ) : (
+            <XCircle className="mr-2 h-4 w-4 text-red-500" />
+          )}
+          <Link
+            href={`https://github.com/${pullRequest.repository.full_name}/actions/runs/placeholder-run-id`}
+            className="text-sm underline text-gray-600"
+          >
+            Build: {pullRequest.buildStatus}
+          </Link>
+        </span>
+        {selectedPR && selectedPR.id === pullRequest.id ? (
+          <Button
+            size="sm"
+            className="bg-white hover:bg-gray-100 text-black border border-gray-200"
+            onClick={onCancelChanges}
+          >
+            Cancel
+          </Button>
+        ) : pullRequest.buildStatus === "success" ? (
+          <Button
+            size="sm"
+            className="bg-green-500 hover:bg-green-600 text-white"
+            onClick={() => onOpenTests(pullRequest, "write")}
+          >
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Write new tests
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="bg-yellow-500 hover:bg-yellow-600 text-white"
+            onClick={() => onOpenTests(pullRequest, "update")}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Update tests to fix
+          </Button>
+        )}
+      </div>
+      {selectedPR && selectedPR.id === pullRequest.id && (
+        <div className="mt-4">
+          <h4 className="font-semibold mb-2">Test Files</h4>
+          {analyzing ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Analyzing PR diff...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {testFiles.map((file) => (
+                <div key={file.name} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Checkbox
+                        id={file.name}
+                        checked={selectedFiles[file.name]}
+                        onCheckedChange={() => onFileToggle(file.name)}
+                      />
+                      <label
+                        htmlFor={file.name}
+                        className="ml-2 font-medium cursor-pointer"
+                      >
+                        {file.name}
+                      </label>
+                      {file.isEntirelyNew && (
+                        <Badge variant="outline" className="ml-2">
+                          New
+                        </Badge>
                       )}
                     </div>
-                  ))}
-                  <Button
-                    className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={handleConfirmChanges}
-                    disabled={Object.values(selectedFiles).every(
-                      (value) => !value
-                    )}
-                  >
-                    <Check className="mr-2 h-4 w-4" />
-                    Commit Changes
-                  </Button>
+                  </div>
+                  {expandedFiles[file.name] && (
+                    <div className="mt-2">
+                      <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
+                        <ReactDiffViewer
+                          oldValue={file.oldContent || ""}
+                          newValue={file.newContent || ""}
+                          splitView={true}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
+              <Button
+                className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={onConfirmChanges}
+                disabled={
+                  Object.values(selectedFiles).every((value) => !value) ||
+                  loading
+                }
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                )}
+                {loading ? "Committing Changes..." : "Commit Changes"}
+              </Button>
             </div>
           )}
-        </li>
-      ))}
-    </ul>
+        </div>
+      )}
+    </div>
   );
 }
