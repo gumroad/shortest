@@ -21,31 +21,87 @@ const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
 
 interface PullRequestItemProps {
   pullRequest: PullRequest;
-  onOpenTests: (pr: PullRequest, mode: "write" | "update") => void;
-  selectedPR: PullRequest | null;
-  testFiles: TestFile[];
-  selectedFiles: Record<string, boolean>;
-  expandedFiles: Record<string, boolean>;
-  analyzing: boolean;
-  onFileToggle: (fileName: string) => void;
-  onConfirmChanges: () => void;
-  onCancelChanges: () => void;
-  loadingPR: number | null;
 }
 
-export function PullRequestItem({
-  pullRequest,
-  onOpenTests,
-  selectedPR,
-  testFiles,
-  selectedFiles,
-  expandedFiles,
-  analyzing,
-  onFileToggle,
-  onConfirmChanges,
-  onCancelChanges,
-  loadingPR,
-}: PullRequestItemProps) {
+export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
+  const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
+  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [analyzing, setAnalyzing] = useState(false);
+  const [loadingPR, setLoadingPR] = useState<number | null>(null);
+
+  const handleOpenTests = (pr: PullRequest, mode: "write" | "update") => {
+    setSelectedPR(pr);
+    setAnalyzing(true);
+    setLoadingPR(pr.id);
+
+    // Simulating API call to get test files
+    setTimeout(() => {
+      const mockTestFiles: TestFile[] = [];
+
+      if (mode === "write") {
+        // ... (mock data for write mode)
+      } else if (mode === "update") {
+        // ... (mock data for update mode)
+      }
+
+      setTestFiles(mockTestFiles);
+      const newSelectedFiles: Record<string, boolean> = {};
+      const newExpandedFiles: Record<string, boolean> = {};
+      mockTestFiles.forEach((file) => {
+        newExpandedFiles[file.name] = true;
+        if (mode === "update") {
+          newSelectedFiles[file.name] = true;
+        }
+      });
+      setSelectedFiles(newSelectedFiles);
+      setExpandedFiles(newExpandedFiles);
+      setAnalyzing(false);
+      setLoadingPR(null);
+    }, 1000);
+  };
+
+  const handleConfirmChanges = async () => {
+    if (!selectedPR) return;
+
+    setLoadingPR(selectedPR.id);
+    try {
+      const filesToCommit = testFiles.filter(
+        (file) => selectedFiles[file.name]
+      );
+      // TODO: await commitChangesToPullRequest(selectedPR, filesToCommit);
+      // Reset state after successful commit
+      setSelectedPR(null);
+      setTestFiles([]);
+      setSelectedFiles({});
+      setExpandedFiles({});
+    } catch (error) {
+      console.error("Error committing changes:", error);
+      // Handle error (e.g., show an error message to the user)
+    } finally {
+      setLoadingPR(null);
+    }
+  };
+
+  const handleCancelChanges = () => {
+    setSelectedPR(null);
+    setTestFiles([]);
+    setSelectedFiles({});
+    setExpandedFiles({});
+  };
+
+  const handleFileToggle = (fileName: string) => {
+    setSelectedFiles((prev) => ({
+      ...prev,
+      [fileName]: !prev[fileName],
+    }));
+    setExpandedFiles((prev) => ({
+      ...prev,
+      [fileName]: !prev[fileName],
+    }));
+  };
+
   const isLoading = loadingPR === pullRequest.id;
 
   return (
@@ -84,7 +140,7 @@ export function PullRequestItem({
           <Button
             size="sm"
             className="bg-white hover:bg-gray-100 text-black border border-gray-200"
-            onClick={onCancelChanges}
+            onClick={handleCancelChanges}
             disabled={isLoading}
           >
             Cancel
@@ -93,7 +149,7 @@ export function PullRequestItem({
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => onOpenTests(pullRequest, "write")}
+            onClick={() => handleOpenTests(pullRequest, "write")}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -107,7 +163,7 @@ export function PullRequestItem({
           <Button
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
-            onClick={() => onOpenTests(pullRequest, "update")}
+            onClick={() => handleOpenTests(pullRequest, "update")}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -136,7 +192,7 @@ export function PullRequestItem({
                       <Checkbox
                         id={file.name}
                         checked={selectedFiles[file.name]}
-                        onCheckedChange={() => onFileToggle(file.name)}
+                        onCheckedChange={() => handleFileToggle(file.name)}
                       />
                       <label
                         htmlFor={file.name}
@@ -166,7 +222,7 @@ export function PullRequestItem({
               ))}
               <Button
                 className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={onConfirmChanges}
+                onClick={handleConfirmChanges}
                 disabled={
                   Object.values(selectedFiles).every((value) => !value) ||
                   isLoading
