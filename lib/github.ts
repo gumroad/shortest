@@ -117,6 +117,8 @@ export async function getAssignedPullRequests() {
           latestCommitSha
         );
 
+        console.log("Build status:", buildStatus);
+
         return {
           id: pr.id,
           repoId: pr.repository_url,

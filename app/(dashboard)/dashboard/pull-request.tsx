@@ -74,7 +74,7 @@ export function PullRequestItem({
             <XCircle className="mr-2 h-4 w-4 text-red-500" />
           )}
           <Link
-            href={`https://github.com/${pullRequest.repository.full_name}/actions/runs/placeholder-run-id`}
+            href={`https://github.com/${pullRequest.repository.full_name}/pull/${pullRequest.number}/checks`}
             className="text-sm underline text-gray-600"
           >
             Build: {pullRequest.buildStatus}
