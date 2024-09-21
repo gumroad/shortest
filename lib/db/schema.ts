@@ -36,18 +36,19 @@ export const users = pgTable(
   })
 );
 
-export const repos = pgTable(
-  "repos",
+export const pullRequests = pgTable(
+  "pull_requests",
   {
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull(),
     githubId: integer("github_id").notNull(),
-    name: varchar("name", { length: 255 }).notNull(),
-    fullName: varchar("full_name", { length: 255 }).notNull(),
-    isPrivate: boolean("is_private").notNull(),
-    isMonitoring: boolean("is_monitoring").notNull().default(false),
+    number: integer("number").notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    state: varchar("state", { length: 20 }).notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    owner: varchar("owner", { length: 255 }).notNull(),
+    repo: varchar("repo", { length: 255 }).notNull(),
   },
   (table) => ({
     userGithubIdIdx: uniqueIndex("user_github_id_idx").on(
@@ -57,23 +58,24 @@ export const repos = pgTable(
   })
 );
 
-export const pullRequests = pgTable("pull_requests", {
-  id: serial("id").primaryKey(),
-  repoId: integer("repo_id").notNull(),
-  githubId: integer("github_id").notNull(),
-  number: integer("number").notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
-  state: varchar("state", { length: 20 }).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Repo = typeof repos.$inferSelect;
-export type NewRepo = typeof repos.$inferInsert;
 export type PullRequest = typeof pullRequests.$inferSelect;
 export type NewPullRequest = typeof pullRequests.$inferInsert;
+
+export interface TestFile {
+  name: string;
+  oldContent: string;
+  newContent: string;
+  isEntirelyNew: boolean;
+}
+
+export interface ExtendedPullRequest extends PullRequest {
+  repository: {
+    owner: string;
+    repo: string;
+  };
+}
 
 export const getExampleTable = async () => {
   const selectResult = await db.select().from(users);
