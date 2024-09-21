@@ -9,29 +9,11 @@ import {
   XCircle,
   Edit,
   PlusCircle,
-  Plus,
-  Trash2,
-  Check,
-  ChevronsUpDown,
   Loader2,
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
@@ -40,12 +22,7 @@ const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
 });
 
-import { getGitHubRepos, getGitHubPullRequests } from "@/lib/github";
-import {
-  updateRepoMonitoring,
-  getMonitoringRepos,
-  getNonMonitoringRepos,
-} from "@/lib/db/queries";
+import { getAssignedPullRequests } from "@/lib/github";
 
 interface Repo {
   id: number;
@@ -54,7 +31,6 @@ interface Repo {
   owner: {
     login: string;
   };
-  isMonitoring?: boolean;
 }
 
 export default function DashboardPage() {
@@ -62,7 +38,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
-  const [isAddingRepo, setIsAddingRepo] = useState(false);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
     {}
@@ -75,20 +50,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchAndSetRepos = async () => {
       try {
-        const data = await getGitHubRepos();
+        const data = await getAssignedPullRequests();
         if ("error" in data) {
           setError(data.error as string);
           setRepos([]);
         } else {
-          // Fetch only monitoring repos for display
-          const monitoringRepos = await getMonitoringRepos();
-          setRepos(
-            monitoringRepos.map((repo) => ({
-              ...repo,
-              full_name: repo.fullName,
-              owner: { login: repo.fullName.split("/")[0] },
-            }))
-          );
+          setRepos(data);
           setError(null);
         }
         setLoading(false);
@@ -159,68 +126,6 @@ export default function DashboardPage() {
     }, 1000);
   };
 
-  const handleRemoveRepo = async (repoId: number) => {
-    try {
-      await updateRepoMonitoring(repoId, false);
-      const updatedRepos = await getMonitoringRepos();
-      setRepos(
-        updatedRepos.map((repo) => ({
-          ...repo,
-          full_name: repo.fullName,
-          owner: { login: repo.fullName.split("/")[0] },
-        }))
-      );
-    } catch (error) {
-      console.error("Error updating repo monitoring status:", error);
-      setError("Failed to remove repository from monitoring");
-    }
-  };
-
-  const handleAddRepo = async (repoId: number) => {
-    try {
-      await updateRepoMonitoring(repoId, true);
-      const updatedRepos = await getMonitoringRepos();
-      setRepos(
-        updatedRepos.map((repo) => ({
-          ...repo,
-          full_name: repo.fullName,
-          owner: { login: repo.fullName.split("/")[0] },
-        }))
-      );
-      setIsAddingRepo(false);
-    } catch (error) {
-      console.error("Error updating repo monitoring status:", error);
-      setError("Failed to add repository for monitoring");
-    }
-  };
-
-  const handleFileToggle = (fileName: string) => {
-    setSelectedFiles((prev) => ({
-      ...prev,
-      [fileName]: !prev[fileName],
-    }));
-    setExpandedFiles((prev) => ({
-      ...prev,
-      [fileName]: !prev[fileName],
-    }));
-  };
-
-  const handleConfirmChanges = () => {
-    // TODO: Implement logic to push changes as a commit to the pull request branch
-    console.log("Confirming changes:", selectedFiles);
-    setSelectedPR(null);
-    setTestFiles([]);
-    setSelectedFiles({});
-    setExpandedFiles({});
-  };
-
-  const handleCancelChanges = () => {
-    setSelectedPR(null);
-    setTestFiles([]);
-    setSelectedFiles({});
-    setExpandedFiles({});
-  };
-
   const handleReconnectGitHub = async () => {
     try {
       // Redirect to GitHub OAuth flow to get new permissions
@@ -271,15 +176,6 @@ export default function DashboardPage() {
               <li key={repo.id}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-lg">{repo.full_name}</h3>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-red-500 hover:text-red-700"
-                    title="Remove repository"
-                    onClick={() => handleRemoveRepo(repo.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
                 <PullRequestList
                   owner={repo.owner.login}
@@ -289,21 +185,7 @@ export default function DashboardPage() {
             ))}
           </ul>
         ) : (
-          <p>No repositories found. Try adding a new repository.</p>
-        )}
-        {isAddingRepo ? (
-          <ComboboxComponent
-            repos={Array.isArray(repos) ? repos : []}
-            onSelect={handleAddRepo}
-          />
-        ) : (
-          <Button
-            className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white"
-            onClick={() => setIsAddingRepo(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add new GitHub repository
-          </Button>
+          <p>No repositories found with assigned pull requests.</p>
         )}
       </div>
     </div>
@@ -355,7 +237,7 @@ function PullRequestList({
 
   const fetchPRs = async () => {
     try {
-      const prs = await getGitHubPullRequests(owner, repoName);
+      const prs = await getAssignedPullRequests(owner, repoName);
       if (Array.isArray(prs)) {
         setPullRequests(
           prs.map((pr) => ({
@@ -606,103 +488,5 @@ function PullRequestList({
         </li>
       ))}
     </ul>
-  );
-}
-
-function ComboboxComponent({
-  repos,
-  onSelect,
-}: {
-  repos: Repo[];
-  onSelect: (repoId: number) => void;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
-  const [nonMonitoringRepos, setNonMonitoringRepos] = React.useState<Repo[]>(
-    []
-  );
-  const [loading, setLoading] = React.useState(false);
-
-  const fetchRepos = async () => {
-    setLoading(true);
-    try {
-      // First, fetch and update all GitHub repos
-      await getGitHubRepos();
-
-      // Then, fetch the non-monitoring repos
-      const repos = await getNonMonitoringRepos();
-      setNonMonitoringRepos(
-        repos.map((repo) => ({
-          ...repo,
-          full_name: repo.fullName,
-          owner: { login: repo.fullName.split("/")[0] },
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching repos:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setOpen(true);
-    fetchRepos();
-  }, []);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between mt-6"
-          onClick={fetchRepos}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Fetching repositories...
-            </>
-          ) : value ? (
-            nonMonitoringRepos.find((repo) => repo.name === value)?.full_name
-          ) : (
-            "Select repository..."
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder="Search repository..." />
-          <CommandList>
-            <CommandEmpty>No repository found.</CommandEmpty>
-            <CommandGroup>
-              {nonMonitoringRepos.map((repo) => (
-                <CommandItem
-                  key={repo.id}
-                  value={repo.full_name}
-                  onSelect={() => {
-                    setValue(repo.full_name);
-                    setOpen(false);
-                    onSelect(repo.id);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === repo.full_name ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {repo.full_name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
   );
 }
