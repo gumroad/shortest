@@ -11,6 +11,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^0.0.61",
     "@clerk/nextjs": "^5.6.0",
     "@octokit/rest": "^21.0.2",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -29,6 +30,7 @@
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vercel/postgres": "^0.10.0",
+    "ai": "^3.4.0",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^2.4.3",
     "class-variance-authority": "^0.7.0",
