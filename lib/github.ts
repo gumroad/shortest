@@ -21,8 +21,6 @@ async function getOctokit() {
     user = await createUser(userId);
   }
 
-  console.log("User:", user);
-
   if (!user.githubAccessToken) {
     throw new Error("GitHub access token not found");
   }
@@ -49,7 +47,6 @@ export async function exchangeCodeForAccessToken(
 
   if (!response.ok) {
     const errorData = await response.json();
-    console.error("GitHub API error:", errorData);
     throw new Error(
       `Failed to exchange code for access token: ${
         errorData.error_description || response.statusText
@@ -60,14 +57,12 @@ export async function exchangeCodeForAccessToken(
   const data = await response.json();
 
   if (data.error) {
-    console.error("GitHub OAuth error:", data);
     throw new Error(
       `GitHub OAuth error: ${data.error_description || data.error}`
     );
   }
 
   if (!data.access_token) {
-    console.error("Unexpected response from GitHub:", data);
     throw new Error("Access token not found in GitHub response");
   }
 
@@ -94,14 +89,10 @@ export async function getAssignedPullRequests() {
       per_page: 100,
     });
 
-    console.log("GitHub API response:", data);
-    console.log(`Found ${data.total_count} pull requests`);
-
     const pullRequests = await Promise.all(
       data.items.map(async (pr) => {
         const [owner, repo] = pr.repository_url.split("/").slice(-2);
 
-        // Get the latest commit for this pull request
         const { data: pullRequestData } = await octokit.pulls.get({
           owner,
           repo,
@@ -116,8 +107,6 @@ export async function getAssignedPullRequests() {
           repo,
           latestCommitSha
         );
-
-        console.log("Build status:", buildStatus);
 
         return {
           id: pr.id,
@@ -138,7 +127,6 @@ export async function getAssignedPullRequests() {
 
     return pullRequests;
   } catch (error) {
-    console.error("Error fetching assigned GitHub pull requests:", error);
     return { error: "Failed to fetch assigned GitHub pull requests" };
   }
 }
@@ -158,7 +146,6 @@ async function fetchBuildStatus(
 
     return data.state;
   } catch (error) {
-    console.error("Error fetching build status:", error);
     return "unknown";
   }
 }
@@ -170,7 +157,6 @@ export async function commitChangesToPullRequest(
   const octokit = await getOctokit();
   const { owner, repo } = pullRequest;
 
-  // Get the current commit SHA
   const { data: pr } = await octokit.pulls.get({
     owner,
     repo,
@@ -179,7 +165,6 @@ export async function commitChangesToPullRequest(
 
   const baseSha = pr.base.sha;
 
-  // Create a new tree with the updated files
   const tree = await Promise.all(
     filesToCommit.map(async (file) => {
       return {
@@ -198,7 +183,6 @@ export async function commitChangesToPullRequest(
     tree,
   });
 
-  // Create a new commit
   const { data: newCommit } = await octokit.git.createCommit({
     owner,
     repo,
@@ -207,7 +191,6 @@ export async function commitChangesToPullRequest(
     parents: [baseSha],
   });
 
-  // Update the reference of the branch
   await octokit.git.updateRef({
     owner,
     repo,
@@ -254,7 +237,6 @@ export async function getPullRequestInfo(
       testFiles,
     };
   } catch (error) {
-    console.error("Error fetching PR info:", error);
     throw new Error("Failed to fetch PR info");
   }
 }
