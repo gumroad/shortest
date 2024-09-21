@@ -26,8 +26,12 @@ interface PullRequestItemProps {
 export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
+    {}
+  );
   const [analyzing, setAnalyzing] = useState(false);
   const [loadingPR, setLoadingPR] = useState<number | null>(null);
 
@@ -37,13 +41,36 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     setLoadingPR(pr.id);
 
     // Simulating API call to get test files
+    // TODO: update this to dynamically generate based on the PR diff and spec file directory
     setTimeout(() => {
       const mockTestFiles: TestFile[] = [];
 
       if (mode === "write") {
-        // ... (mock data for write mode)
+        mockTestFiles.push({
+          name: "signup_spec.rb",
+          oldContent: "",
+          newContent:
+            "describe 'Signup' do\n  it 'allows new user to sign up' do\n    # Test code here\n  end\nend",
+          isEntirelyNew: true,
+        });
+
+        mockTestFiles.push({
+          name: "login_spec.rb",
+          oldContent:
+            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\nend",
+          newContent:
+            "describe 'Login' do\n  it 'allows existing user to log in' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'password123'\n    click_button 'Log In'\n    expect(page).to have_content('Welcome back!')\n  end\n\n\n  it 'shows error message for invalid credentials' do\n    visit '/login'\n    fill_in 'Email', with: 'user@example.com'\n    fill_in 'Password', with: 'wrongpassword'\n    click_button 'Log In'\n    expect(page).to have_content('Invalid email or password')\n  end\nend",
+          isEntirelyNew: false,
+        });
       } else if (mode === "update") {
-        // ... (mock data for update mode)
+        mockTestFiles.push({
+          name: "logic_spec.rb",
+          oldContent:
+            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies discount' do\n    expect(apply_discount(100, 0.1)).to eq(90)\n  end\nend",
+          newContent:
+            "describe 'BusinessLogic' do\n  it 'calculates total correctly' do\n    expect(calculate_total(10, 5)).to eq(15)\n  end\n\n  it 'applies percentage discount' do\n    expect(apply_percentage_discount(100, 10)).to eq(90)\n  end\n\n  it 'applies flat discount' do\n    expect(apply_flat_discount(100, 10)).to eq(90)\n  end\nend",
+          isEntirelyNew: false,
+        });
       }
 
       setTestFiles(mockTestFiles);
@@ -61,7 +88,6 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       setLoadingPR(null);
     }, 1000);
   };
-
   const handleConfirmChanges = async () => {
     if (!selectedPR) return;
 

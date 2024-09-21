@@ -68,6 +68,26 @@ export default function DashboardPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <p className="text-lg mb-4">{error}</p>
+        <Button onClick={handleReconnectGitHub}>
+          Reconnect GitHub account
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="p-6">
