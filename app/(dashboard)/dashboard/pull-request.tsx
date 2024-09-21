@@ -116,7 +116,8 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         (file) => selectedFiles[file.name]
       );
 
-      await commitChangesToPullRequest(selectedPR, filesToCommit);
+      // TODO: commit changes to pull request
+      //await commitChangesToPullRequest(selectedPR, filesToCommit);
 
       toast({
         title: "Changes committed successfully",
