@@ -159,10 +159,21 @@ export default function DashboardPage() {
     }, 1000);
   };
 
-  // TODO: update this to update the repo monitoring status in the database
-
-  const handleRemoveRepo = (repoId: number) => {
-    setRepos((prevRepos) => prevRepos.filter((repo) => repo.id !== repoId));
+  const handleRemoveRepo = async (repoId: number) => {
+    try {
+      await updateRepoMonitoring(repoId, false);
+      const updatedRepos = await getMonitoringRepos();
+      setRepos(
+        updatedRepos.map((repo) => ({
+          ...repo,
+          full_name: repo.fullName,
+          owner: { login: repo.fullName.split("/")[0] },
+        }))
+      );
+    } catch (error) {
+      console.error("Error updating repo monitoring status:", error);
+      setError("Failed to remove repository from monitoring");
+    }
   };
 
   const handleAddRepo = async (repoId: number) => {
