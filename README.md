@@ -71,3 +71,7 @@ When you're ready to deploy your SaaS application to production, follow these st
 ### Add environment variables
 
 In your Vercel project settings (or during deployment), add all the necessary environment variables. Make sure to update the values for the production environment.
+
+## Running Tests
+
+To run all specs:
