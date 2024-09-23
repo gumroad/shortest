@@ -1,5 +1,6 @@
 {
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
@@ -8,7 +9,8 @@
     "db:seed": "npx tsx lib/db/seed.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.6.0",
@@ -54,9 +56,16 @@
     "tailwindcss-react-aria-components": "1.1.5",
     "typescript": "^5.6.2",
     "vaul": "^0.9.4",
+    "vite-tsconfig-paths": "^5.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "smee-client": "^2.0.3"
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "happy-dom": "^15.7.4",
+    "jsdom": "^25.0.1",
+    "smee-client": "^2.0.3",
+    "vitest": "^2.1.1"
   }
 }
