@@ -74,4 +74,8 @@ In your Vercel project settings (or during deployment), add all the necessary en
 
 ## Running Tests
 
-To run all specs:
+To run specs:
+
+```bash
+pnpm vitest
+```
