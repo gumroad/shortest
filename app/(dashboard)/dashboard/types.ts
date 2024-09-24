@@ -17,7 +17,5 @@ export interface PullRequest {
 
 export interface TestFile {
   name: string;
-  oldContent: string;
-  newContent: string;
-  isEntirelyNew: boolean;
+  content: string;
 }

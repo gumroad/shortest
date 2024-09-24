@@ -17,7 +17,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
 import { PullRequest, TestFile } from "./types";
-import { experimental_useObject as useObject } from "ai/react";
 import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 import { useToast } from "@/hooks/use-toast";
 import { commitChangesToPullRequest, getPullRequestInfo } from "@/lib/github";
@@ -43,35 +42,40 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { object, submit, isLoading } = useObject({
-    api: "/api/generate-tests",
-    schema: generateTestsResponseSchema,
-  });
-
-  useEffect(() => {
-    if (object && !isLoading) {
-      handleTestFilesUpdate(object as TestFile[]);
-    }
-  }, [object, isLoading]);
-
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
     setLoading(true);
     setError(null);
 
     try {
-      const { diff, testFiles } = await getPullRequestInfo(
+      const { diff, testFiles: oldTestFiles } = await getPullRequestInfo(
         pr.repository.owner.login,
         pr.repository.name,
         pr.number
       );
 
-      submit({
-        mode,
-        pr_id: pr.id,
-        pr_diff: diff,
-        test_files: testFiles,
+      const response = await fetch("/api/generate-tests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode,
+          pr_id: pr.id,
+          pr_diff: diff,
+          test_files: oldTestFiles,
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate test files");
+      }
+
+      const data = await response.json();
+      console.log("Data", data);
+      const parsedData = generateTestsResponseSchema.parse(data);
+      console.log("Parsed data", parsedData);
+      handleTestFilesUpdate(oldTestFiles, parsedData);
     } catch (error) {
       console.error("Error generating test files:", error);
       setError("Failed to generate test files.");
@@ -81,14 +85,25 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     }
   };
 
-  const handleTestFilesUpdate = (testFiles: TestFile[]) => {
-    console.log("Test files", testFiles);
-    if (testFiles.length > 0) {
-      console.log("Test files", testFiles);
+  const handleTestFilesUpdate = (
+    oldTestFiles: TestFile[],
+    newTestFiles: TestFile[]
+  ) => {
+    console.log("Test files", newTestFiles);
+    if (newTestFiles.length > 0) {
+      console.log("Test files", newTestFiles);
 
-      const filteredTestFiles = testFiles.filter(
-        (file): file is TestFile => file !== undefined
-      );
+      const filteredTestFiles = newTestFiles
+        .filter((file): file is TestFile => file !== undefined)
+        .map((file) => {
+          const oldFile = oldTestFiles.find(
+            (oldFile) => oldFile.name === file.name
+          );
+          return {
+            ...file,
+            oldContent: oldFile ? oldFile.content : "",
+          };
+        });
       setTestFiles(filteredTestFiles);
       const newSelectedFiles: Record<string, boolean> = {};
       const newExpandedFiles: Record<string, boolean> = {};
@@ -259,11 +274,6 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
                       >
                         {file.name}
                       </label>
-                      {file.isEntirelyNew && (
-                        <Badge variant="outline" className="ml-2">
-                          New
-                        </Badge>
-                      )}
                     </div>
                   </div>
                   {expandedFiles[file.name] && (
@@ -271,7 +281,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
                       <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
                         <ReactDiffViewer
                           oldValue={file.oldContent || ""}
-                          newValue={file.newContent || ""}
+                          newValue={file.content || ""}
                           splitView={true}
                         />
                       </div>
