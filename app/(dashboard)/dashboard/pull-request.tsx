@@ -31,7 +31,6 @@ interface PullRequestItemProps {
 }
 
 export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
-  const [selectedPR, setSelectedPR] = useState<PullRequest | null>(null);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
     {}
@@ -40,7 +39,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     {}
   );
   const [analyzing, setAnalyzing] = useState(false);
-  const [loadingPR, setLoadingPR] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -49,10 +48,9 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     schema: generateTestsResponseSchema,
   });
 
-  const handleOpenTests = async (pr: PullRequest, mode: "write" | "update") => {
-    setSelectedPR(pr);
+  const handleWriteNewTests = async (pr: PullRequest) => {
     setAnalyzing(true);
-    setLoadingPR(pr.id);
+    setLoading(true);
     setError(null);
 
     try {
@@ -65,7 +63,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       console.log("PR info", { diff, testFiles });
 
       submit({
-        mode,
+        mode: "write",
         pr_id: pr.id,
         pr_diff: diff,
         test_files: testFiles,
@@ -89,9 +87,6 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         object.testFiles.forEach((file) => {
           const fileName = file?.name ?? `file_${Math.random()}`;
           newExpandedFiles[fileName] = true;
-          if (mode === "update") {
-            newSelectedFiles[fileName] = true;
-          }
         });
         setSelectedFiles(newSelectedFiles);
         setExpandedFiles(newExpandedFiles);
@@ -103,14 +98,67 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       );
     } finally {
       setAnalyzing(false);
-      setLoadingPR(null);
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateTests = async (pr: PullRequest) => {
+    setAnalyzing(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("fetching PR info", pr);
+      const { diff, testFiles } = await getPullRequestInfo(
+        pr.repository.owner.login,
+        pr.repository.name,
+        pr.number
+      );
+      console.log("PR info", { diff, testFiles });
+
+      submit({
+        mode: "update",
+        pr_id: pr.id,
+        pr_diff: diff,
+        test_files: testFiles,
+      });
+
+      // Wait for the object to be generated
+      while (!object) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      console.log("object", object);
+
+      if (object.testFiles) {
+        setTestFiles(
+          object.testFiles.filter(
+            (file): file is TestFile => file !== undefined
+          )
+        );
+        const newSelectedFiles: Record<string, boolean> = {};
+        const newExpandedFiles: Record<string, boolean> = {};
+        object.testFiles.forEach((file) => {
+          const fileName = file?.name ?? `file_${Math.random()}`;
+          newExpandedFiles[fileName] = true;
+          newSelectedFiles[fileName] = true;
+        });
+        setSelectedFiles(newSelectedFiles);
+        setExpandedFiles(newExpandedFiles);
+      }
+    } catch (error) {
+      console.error("Error generating test files:", error);
+      setError(
+        "Failed to generate test files. Please check your OpenAI API key."
+      );
+    } finally {
+      setAnalyzing(false);
+      setLoading(false);
     }
   };
 
   const handleConfirmChanges = async () => {
-    if (!selectedPR) return;
-
-    setLoadingPR(selectedPR.id);
+    setLoading(true);
     setError(null);
     try {
       const filesToCommit = testFiles.filter(
@@ -118,7 +166,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       );
 
       // TODO: commit changes to pull request
-      //await commitChangesToPullRequest(selectedPR, filesToCommit);
+      await commitChangesToPullRequest(pullRequest, filesToCommit);
 
       toast({
         title: "Changes committed successfully",
@@ -126,7 +174,6 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       });
 
       // Reset state after successful commit
-      setSelectedPR(null);
       setTestFiles([]);
       setSelectedFiles({});
       setExpandedFiles({});
@@ -139,12 +186,11 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         variant: "destructive",
       });
     } finally {
-      setLoadingPR(null);
+      setLoading(false);
     }
   };
 
   const handleCancelChanges = () => {
-    setSelectedPR(null);
     setTestFiles([]);
     setSelectedFiles({});
     setExpandedFiles({});
@@ -161,8 +207,6 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       [fileName]: !prev[fileName],
     }));
   };
-
-  const isLoading = loadingPR === pullRequest.id;
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md">
@@ -198,12 +242,12 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
             Build: {pullRequest.buildStatus}
           </Link>
         </span>
-        {selectedPR && selectedPR.id === pullRequest.id ? (
+        {testFiles.length > 0 ? (
           <Button
             size="sm"
             className="bg-white hover:bg-gray-100 text-black border border-gray-200"
             onClick={handleCancelChanges}
-            disabled={isLoading}
+            disabled={loading}
           >
             Cancel
           </Button>
@@ -211,29 +255,29 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleOpenTests(pullRequest, "write")}
-            disabled={isLoading}
+            onClick={() => handleWriteNewTests(pullRequest)}
+            disabled={loading}
           >
-            {isLoading ? (
+            {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <PlusCircle className="mr-2 h-4 w-4" />
             )}
-            {isLoading ? "Loading..." : "Write new tests"}
+            {loading ? "Loading..." : "Write new tests"}
           </Button>
         ) : (
           <Button
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
-            onClick={() => handleOpenTests(pullRequest, "update")}
-            disabled={isLoading}
+            onClick={() => handleUpdateTests(pullRequest)}
+            disabled={loading}
           >
-            {isLoading ? (
+            {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Edit className="mr-2 h-4 w-4" />
             )}
-            {isLoading ? "Loading..." : "Update tests to fix"}
+            {loading ? "Loading..." : "Update tests to fix"}
           </Button>
         )}
       </div>
@@ -242,7 +286,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           {error}
         </div>
       )}
-      {selectedPR && selectedPR.id === pullRequest.id && (
+      {loading && (
         <div className="mt-4">
           <h4 className="font-semibold mb-2">Test Files</h4>
           {analyzing ? (
@@ -292,15 +336,15 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
                 onClick={handleConfirmChanges}
                 disabled={
                   Object.values(selectedFiles).every((value) => !value) ||
-                  isLoading
+                  loading
                 }
               >
-                {isLoading ? (
+                {loading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <CheckCircle className="mr-2 h-4 w-4" />
                 )}
-                {isLoading ? "Committing Changes..." : "Commit Changes"}
+                {loading ? "Committing Changes..." : "Commit Changes"}
               </Button>
             </div>
           )}
