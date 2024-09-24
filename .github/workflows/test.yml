@@ -26,12 +26,16 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
-      - name: "Install Node"
-        uses: actions/setup-node@v4
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
-      - name: "Install Deps"
+          node-version: 20
+          cache: "pnpm"
+
+      - shell: bash
         run: pnpm install
       - name: "Test"
         run: npx vitest --coverage.enabled true
