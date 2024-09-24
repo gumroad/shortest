@@ -1,6 +1,7 @@
 {
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@9.7.1",
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
