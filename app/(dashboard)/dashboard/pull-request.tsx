@@ -72,9 +72,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       }
 
       const data = await response.json();
-      console.log("Data", data);
       const parsedData = generateTestsResponseSchema.parse(data);
-      console.log("Parsed data", parsedData);
       handleTestFilesUpdate(oldTestFiles, parsedData);
     } catch (error) {
       console.error("Error generating test files:", error);
@@ -89,10 +87,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     oldTestFiles: TestFile[],
     newTestFiles: TestFile[]
   ) => {
-    console.log("Test files", newTestFiles);
     if (newTestFiles.length > 0) {
-      console.log("Test files", newTestFiles);
-
       const filteredTestFiles = newTestFiles
         .filter((file): file is TestFile => file !== undefined)
         .map((file) => {
@@ -117,13 +112,16 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     }
   };
 
-  const handleConfirmChanges = async () => {
+  const commitChanges = async () => {
     setLoading(true);
     setError(null);
     try {
-      const filesToCommit = testFiles.filter(
-        (file) => selectedFiles[file.name]
-      );
+      const filesToCommit = testFiles
+        .filter((file) => selectedFiles[file.name])
+        .map((file) => ({
+          name: file.name,
+          content: file.content,
+        }));
 
       await commitChangesToPullRequest(
         pullRequest.repository.owner.login,
@@ -251,7 +249,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       )}
       {(loading || analyzing || testFiles.length > 0) && (
         <div className="mt-4">
-          <h4 className="font-semibold mb-2">Test Files</h4>
+          <h4 className="font-semibold mb-2">Test files</h4>
           {analyzing ? (
             <div className="flex items-center justify-center h-20">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -291,7 +289,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
               ))}
               <Button
                 className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={handleConfirmChanges}
+                onClick={commitChanges}
                 disabled={
                   Object.values(selectedFiles).every((value) => !value) ||
                   loading
@@ -302,7 +300,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
                 ) : (
                   <CheckCircle className="mr-2 h-4 w-4" />
                 )}
-                {loading ? "Committing Changes..." : "Commit Changes"}
+                {loading ? "Committing changes..." : "Commit changes"}
               </Button>
             </div>
           )}

@@ -172,48 +172,69 @@ export async function commitChangesToPullRequest(
 ) {
   const octokit = await getOctokit();
 
-  const { data: pr } = await octokit.pulls.get({
-    owner,
-    repo,
-    pull_number: pullNumber,
-  });
+  try {
+    const { data: pr } = await octokit.pulls.get({
+      owner,
+      repo,
+      pull_number: pullNumber,
+    });
 
-  const baseSha = pr.base.sha;
+    const { data: ref } = await octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${pr.head.ref}`,
+    });
 
-  const tree = await Promise.all(
-    filesToCommit.map(async (file) => {
-      return {
-        path: file.name,
-        mode: "100644" as const,
-        type: "blob" as const,
-        content: file.newContent,
-      };
-    })
-  );
+    const { data: commit } = await octokit.git.getCommit({
+      owner,
+      repo,
+      commit_sha: ref.object.sha,
+    });
 
-  const { data: newTree } = await octokit.git.createTree({
-    owner,
-    repo,
-    base_tree: baseSha,
-    tree,
-  });
+    const tree = await Promise.all(
+      filesToCommit.map(async (file) => {
+        const { data: blob } = await octokit.git.createBlob({
+          owner,
+          repo,
+          content: file.content,
+          encoding: "utf-8",
+        });
 
-  const { data: newCommit } = await octokit.git.createCommit({
-    owner,
-    repo,
-    message: "Update test files",
-    tree: newTree.sha,
-    parents: [baseSha],
-  });
+        return {
+          path: file.name,
+          mode: "100644",
+          type: "blob",
+          sha: blob.sha,
+        };
+      })
+    );
 
-  await octokit.git.updateRef({
-    owner,
-    repo,
-    ref: `heads/${pr.head.ref}`,
-    sha: newCommit.sha,
-  });
+    const { data: newTree } = await octokit.git.createTree({
+      owner,
+      repo,
+      base_tree: commit.tree.sha,
+      tree,
+    });
+
+    const { data: newCommit } = await octokit.git.createCommit({
+      owner,
+      repo,
+      message: "Update test files",
+      tree: newTree.sha,
+      parents: [commit.sha],
+    });
+
+    await octokit.git.updateRef({
+      owner,
+      repo,
+      ref: `heads/${pr.head.ref}`,
+      sha: newCommit.sha,
+    });
+  } catch (error) {
+    console.error("Error committing changes to pull request:", error);
+    throw error;
+  }
 }
-
 export async function getPullRequestInfo(
   owner: string,
   repo: string,
