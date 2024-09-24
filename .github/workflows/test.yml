@@ -1,8 +1,23 @@
 name: "Test"
 on:
+  push:
   pull_request:
 
 jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: |
+            - recursive: true
+              args: [--frozen-lockfile, --strict-peer-dependencies]
+            - args: [--global, gulp, prettier, typescript]
+
   test:
     runs-on: ubuntu-latest
 
