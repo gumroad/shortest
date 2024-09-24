@@ -212,8 +212,7 @@ export async function commitChangesToPullRequest(
     const { data: newTree } = await octokit.git.createTree({
       owner,
       repo,
-      base_tree: commit.tree.sha,
-      tree,
+      tree: tree as any,
     });
 
     const { data: newCommit } = await octokit.git.createCommit({
