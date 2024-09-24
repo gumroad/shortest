@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   GitPullRequestDraft,
@@ -43,10 +43,16 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { object, submit } = useObject({
+  const { object, submit, isLoading } = useObject({
     api: "/api/generate-tests",
     schema: generateTestsResponseSchema,
   });
+
+  useEffect(() => {
+    if (object && !isLoading) {
+      handleTestFilesUpdate(object as TestFile[]);
+    }
+  }, [object, isLoading]);
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -66,40 +72,33 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         pr_diff: diff,
         test_files: testFiles,
       });
-
-      while (!object) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      setLoading(false);
-      setAnalyzing(false);
-
-      console.log("object testFiles", object.testFiles);
-
-      if (object.testFiles) {
-        setTestFiles(
-          object.testFiles.filter(
-            (file): file is TestFile => file !== undefined
-          )
-        );
-        const newSelectedFiles: Record<string, boolean> = {};
-        const newExpandedFiles: Record<string, boolean> = {};
-        object.testFiles.forEach((file) => {
-          const fileName = file?.name ?? `file_${Math.random()}`;
-          newExpandedFiles[fileName] = true;
-          if (mode === "update") {
-            newSelectedFiles[fileName] = true;
-          }
-        });
-        setSelectedFiles(newSelectedFiles);
-        setExpandedFiles(newExpandedFiles);
-      }
     } catch (error) {
       console.error("Error generating test files:", error);
       setError("Failed to generate test files.");
     } finally {
       setAnalyzing(false);
       setLoading(false);
+    }
+  };
+
+  const handleTestFilesUpdate = (testFiles: TestFile[]) => {
+    console.log("Test files", testFiles);
+    if (testFiles.length > 0) {
+      console.log("Test files", testFiles);
+
+      const filteredTestFiles = testFiles.filter(
+        (file): file is TestFile => file !== undefined
+      );
+      setTestFiles(filteredTestFiles);
+      const newSelectedFiles: Record<string, boolean> = {};
+      const newExpandedFiles: Record<string, boolean> = {};
+      filteredTestFiles.forEach((file) => {
+        const fileName = file?.name ?? `file_${Math.random()}`;
+        newExpandedFiles[fileName] = true;
+        newSelectedFiles[fileName] = true;
+      });
+      setSelectedFiles(newSelectedFiles);
+      setExpandedFiles(newExpandedFiles);
     }
   };
 
