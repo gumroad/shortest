@@ -222,41 +222,55 @@ export async function getPullRequestInfo(
   const octokit = await getOctokit();
 
   try {
-    const [diffResponse, filesResponse] = await Promise.all([
+    const [diffResponse, repoContentsResponse] = await Promise.all([
       octokit.pulls.get({
         owner,
         repo,
         pull_number: pullNumber,
         mediaType: { format: "diff" },
       }),
-      octokit.pulls.listFiles({
+      octokit.rest.repos.getContent({
         owner,
         repo,
-        pull_number: pullNumber,
+        path: "",
       }),
     ]);
 
-    console.log("Diff response: ", diffResponse);
-    console.log("Files response: ", filesResponse);
+    const testFiles = [];
+    const queue = repoContentsResponse.data as { path: string; type: string }[];
 
-    const testFiles = filesResponse.data
-      .filter(
-        (file) =>
-          file.filename.toLowerCase().includes("test") ||
-          file.filename.toLowerCase().includes("spec")
-      )
-      .map((file) => ({
-        name: file.filename,
-        content: file.patch || "",
-      }));
-
-    console.log("Test files: ", testFiles);
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (item.type === "dir") {
+        const dirContents = await octokit.rest.repos.getContent({
+          owner,
+          repo,
+          path: item.path,
+        });
+        queue.push(...(dirContents.data as { path: string; type: string }[]));
+      } else if (
+        item.type === "file" &&
+        item.path.toLowerCase().includes("test.tsx")
+      ) {
+        const fileContent = await octokit.rest.repos.getContent({
+          owner,
+          repo,
+          path: item.path,
+          mediaType: { format: "raw" },
+        });
+        testFiles.push({
+          name: item.path,
+          content: fileContent.data as string,
+        });
+      }
+    }
 
     return {
       diff: diffResponse.data,
       testFiles,
     };
   } catch (error) {
+    console.error("Error fetching PR info:", error);
     throw new Error("Failed to fetch PR info");
   }
 }

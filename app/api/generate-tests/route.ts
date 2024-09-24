@@ -1,4 +1,4 @@
-import { anthropic } from '@ai-sdk/anthropic';
+import { anthropic } from "@ai-sdk/anthropic";
 import { streamObject } from "ai";
 import { z } from "zod";
 import { GenerateTestsInput } from "./schema";
@@ -23,11 +23,11 @@ export async function POST(req: Request) {
   Existing test files:
   <Test Files>
   ${test_files
-    .map((file) => `${file.name}${file.content ? `: ${file.content}` : ""}`)
+    .map((file) => `${file.name}\n${file.content ? `: ${file.content}` : ""}`)
     .join("\n")}
-  </Test Files>`;
+  </Test Files>
 
-  console.log("Prompt: ", prompt);
+  Respond with an array of test files with their name being the path to the file and the content being the full contents of the updated test file.`;
 
   const { elementStream } = await streamObject({
     model: anthropic("claude-3-5-sonnet-20240620"),
@@ -39,14 +39,12 @@ export async function POST(req: Request) {
     prompt,
   });
 
-  console.log("Element stream: ", elementStream);
-
   const tests = [];
   for await (const test of elementStream) {
     tests.push(test);
   }
 
-  console.log("Tests: ", tests);
+  console.log("Tests", tests);
 
   return new Response(JSON.stringify({ tests }), {
     headers: { "Content-Type": "application/json" },
