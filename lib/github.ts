@@ -151,16 +151,17 @@ async function fetchBuildStatus(
 }
 
 export async function commitChangesToPullRequest(
-  pullRequest: PullRequest,
+  owner: string,
+  repo: string,
+  pullNumber: number,
   filesToCommit: TestFile[]
 ) {
   const octokit = await getOctokit();
-  const { owner, repo } = pullRequest;
 
   const { data: pr } = await octokit.pulls.get({
     owner,
     repo,
-    pull_number: pullRequest.number,
+    pull_number: pullNumber,
   });
 
   const baseSha = pr.base.sha;

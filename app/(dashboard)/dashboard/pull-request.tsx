@@ -48,87 +48,33 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     schema: generateTestsResponseSchema,
   });
 
-  const handleWriteNewTests = async (pr: PullRequest) => {
+  const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
     setLoading(true);
     setError(null);
 
     try {
-      console.log("fetching PR info", pr);
       const { diff, testFiles } = await getPullRequestInfo(
         pr.repository.owner.login,
         pr.repository.name,
         pr.number
       );
-      console.log("PR info", { diff, testFiles });
 
       submit({
-        mode: "write",
+        mode,
         pr_id: pr.id,
         pr_diff: diff,
         test_files: testFiles,
       });
 
-      // Wait for the object to be generated
       while (!object) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      console.log("object", object);
-
-      if (object.testFiles) {
-        setTestFiles(
-          object.testFiles.filter(
-            (file): file is TestFile => file !== undefined
-          )
-        );
-        const newSelectedFiles: Record<string, boolean> = {};
-        const newExpandedFiles: Record<string, boolean> = {};
-        object.testFiles.forEach((file) => {
-          const fileName = file?.name ?? `file_${Math.random()}`;
-          newExpandedFiles[fileName] = true;
-        });
-        setSelectedFiles(newSelectedFiles);
-        setExpandedFiles(newExpandedFiles);
-      }
-    } catch (error) {
-      console.error("Error generating test files:", error);
-      setError(
-        "Failed to generate test files. Please check your OpenAI API key."
-      );
-    } finally {
-      setAnalyzing(false);
       setLoading(false);
-    }
-  };
+      setAnalyzing(false);
 
-  const handleUpdateTests = async (pr: PullRequest) => {
-    setAnalyzing(true);
-    setLoading(true);
-    setError(null);
-
-    try {
-      console.log("fetching PR info", pr);
-      const { diff, testFiles } = await getPullRequestInfo(
-        pr.repository.owner.login,
-        pr.repository.name,
-        pr.number
-      );
-      console.log("PR info", { diff, testFiles });
-
-      submit({
-        mode: "update",
-        pr_id: pr.id,
-        pr_diff: diff,
-        test_files: testFiles,
-      });
-
-      // Wait for the object to be generated
-      while (!object) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      console.log("object", object);
+      console.log("object testFiles", object.testFiles);
 
       if (object.testFiles) {
         setTestFiles(
@@ -141,16 +87,16 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         object.testFiles.forEach((file) => {
           const fileName = file?.name ?? `file_${Math.random()}`;
           newExpandedFiles[fileName] = true;
-          newSelectedFiles[fileName] = true;
+          if (mode === "update") {
+            newSelectedFiles[fileName] = true;
+          }
         });
         setSelectedFiles(newSelectedFiles);
         setExpandedFiles(newExpandedFiles);
       }
     } catch (error) {
       console.error("Error generating test files:", error);
-      setError(
-        "Failed to generate test files. Please check your OpenAI API key."
-      );
+      setError("Failed to generate test files.");
     } finally {
       setAnalyzing(false);
       setLoading(false);
@@ -165,15 +111,18 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         (file) => selectedFiles[file.name]
       );
 
-      // TODO: commit changes to pull request
-      await commitChangesToPullRequest(pullRequest, filesToCommit);
+      await commitChangesToPullRequest(
+        pullRequest.repository.owner.login,
+        pullRequest.repository.name,
+        pullRequest.number,
+        filesToCommit
+      );
 
       toast({
         title: "Changes committed successfully",
         description: "The test files have been added to the pull request.",
       });
 
-      // Reset state after successful commit
       setTestFiles([]);
       setSelectedFiles({});
       setExpandedFiles({});
@@ -255,7 +204,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleWriteNewTests(pullRequest)}
+            onClick={() => handleTests(pullRequest, "write")}
             disabled={loading}
           >
             {loading ? (
@@ -269,7 +218,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           <Button
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
-            onClick={() => handleUpdateTests(pullRequest)}
+            onClick={() => handleTests(pullRequest, "update")}
             disabled={loading}
           >
             {loading ? (
@@ -286,7 +235,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           {error}
         </div>
       )}
-      {loading && (
+      {(loading || analyzing || testFiles.length > 0) && (
         <div className="mt-4">
           <h4 className="font-semibold mb-2">Test Files</h4>
           {analyzing ? (
