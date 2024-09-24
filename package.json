@@ -14,6 +14,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^0.0.50",
     "@ai-sdk/openai": "^0.0.61",
     "@clerk/nextjs": "^5.6.0",
     "@octokit/rest": "^21.0.2",
