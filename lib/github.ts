@@ -101,19 +101,12 @@ export async function getAssignedPullRequests() {
 
         const branchName = pullRequestData.head.ref;
 
-        console.log(
-          `branchName: ${branchName}, owner: ${owner}, repo: ${repo}`
-        );
-        console.log("pr.number", pr.number);
-
         const buildStatus = await fetchBuildStatus(
           octokit,
           owner,
           repo,
           branchName
         );
-
-        console.log("buildStatus", buildStatus);
 
         return {
           id: pr.id,
@@ -147,15 +140,24 @@ async function fetchBuildStatus(
   ref: string
 ): Promise<string> {
   try {
-    const { data } = await octokit.rest.repos.getCombinedStatusForRef({
+    const { data } = await octokit.rest.checks.listForRef({
       owner,
       repo,
       ref,
     });
 
-    console.log("data", data);
+    if (data.check_runs.length === 0) {
+      return "pending";
+    }
 
-    return data.state;
+    const statuses = data.check_runs.map((run) => run.conclusion);
+    if (statuses.every((status) => status === "success")) {
+      return "success";
+    } else if (statuses.some((status) => status === "failure")) {
+      return "failure";
+    } else {
+      return "pending";
+    }
   } catch (error) {
     console.error("Error fetching build status:", error);
     return "unknown";
@@ -234,6 +236,9 @@ export async function getPullRequestInfo(
       }),
     ]);
 
+    console.log("Diff response: ", diffResponse);
+    console.log("Files response: ", filesResponse);
+
     const testFiles = filesResponse.data
       .filter(
         (file) =>
@@ -244,6 +249,8 @@ export async function getPullRequestInfo(
         name: file.filename,
         content: file.patch || "",
       }));
+
+    console.log("Test files: ", testFiles);
 
     return {
       diff: diffResponse.data,
