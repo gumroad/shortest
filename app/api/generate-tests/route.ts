@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { streamObject } from "ai";
+import { generateObject } from "ai";
 import { z } from "zod";
 import { GenerateTestsInput } from "./schema";
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
   Respond with an array of test files with their name being the path to the file and the content being the full contents of the updated test file.`;
 
-  const { elementStream } = await streamObject({
+  const { object } = await generateObject({
     model: anthropic("claude-3-5-sonnet-20240620"),
     output: "array",
     schema: z.object({
@@ -40,13 +40,11 @@ export async function POST(req: Request) {
   });
 
   const tests = [];
-  for await (const test of elementStream) {
+  for (const test of object) {
     tests.push(test);
   }
 
-  console.log("Tests", tests);
-
-  return new Response(JSON.stringify({ tests }), {
+  return new Response(JSON.stringify(tests), {
     headers: { "Content-Type": "application/json" },
   });
 }

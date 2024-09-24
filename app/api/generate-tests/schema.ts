@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const generateTestsSchema = z.object({
+export const generateTestsSchema = z.object({
   mode: z.enum(["write", "update"]),
   pr_id: z.number(),
   pr_diff: z.string(),
@@ -12,16 +12,12 @@ const generateTestsSchema = z.object({
   ),
 });
 
-export const generateTestsResponseSchema = z.object({
-  testFiles: z.array(
-    z.object({
-      name: z.string(),
-      oldContent: z.string(),
-      newContent: z.string(),
-      isEntirelyNew: z.boolean(),
-    })
-  ),
-});
+export const generateTestsResponseSchema = z.array(
+  z.object({
+    name: z.string(),
+    content: z.string(),
+  })
+);
 
 export type GenerateTestsInput = z.infer<typeof generateTestsSchema>;
 export type GenerateTestsResponse = z.infer<typeof generateTestsResponseSchema>;
