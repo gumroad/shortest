@@ -99,14 +99,21 @@ export async function getAssignedPullRequests() {
           pull_number: pr.number,
         });
 
-        const latestCommitSha = pullRequestData.head.sha;
+        const branchName = pullRequestData.head.ref;
+
+        console.log(
+          `branchName: ${branchName}, owner: ${owner}, repo: ${repo}`
+        );
+        console.log("pr.number", pr.number);
 
         const buildStatus = await fetchBuildStatus(
           octokit,
           owner,
           repo,
-          latestCommitSha
+          branchName
         );
+
+        console.log("buildStatus", buildStatus);
 
         return {
           id: pr.id,
@@ -121,12 +128,14 @@ export async function getAssignedPullRequests() {
           isDraft: pr.draft || false,
           owner,
           repo,
+          branchName,
         };
       })
     );
 
     return pullRequests;
   } catch (error) {
+    console.error("Error fetching assigned pull requests:", error);
     return { error: "Failed to fetch assigned GitHub pull requests" };
   }
 }
@@ -144,8 +153,11 @@ async function fetchBuildStatus(
       ref,
     });
 
+    console.log("data", data);
+
     return data.state;
   } catch (error) {
+    console.error("Error fetching build status:", error);
     return "unknown";
   }
 }

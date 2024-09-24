@@ -4,6 +4,7 @@ export interface PullRequest {
   number: number;
   buildStatus: string;
   isDraft: boolean;
+  branchName: string;
   repository: {
     id: number;
     name: string;
