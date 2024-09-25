@@ -7,7 +7,7 @@ import {
   updateUserGithubToken,
   createUser,
 } from "./db/queries";
-import { PullRequest, TestFile } from "./db/schema";
+import { TestFile } from "../app/(dashboard)/dashboard/types";
 
 async function getOctokit() {
   const { userId } = auth();
