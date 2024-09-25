@@ -169,7 +169,7 @@ export async function commitChangesToPullRequest(
   repo: string,
   pullNumber: number,
   filesToCommit: TestFile[]
-) {
+): Promise<string> {
   const octokit = await getOctokit();
 
   try {
@@ -191,28 +191,53 @@ export async function commitChangesToPullRequest(
       commit_sha: ref.object.sha,
     });
 
-    const tree = await Promise.all(
-      filesToCommit.map(async (file) => {
-        const { data: blob } = await octokit.git.createBlob({
-          owner,
-          repo,
-          content: file.content,
-          encoding: "utf-8",
-        });
+    const { data: currentTree } = await octokit.git.getTree({
+      owner,
+      repo,
+      tree_sha: commit.tree.sha,
+      recursive: "true",
+    });
 
-        return {
+    const updatedTree = currentTree.tree.map((item) => ({
+      path: item.path,
+      mode: item.mode,
+      type: item.type,
+      sha: item.sha,
+    }));
+
+    for (const file of filesToCommit) {
+      const { data: blob } = await octokit.git.createBlob({
+        owner,
+        repo,
+        content: file.content,
+        encoding: "utf-8",
+      });
+
+      const existingFileIndex = updatedTree.findIndex(
+        (item) => item.path === file.name
+      );
+      if (existingFileIndex !== -1) {
+        updatedTree[existingFileIndex] = {
           path: file.name,
           mode: "100644",
           type: "blob",
           sha: blob.sha,
         };
-      })
-    );
+      } else {
+        updatedTree.push({
+          path: file.name,
+          mode: "100644",
+          type: "blob",
+          sha: blob.sha,
+        });
+      }
+    }
 
     const { data: newTree } = await octokit.git.createTree({
       owner,
       repo,
-      tree: tree as any,
+      tree: updatedTree as any,
+      base_tree: commit.tree.sha,
     });
 
     const { data: newCommit } = await octokit.git.createCommit({
@@ -229,11 +254,15 @@ export async function commitChangesToPullRequest(
       ref: `heads/${pr.head.ref}`,
       sha: newCommit.sha,
     });
+
+    // Return the commit URL
+    return `https://github.com/${owner}/${repo}/commit/${newCommit.sha}`;
   } catch (error) {
     console.error("Error committing changes to pull request:", error);
     throw error;
   }
 }
+
 export async function getPullRequestInfo(
   owner: string,
   repo: string,
