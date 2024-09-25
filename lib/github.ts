@@ -255,7 +255,6 @@ export async function commitChangesToPullRequest(
       sha: newCommit.sha,
     });
 
-    // Return the commit URL
     return `https://github.com/${owner}/${repo}/commit/${newCommit.sha}`;
   } catch (error) {
     console.error("Error committing changes to pull request:", error);
@@ -299,7 +298,7 @@ export async function getPullRequestInfo(
         queue.push(...(dirContents.data as { path: string; type: string }[]));
       } else if (
         item.type === "file" &&
-        item.path.toLowerCase().includes("test.tsx")
+        item.path.toLowerCase().includes(".test.")
       ) {
         const fileContent = await octokit.rest.repos.getContent({
           owner,

@@ -125,6 +125,9 @@ importers:
       react-dom:
         specifier: 19.0.0-rc-7771d3a7-20240827
         version: 19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827)
+      run:
+        specifier: ^1.5.0
+        version: 1.5.0
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
@@ -3097,6 +3100,11 @@ packages:
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
+
+  run@1.5.0:
+    resolution: {integrity: sha512-CBPzeX6JQZUdhZpSFyNt2vUk44ivKMWZYCNBYoZYEE46mL9nf6WyMP3320WnzIrJuo89+njiUvlo83jUEXjXLg==}
+    engines: {node: '>=v0.9.0'}
+    hasBin: true
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
@@ -6287,6 +6295,10 @@ snapshots:
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
+
+  run@1.5.0:
+    dependencies:
+      minimatch: 9.0.5
 
   safer-buffer@2.1.2: {}
 

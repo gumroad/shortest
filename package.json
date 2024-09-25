@@ -53,6 +53,7 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "19.0.0-rc-7771d3a7-20240827",
+    "run": "^1.5.0",
     "server-only": "^0.0.1",
     "stripe": "^16.10.0",
     "tailwind-merge": "^2.5.2",
