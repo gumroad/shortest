@@ -4,6 +4,7 @@ export interface PullRequest {
   number: number;
   buildStatus: string;
   isDraft: boolean;
+  branchName: string;
   repository: {
     id: number;
     name: string;
@@ -16,7 +17,6 @@ export interface PullRequest {
 
 export interface TestFile {
   name: string;
-  oldContent: string;
-  newContent: string;
-  isEntirelyNew: boolean;
+  content: string;
+  oldContent?: string;
 }
