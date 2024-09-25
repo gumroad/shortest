@@ -63,13 +63,6 @@ export type NewUser = typeof users.$inferInsert;
 export type PullRequest = typeof pullRequests.$inferSelect;
 export type NewPullRequest = typeof pullRequests.$inferInsert;
 
-export interface TestFile {
-  name: string;
-  oldContent: string;
-  newContent: string;
-  isEntirelyNew: boolean;
-}
-
 export interface ExtendedPullRequest extends PullRequest {
   repository: {
     owner: string;

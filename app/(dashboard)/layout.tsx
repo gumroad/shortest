@@ -6,6 +6,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import Link from "next/link";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -43,6 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <main>{children}</main>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
