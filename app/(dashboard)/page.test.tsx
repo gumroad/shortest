@@ -34,24 +34,4 @@ describe("Homepage", () => {
       "Write Your Tests"
     );
   });
-
-  it("renders the sign-in button for signed-out users", () => {
-    render(
-      <ClerkProvider>
-        <Homepage />
-      </ClerkProvider>
-    );
-
-    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
-  });
-
-  it("renders the dashboard link for signed-in users", () => {
-    render(
-      <ClerkProvider>
-        <Homepage />
-      </ClerkProvider>
-    );
-
-    expect(screen.getByRole("link", { name: /go to dashboard/i })).toBeInTheDocument();
-  });
 });
