@@ -289,7 +289,7 @@ export async function getPullRequestInfo(
 
     while (queue.length > 0) {
       const item = queue.shift();
-      if (item.type === "dir") {
+      if (item && item.type === "dir") {
         const dirContents = await octokit.rest.repos.getContent({
           owner,
           repo,
@@ -297,6 +297,7 @@ export async function getPullRequestInfo(
         });
         queue.push(...(dirContents.data as { path: string; type: string }[]));
       } else if (
+        item &&
         item.type === "file" &&
         item.path.toLowerCase().includes(".test.")
       ) {
@@ -304,12 +305,21 @@ export async function getPullRequestInfo(
           owner,
           repo,
           path: item.path,
-          mediaType: { format: "raw" },
         });
-        testFiles.push({
-          name: item.path,
-          content: fileContent.data as string,
-        });
+
+        if (
+          "content" in fileContent.data &&
+          typeof fileContent.data.content === "string"
+        ) {
+          const decodedContent = Buffer.from(
+            fileContent.data.content,
+            "base64"
+          ).toString("utf-8");
+          testFiles.push({
+            name: item.path,
+            content: decodedContent,
+          });
+        }
       }
     }
 
