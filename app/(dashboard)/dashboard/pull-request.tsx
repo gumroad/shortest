@@ -123,7 +123,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           content: file.content,
         }));
 
-      await commitChangesToPullRequest(
+      const newCommitUrl = await commitChangesToPullRequest(
         pullRequest.repository.owner.login,
         pullRequest.repository.name,
         pullRequest.number,
@@ -132,7 +132,14 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
 
       toast({
         title: "Changes committed successfully",
-        description: "The test files have been added to the pull request.",
+        description: (
+          <>
+            The test files have been added to the pull request.{" "}
+            <Link href={newCommitUrl} className="underline">
+              View commit
+            </Link>
+          </>
+        ),
       });
 
       setTestFiles([]);
