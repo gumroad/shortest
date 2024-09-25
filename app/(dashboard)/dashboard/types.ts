@@ -18,4 +18,5 @@ export interface PullRequest {
 export interface TestFile {
   name: string;
   content: string;
+  oldContent: string | null;
 }
