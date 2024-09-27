@@ -2,16 +2,8 @@
 
 import { eq } from "drizzle-orm";
 import { db } from "./drizzle";
-import {
-  users,
-  User,
-  NewUser,
-  pullRequests,
-  PullRequest,
-  NewPullRequest,
-} from "./schema";
+import { users, User, NewUser, pullRequests, PullRequest } from "./schema";
 import { auth } from "@clerk/nextjs/server";
-import { and, sql } from "drizzle-orm";
 
 export async function updateUserSubscription(
   clerkId: string,
@@ -39,16 +31,6 @@ export async function getUserByClerkId(clerkId: string): Promise<User | null> {
     .limit(1);
 
   return result[0] || null;
-}
-
-export async function updateUserGithubToken(
-  clerkId: string,
-  accessToken: string
-) {
-  await db
-    .update(users)
-    .set({ githubAccessToken: accessToken })
-    .where(eq(users.clerkId, clerkId));
 }
 
 export async function createUser(clerkId: string): Promise<User> {
