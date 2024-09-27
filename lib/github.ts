@@ -1,31 +1,20 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
-import {
-  getUserByClerkId,
-  updateUserGithubToken,
-  createUser,
-} from "./db/queries";
+import { updateUserGithubToken } from "./db/queries";
 import { TestFile } from "../app/(dashboard)/dashboard/types";
 
 async function getOctokit() {
   const { userId } = auth();
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
+  if (!userId) throw new Error("Clerk: User not authenticated");
 
-  let user = await getUserByClerkId(userId);
+  const clerk = clerkClient();
+  const [{ token: githubToken }] = await clerk.users
+    .getUserOauthAccessToken(userId, "oauth_github")
+    .then(({ data }) => data);
 
-  if (!user) {
-    user = await createUser(userId);
-  }
-
-  if (!user.githubAccessToken) {
-    throw new Error("GitHub access token not found");
-  }
-
-  return new Octokit({ auth: user.githubAccessToken });
+  return new Octokit({ auth: githubToken });
 }
 
 export async function exchangeCodeForAccessToken(
