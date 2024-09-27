@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "./drizzle";
 import { users, User, NewUser, pullRequests, PullRequest } from "./schema";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export async function updateUserSubscription(
   clerkId: string,
@@ -23,24 +23,33 @@ export async function updateUserSubscription(
     .where(eq(users.clerkId, clerkId));
 }
 
-export async function getUserByClerkId(clerkId: string): Promise<User | null> {
-  const result = await db
+async function createUser(clerkId: string): Promise<User> {
+  const clerkUser = await clerkClient.users.getUser(clerkId);
+  const newUser: NewUser = {
+    clerkId,
+    role: "member",
+    name:
+      clerkUser.firstName && clerkUser.lastName
+        ? `${clerkUser.firstName} ${clerkUser.lastName}`
+        : clerkUser.username || "",
+  };
+
+  const [createdUser] = await db.insert(users).values(newUser).returning();
+  return createdUser;
+}
+
+export async function getUserByClerkId(clerkId: string): Promise<User> {
+  const [existingUser] = await db
     .select()
     .from(users)
     .where(eq(users.clerkId, clerkId))
     .limit(1);
 
-  return result[0] || null;
-}
+  if (existingUser) {
+    return existingUser;
+  }
 
-export async function createUser(clerkId: string): Promise<User> {
-  const newUser: NewUser = {
-    clerkId,
-    role: "member",
-  };
-
-  const [createdUser] = await db.insert(users).values(newUser).returning();
-  return createdUser;
+  return createUser(clerkId);
 }
 
 export async function getPullRequests(): Promise<PullRequest[]> {
@@ -50,9 +59,5 @@ export async function getPullRequests(): Promise<PullRequest[]> {
   }
 
   const user = await getUserByClerkId(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
   return db.select().from(pullRequests).where(eq(pullRequests.userId, user.id));
 }
