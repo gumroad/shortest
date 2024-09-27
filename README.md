@@ -1,4 +1,4 @@
-# Shortest app
+# Shortest
 
 **[shortest.com](shortest.com)**
 
