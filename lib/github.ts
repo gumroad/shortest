@@ -5,7 +5,7 @@ import { Octokit } from "@octokit/rest";
 import { updateUserGithubToken } from "./db/queries";
 import { TestFile } from "../app/(dashboard)/dashboard/types";
 
-async function getOctokit() {
+export async function getOctokit() {
   const { userId } = auth();
   if (!userId) throw new Error("Clerk: User not authenticated");
 

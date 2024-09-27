@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { Octokit } from "@octokit/rest";
+import { getOctokit } from "@/lib/github";
 
-const octokit = new Octokit({ auth: process.env.GITHUB_ACCESS_TOKEN });
+const octokit = getOctokit();
 
 // Webhooks documentation: https://docs.github.com/en/webhooks
 
