@@ -1,6 +1,6 @@
 # Shortest
 
-**[shortest.com](shortest.com)**
+**[shortest.com](https://shortest.com)**
 
 ## Getting started
 
