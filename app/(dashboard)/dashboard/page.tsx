@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, GitPullRequest } from "lucide-react";
 import { PullRequestItem } from "./pull-request";
 import { PullRequest } from "./types";
 import { getAssignedPullRequests } from "@/lib/github";
@@ -89,10 +89,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="p-6">
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="p-6 flex-grow flex items-center">
         {pullRequests.length > 0 ? (
-          <ul className="space-y-8">
+          <ul className="space-y-8 w-full">
             {pullRequests.map((pr) => (
               <li key={pr.id}>
                 <div className="flex items-center justify-between mb-2">
@@ -105,7 +105,17 @@ export default function DashboardPage() {
             ))}
           </ul>
         ) : (
-          <p>No pull requests found.</p>
+          <div className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div className="flex flex-col items-center justify-center text-center">
+              <GitPullRequest className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold mb-2">
+                No pull requests found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                We couldn't find any pull requests assigned to you.
+              </p>
+            </div>
+          </div>
         )}
       </div>
     </div>
