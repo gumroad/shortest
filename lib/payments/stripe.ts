@@ -17,6 +17,7 @@ export async function createCheckoutSession({
 }) {
   if (!user) {
     redirect(`/sign-up?redirect=checkout&priceId=${priceId}`);
+    return;
   }
 
   const session = await stripe.checkout.sessions.create({
