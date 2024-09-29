@@ -42,7 +42,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
-      <main>{children}</main>
+      {children}
       <Toaster />
     </ClerkProvider>
   );
