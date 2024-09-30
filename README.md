@@ -26,10 +26,11 @@ This guide will help you set up the Shortest project for local development.
    ```
 
 #### For Gumroad Vercel Team Members:
-1. Run `vercel env pull .env.development.local` to get the latest environment variables
+1. Run `vercel env pull` to get the latest environment variables
+- https://vercel.com/docs/deployments/local-env#environment-variables-for-local-development
 
 #### For Other Contributors:
-1. Duplicate `.env.example` and name it `.env.local`
+1. Duplicate `.env.example` and name it `.env`
 2. You will need to manually configure the services as described in the "Services Configuration" section below
 
 #### Set up the database:
