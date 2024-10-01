@@ -29,6 +29,13 @@
       "when": 1726861331690,
       "tag": "0003_exotic_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1727474740023,
+      "tag": "0004_dear_the_liberteens",
+      "breakpoints": true
     }
   ]
 }
