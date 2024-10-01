@@ -30,8 +30,8 @@ This guide will help you set up the Shortest project for local development.
 - https://vercel.com/docs/deployments/local-env#environment-variables-for-local-development
 
 #### For Other Contributors:
-1. Duplicate `.env.example` and name it `.env`
-2. You will need to manually configure the services as described in the "Services Configuration" section below
+1. Run `pnpm run setup` to configure the environment variables.
+2. The setup wizard will ask you for information. Refer to "Services Configuration" section below for more details.
 
 #### Set up the database:
    ```bash
@@ -42,7 +42,7 @@ This guide will help you set up the Shortest project for local development.
 
 ### Services Configuration
 
-You'll need to set up the following services for local development. If you're not a Gumroad Vercel team member, you'll need to manually configure each of these services and add the corresponding environment variables to your `.env.local` file:
+You'll need to set up the following services for local development. If you're not a Gumroad Vercel team member, you'll need to either run the setup wizard `pnpm run setup` or manually configure each of these services and add the corresponding environment variables to your `.env.local` file:
 
 <details>
 <summary>Clerk</summary>
