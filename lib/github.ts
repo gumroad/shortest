@@ -1,81 +1,19 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
-import {
-  getUserByClerkId,
-  updateUserGithubToken,
-  createUser,
-} from "./db/queries";
 import { TestFile } from "../app/(dashboard)/dashboard/types";
 
-async function getOctokit() {
+export async function getOctokit() {
   const { userId } = auth();
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
+  if (!userId) throw new Error("Clerk: User not authenticated");
 
-  let user = await getUserByClerkId(userId);
+  const clerk = clerkClient();
+  const [{ token: githubToken }] = await clerk.users
+    .getUserOauthAccessToken(userId, "oauth_github")
+    .then(({ data }) => data);
 
-  if (!user) {
-    user = await createUser(userId);
-  }
-
-  if (!user.githubAccessToken) {
-    throw new Error("GitHub access token not found");
-  }
-
-  return new Octokit({ auth: user.githubAccessToken });
-}
-
-export async function exchangeCodeForAccessToken(
-  code: string
-): Promise<string> {
-  const response = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
-      client_secret: process.env.GITHUB_CLIENT_SECRET,
-      code,
-      redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/github/callback`,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(
-      `Failed to exchange code for access token: ${
-        errorData.error_description || response.statusText
-      }`
-    );
-  }
-
-  const data = await response.json();
-
-  if (data.error) {
-    throw new Error(
-      `GitHub OAuth error: ${data.error_description || data.error}`
-    );
-  }
-
-  if (!data.access_token) {
-    throw new Error("Access token not found in GitHub response");
-  }
-
-  return data.access_token;
-}
-
-export async function saveGitHubAccessToken(accessToken: string) {
-  const { userId } = auth();
-  if (!userId) {
-    throw new Error("User not authenticated");
-  }
-
-  await updateUserGithubToken(userId, accessToken);
+  return new Octokit({ auth: githubToken });
 }
 
 export async function getAssignedPullRequests() {
