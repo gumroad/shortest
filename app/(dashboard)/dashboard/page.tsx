@@ -49,25 +49,6 @@ export default function DashboardPage() {
     fetchAndSetPullRequests();
   }, []);
 
-  const handleReconnectGitHub = async () => {
-    try {
-      const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      if (!clientId) {
-        throw new Error("GitHub Client ID is not set");
-      }
-      if (!baseUrl) {
-        throw new Error("Base URL is not set");
-      }
-      const redirectUri = `${baseUrl}/api/github/callback`;
-      const encodedRedirectUri = encodeURIComponent(redirectUri);
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodedRedirectUri}&scope=repo,user`;
-    } catch (error) {
-      console.error("Error redirecting to GitHub:", error);
-      setError("Failed to redirect to GitHub. Please try again.");
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -81,9 +62,6 @@ export default function DashboardPage() {
       <div className="flex flex-col items-center justify-center h-full">
         <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
         <p className="text-lg mb-4">{error}</p>
-        <Button onClick={handleReconnectGitHub}>
-          Reconnect GitHub account
-        </Button>
       </div>
     );
   }
