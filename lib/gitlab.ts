@@ -2,6 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Gitlab } from "@gitbeaker/rest";
+import { CommitAction } from '@gitbeaker/core';
 import { TestFile } from "../app/(dashboard)/dashboard/types";
 
 export async function getGitlabClient() {
@@ -26,10 +27,13 @@ export async function getGitlabClient() {
     try {
       await gitlab.Users.showCurrentUser();
     } catch (error: unknown) {
-      if (error instanceof Error && error.response?.status === 403) {
-        console.error("GitLab token doesn't have sufficient permissions");
-        await clerk.users.revokeOauthAccessToken(userId, "oauth_gitlab");
-        throw new Error("GitLab token invalid or lacks permissions. Please re-authenticate with GitLab.");
+      if (error instanceof Error) {
+        const gitlabError = error as { response?: { status?: number } };
+        if (gitlabError.response?.status === 403) {
+          console.error("GitLab token doesn't have sufficient permissions");
+          await clerk.sessions.revokeSession(userId);
+          throw new Error("GitLab token invalid or lacks permissions. Please re-authenticate.");
+        }
       }
       throw error;
     }
@@ -37,10 +41,13 @@ export async function getGitlabClient() {
     return gitlab;
   } catch (error: unknown) {
     console.error("Error creating GitLab client:", error);
-    if (error instanceof Error && error.response?.status === 401) {
-      // Token might be expired, try to refresh it
-      await clerk.users.revokeOauthAccessToken(userId, "oauth_gitlab");
-      throw new Error("GitLab token expired. Please re-authenticate with GitLab.");
+    if (error instanceof Error) {
+      const gitlabError = error as { response?: { status?: number } };
+      if (gitlabError.response?.status === 401) {
+        // Token might be expired, revoke the session
+        await clerk.sessions.revokeSession(userId);
+        throw new Error("GitLab authentication expired. Please re-authenticate.");
+      }
     }
     throw error;
   }
@@ -107,8 +114,8 @@ export async function commitChangesToMergeRequest(
     const mr = await gitlab.MergeRequests.show(projectId, mergeRequestIid);
     const branch = mr.source_branch;
 
-    const actions = filesToCommit.map((file) => ({
-      action: "update",
+    const actions: CommitAction[] = filesToCommit.map((file) => ({
+      action: "update" as const,
       filePath: file.name,
       content: file.content,
     }));

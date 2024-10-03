@@ -18,6 +18,7 @@
     "@ai-sdk/anthropic": "^0.0.50",
     "@ai-sdk/openai": "^0.0.61",
     "@clerk/nextjs": "^5.6.0",
+    "@gitbeaker/core": "^40.4.0",
     "@gitbeaker/rest": "^40.4.0",
     "@octokit/rest": "^21.0.2",
     "@radix-ui/react-avatar": "^1.1.0",
