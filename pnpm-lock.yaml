@@ -17,6 +17,9 @@ importers:
       '@clerk/nextjs':
         specifier: ^5.6.0
         version: 5.6.0(next@15.0.0-canary.152(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827))(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827)
+      '@gitbeaker/rest':
+        specifier: ^40.4.0
+        version: 40.4.0
       '@octokit/rest':
         specifier: ^21.0.2
         version: 21.0.2
@@ -854,6 +857,18 @@ packages:
 
   '@floating-ui/utils@0.2.7':
     resolution: {integrity: sha512-X8R8Oj771YRl/w+c1HqAC1szL8zWQRwFvgDwT129k9ACdBoud/+/rX9V0qiMl6LWUdP9voC2nDVZYPMQQsb6eA==}
+
+  '@gitbeaker/core@40.4.0':
+    resolution: {integrity: sha512-RR5H5cXqfxfa3MkFHYR7qU9z1DckqnDVi9l2za4W5Sfo8zNop6Ci5uDDZx4EkRR4Ri9MJGQULFYHw1sKAK9OJg==}
+    engines: {node: '>=18.20.0'}
+
+  '@gitbeaker/requester-utils@40.4.0':
+    resolution: {integrity: sha512-onR/oJr/plaUehkZGdCkkl9qF0BfeuSchrl6+6cvvEy6q3zVXgZHLCMXZW7sGafpr61IFOqU8/W3bTP+14Njog==}
+    engines: {node: '>=18.20.0'}
+
+  '@gitbeaker/rest@40.4.0':
+    resolution: {integrity: sha512-C+kQkwA3WD09jvwtdrBqifuRPQgetw4egLCZdKAGUfw5y8E5Vh/jjmTq2RIzV9JlKfJmJCK3sKaOoPQkqN4erA==}
+    engines: {node: '>=18.20.0'}
 
   '@img/sharp-darwin-arm64@0.33.5':
     resolution: {integrity: sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ==}
@@ -2869,6 +2884,10 @@ packages:
   picocolors@1.1.0:
     resolution: {integrity: sha512-TQ92mBOW0l3LeMeyLV6mzy/kWr8lkd/hp3mTg7wYK7zJhuBStmGMBG0BdeDZS/dZx1IukaX6Bk11zcln25o1Aw==}
 
+  picomatch-browser@2.2.6:
+    resolution: {integrity: sha512-0ypsOQt9D4e3hziV8O4elD9uN0z/jtUEfxVRtNaAAtXIyUx9m/SzlO020i8YNL2aL/E6blOvvHQcin6HZlFy/w==}
+    engines: {node: '>=8.6'}
+
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
@@ -2973,6 +2992,9 @@ packages:
 
   raf-schd@4.0.3:
     resolution: {integrity: sha512-tQkJl2GRWh83ui2DiPTJz9wEiMN20syf+5oKfB03yYP7ioZcJwsIK8FjrtLwH1m7C7e+Tt2yYBlrOpdT+dyeIQ==}
+
+  rate-limiter-flexible@4.0.1:
+    resolution: {integrity: sha512-2/dGHpDFpeA0+755oUkW+EKyklqLS9lu0go9pDsbhqQjZcxfRyJ6LA4JI0+HAdZ2bemD/oOjUeZQB2lCZqXQfQ==}
 
   react-beautiful-dnd@13.1.1:
     resolution: {integrity: sha512-0Lvs4tq2VcrEjEgDXHjT98r+63drkKEgqyxdA7qD3mvKwga6a5SscbdLPO2IExotU1jW8L0Ksdl0Cj2AF67nPQ==}
@@ -3564,6 +3586,9 @@ packages:
       utf-8-validate:
         optional: true
 
+  xcase@2.0.1:
+    resolution: {integrity: sha512-UmFXIPU+9Eg3E9m/728Bii0lAIuoc+6nbrNUKaRPJOFp91ih44qqGlWtxMB6kXFrRD6po+86ksHM5XHCfk6iPw==}
+
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -4114,6 +4139,24 @@ snapshots:
       react-dom: 19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827)
 
   '@floating-ui/utils@0.2.7': {}
+
+  '@gitbeaker/core@40.4.0':
+    dependencies:
+      '@gitbeaker/requester-utils': 40.4.0
+      qs: 6.13.0
+      xcase: 2.0.1
+
+  '@gitbeaker/requester-utils@40.4.0':
+    dependencies:
+      picomatch-browser: 2.2.6
+      qs: 6.13.0
+      rate-limiter-flexible: 4.0.1
+      xcase: 2.0.1
+
+  '@gitbeaker/rest@40.4.0':
+    dependencies:
+      '@gitbeaker/core': 40.4.0
+      '@gitbeaker/requester-utils': 40.4.0
 
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:
@@ -6055,6 +6098,8 @@ snapshots:
 
   picocolors@1.1.0: {}
 
+  picomatch-browser@2.2.6: {}
+
   picomatch@2.3.1: {}
 
   pify@2.3.0: {}
@@ -6145,6 +6190,8 @@ snapshots:
   queue-microtask@1.2.3: {}
 
   raf-schd@4.0.3: {}
+
+  rate-limiter-flexible@4.0.1: {}
 
   react-beautiful-dnd@13.1.1(react-dom@19.0.0-rc-7771d3a7-20240827(react@19.0.0-rc-7771d3a7-20240827))(react@19.0.0-rc-7771d3a7-20240827):
     dependencies:
@@ -6769,6 +6816,8 @@ snapshots:
   ws@8.18.0(bufferutil@4.0.8):
     optionalDependencies:
       bufferutil: 4.0.8
+
+  xcase@2.0.1: {}
 
   xml-name-validator@5.0.0: {}
 

@@ -6,23 +6,30 @@ import { Loader2, AlertCircle, GitPullRequest } from "lucide-react";
 import { PullRequestItem } from "./pull-request";
 import { PullRequest } from "./types";
 import { getAssignedPullRequests } from "@/lib/github";
+import { getAssignedMergeRequests } from "@/lib/gitlab";
 
 export default function DashboardPage() {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
+  const [mergeRequests, setMergeRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAndSetPullRequests = async () => {
+    const fetchAndSetCodeRequests = async () => {
       try {
-        const data = await getAssignedPullRequests();
-        if ("error" in data) {
-          setError(data.error as string);
+        const [githubData, gitlabData] = await Promise.all([
+          getAssignedPullRequests(),
+          getAssignedMergeRequests(),
+        ]);
+
+        if ("error" in githubData) {
+          setError(githubData.error as string);
           setPullRequests([]);
         } else {
           setPullRequests(
-            data.map((pr) => ({
+            githubData.map((pr) => ({
               ...pr,
+              source: 'github',  // Add this line
               repository: {
                 id: parseInt(pr.repoId, 10),
                 name: pr.repo,
@@ -33,20 +40,43 @@ export default function DashboardPage() {
               },
             }))
           );
-          setError(null);
         }
+
+        if ("error" in gitlabData) {
+          setError((prevError) => prevError ? `${prevError}\n${gitlabData.error}` : gitlabData.error as string);
+          setMergeRequests([]);
+        } else {
+          console.log(gitlabData);
+          setMergeRequests(
+            gitlabData.map((mr) => ({
+              ...mr,
+              source: 'gitlab',  // Add this line
+              repository: {
+                id: mr.repoId,
+                name: mr.repo,
+                full_name: `${mr.owner}/${mr.repo}`,
+                owner: {
+                  login: mr.owner,
+                },
+              },
+            }))
+          );
+        }
+
+        setError(null);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching pull requests:", error);
+        console.error("Error fetching requests:", error);
         setLoading(false);
         setError(
-          "Failed to fetch pull requests. Please reconnect your GitHub account."
+          "Failed to fetch pull requests and merge requests. Please reconnect your GitHub and GitLab accounts."
         );
         setPullRequests([]);
+        setMergeRequests([]);
       }
     };
 
-    fetchAndSetPullRequests();
+    fetchAndSetCodeRequests();
   }, []);
 
   if (loading) {
@@ -66,19 +96,21 @@ export default function DashboardPage() {
     );
   }
 
+  const allRequests = [...pullRequests, ...mergeRequests];
+
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="p-6 flex-grow flex items-center">
-        {pullRequests.length > 0 ? (
+        {allRequests.length > 0 ? (
           <ul className="space-y-8 w-full">
-            {pullRequests.map((pr) => (
-              <li key={pr.id}>
+            {allRequests.map((request) => (
+              <li key={request.id}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-lg">
-                    {pr.repository.full_name}
+                    {request.repository.full_name}
                   </h3>
                 </div>
-                <PullRequestItem pullRequest={pr} />
+                <PullRequestItem pullRequest={request} />
               </li>
             ))}
           </ul>
@@ -87,10 +119,10 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center text-center">
               <GitPullRequest className="h-16 w-16 text-gray-400 mb-4" />
               <h3 className="text-xl font-semibold mb-2">
-                No pull requests found
+                No pull requests or merge requests found
               </h3>
               <p className="text-gray-600 mb-4">
-                We couldn't find any pull requests assigned to you.
+                We couldn't find any pull requests or merge requests assigned to you.
               </p>
             </div>
           </div>
