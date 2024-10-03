@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, PenTool, Zap, Clock } from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { ArrowRight, Clock, PenTool, Zap } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -10,7 +10,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl md:text-6xl">
-              (Have AI) Write Your Tests
+              (Have AI) Write Your Tests HELLO
               <span className="block text-orange-500">Faster Than Ever</span>
             </h1>
             <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl max-w-2xl mx-auto">
