@@ -21,7 +21,7 @@ import dynamic from "next/dynamic";
 import { PullRequest, TestFile } from "./types";
 import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 import { useToast } from "@/hooks/use-toast";
-import { commitChangesToPullRequest, getPullRequestInfo } from "@/lib/github";
+import { commitChangesToPullRequest, getPullRequestInfo } from "@/lib/gitProviderActions";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -48,14 +48,10 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     setAnalyzing(true);
     setLoading(true);
     setError(null);
-
+  
     try {
-      const { diff, testFiles: oldTestFiles } = await getPullRequestInfo(
-        pr.repository.owner.login,
-        pr.repository.name,
-        pr.number
-      );
-
+      const { diff, testFiles: oldTestFiles } = await getPullRequestInfo(pr);
+  
       const response = await fetch("/api/generate-tests", {
         method: "POST",
         headers: {
@@ -68,11 +64,11 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           test_files: oldTestFiles,
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to generate test files");
       }
-
+  
       const data = await response.json();
       const parsedData = generateTestsResponseSchema.parse(data);
       handleTestFilesUpdate(oldTestFiles, parsedData);
@@ -124,14 +120,9 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           name: file.name,
           content: file.content,
         }));
-
-      const newCommitUrl = await commitChangesToPullRequest(
-        pullRequest.repository.owner.login,
-        pullRequest.repository.name,
-        pullRequest.number,
-        filesToCommit
-      );
-
+  
+      const newCommitUrl = await commitChangesToPullRequest(pullRequest, filesToCommit);
+  
       toast({
         title: "Changes committed successfully",
         description: (
@@ -143,7 +134,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           </>
         ),
       });
-
+  
       setTestFiles([]);
       setSelectedFiles({});
       setExpandedFiles({});
