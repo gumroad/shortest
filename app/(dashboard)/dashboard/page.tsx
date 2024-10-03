@@ -96,21 +96,21 @@ export default function DashboardPage() {
     );
   }
 
-  const allRequests = [...pullRequests, ...mergeRequests];
+  const allCodeChangeRequests = [...pullRequests, ...mergeRequests];
 
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="p-6 flex-grow flex items-center">
-        {allRequests.length > 0 ? (
+        {allCodeChangeRequests.length > 0 ? (
           <ul className="space-y-8 w-full">
-            {allRequests.map((request) => (
-              <li key={request.id}>
+            {allCodeChangeRequests.map((codeChangeRequest) => (
+              <li key={codeChangeRequest.id}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-lg">
-                    {request.repository.full_name}
+                    {codeChangeRequest.repository.full_name}
                   </h3>
                 </div>
-                <PullRequestItem pullRequest={request} />
+                <PullRequestItem pullRequest={codeChangeRequest} />
               </li>
             ))}
           </ul>
