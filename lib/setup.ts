@@ -241,8 +241,20 @@ async function promptForAnthropicApiKey(): Promise<string> {
   return await question('Enter your Anthropic API Key: ');
 }
 
+async function promptForGitHubOAuth(): Promise<void> {
+  console.log('Step 7: Setting up GitHub OAuth');
+  console.log('Create a GitHub OAuth App as described in the README.md file.'); 
+  console.log('Check "Github OAuth" section for more details.');
+  
+  const confirmed = await question('Have you completed these steps? (y/n): ');
+  if (confirmed.toLowerCase() !== 'y') {
+    console.log('Please complete the GitHub OAuth setup before continuing.');
+    process.exit(1);
+  }
+}
+
 async function writeEnvFile(envVars: Record<string, string>) {
-  console.log('Step 7: Writing environment variables to .env.local');
+  console.log('Step 8: Writing environment variables to .env.local');
   const envContent = Object.entries(envVars)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
@@ -277,6 +289,7 @@ async function main() {
   const STRIPE_WEBHOOK_SECRET = await setupStripeWebhook();
   const { publishableKey: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, secretKey: CLERK_SECRET_KEY } = await promptForClerkKeys();
   const ANTHROPIC_API_KEY = await promptForAnthropicApiKey();
+  await promptForGitHubOAuth();
   const NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
   const BASE_URL = 'http://localhost:3000';
   const CLERK_SIGN_IN_FALLBACK_REDIRECT_URL = '/dashboard';
