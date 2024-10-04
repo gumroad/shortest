@@ -103,7 +103,7 @@ You'll need to set up the following services for local development. If you're no
 
 2. Configure Clerk with GitHub OAuth:
    - Go to your Clerk dashboard.
-   - Navigate to `Configure` > `Social Connections` > `GitHub`.
+   - Navigate to `Configure` > `SSO Connections` > `GitHub`.
    - Select `Use custom credentials`
    - Enter your `Client ID` and `Client Secret` from the GitHub OAuth app you just created.
    - Add `repo` to the `Scopes`
