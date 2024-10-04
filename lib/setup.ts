@@ -243,7 +243,8 @@ async function promptForAnthropicApiKey(): Promise<string> {
 
 async function promptForGitHubOAuth(): Promise<void> {
   console.log('Step 7: Setting up GitHub OAuth');
-  console.log('Please make sure that you have created a GitHub OAuth App as described in the README.md file. Check "Github OAuth" section for more details.');
+  console.log('Create a GitHub OAuth App as described in the README.md file.'); 
+  console.log('Check "Github OAuth" section for more details.');
   
   const confirmed = await question('Have you completed these steps? (y/n): ');
   if (confirmed.toLowerCase() !== 'y') {
