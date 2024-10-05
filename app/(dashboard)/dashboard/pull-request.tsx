@@ -18,7 +18,7 @@ import dynamic from "next/dynamic";
 import { PullRequest, TestFile } from "./types";
 import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 import { useToast } from "@/hooks/use-toast";
-import { commitChangesToPullRequest, getPullRequestInfo } from "@/lib/github";
+import { commitChangesToPullRequest, getPullRequestInfo, getFailingTests } from "@/lib/github";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -53,6 +53,19 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         pr.number
       );
 
+      let testFilesToUpdate = oldTestFiles;
+
+      if (mode === "update") {
+        const failingTests = await getFailingTests(
+          pr.repository.owner.login,
+          pr.repository.name,
+          pr.number
+        );
+        testFilesToUpdate = oldTestFiles.filter(file => 
+          failingTests.some(failingFile => failingFile.name === file.name)
+        );
+      }
+
       const response = await fetch("/api/generate-tests", {
         method: "POST",
         headers: {
@@ -62,7 +75,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           mode,
           pr_id: pr.id,
           pr_diff: diff,
-          test_files: oldTestFiles,
+          test_files: testFilesToUpdate,
         }),
       });
 
