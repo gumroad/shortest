@@ -8,6 +8,7 @@ import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 vi.mock('@/lib/github', () => ({
   getPullRequestInfo: vi.fn(),
   commitChangesToPullRequest: vi.fn(),
+  getFailingTests: vi.fn(),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({
@@ -56,7 +57,7 @@ describe('PullRequestItem', () => {
     expect(screen.getByText('Build: success')).toBeInTheDocument();
   });
 
-  it('handles "Write new tests" button click', async () => {
+  it('handles "Write new tests" button click for successful build', async () => {
     const { getPullRequestInfo } = await import('@/lib/github');
     vi.mocked(getPullRequestInfo).mockResolvedValue({
       diff: 'mock diff',
@@ -68,7 +69,7 @@ describe('PullRequestItem', () => {
       json: () => Promise.resolve([{ name: 'generated_test.ts', content: 'generated content' }]),
     } as Response);
 
-    render(<PullRequestItem pullRequest={mockPullRequest} />);
+    render(<PullRequestItem pullRequest={{ ...mockPullRequest, buildStatus: 'success' }} />);
     const writeTestsButton = screen.getByText('Write new tests');
     fireEvent.click(writeTestsButton);
 
@@ -82,17 +83,23 @@ describe('PullRequestItem', () => {
     });
   });
 
-  it('handles "Update tests to fix" button click', async () => {
+  it('handles "Update tests to fix" button click for failed build', async () => {
     const failedPR = { ...mockPullRequest, buildStatus: 'failure' };
-    const { getPullRequestInfo } = await import('@/lib/github');
+    const { getPullRequestInfo, getFailingTests } = await import('@/lib/github');
     vi.mocked(getPullRequestInfo).mockResolvedValue({
       diff: 'mock diff',
-      testFiles: [{ name: 'test.ts', content: 'test content' }],
+      testFiles: [
+        { name: 'test1.ts', content: 'test content 1' },
+        { name: 'test2.ts', content: 'test content 2' },
+      ],
     });
+    vi.mocked(getFailingTests).mockResolvedValue([
+      { name: 'test1.ts', content: 'failing test content' },
+    ]);
 
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([{ name: 'fixed_test.ts', content: 'fixed content' }]),
+      json: () => Promise.resolve([{ name: 'test1.ts', content: 'fixed content' }]),
     } as Response);
 
     render(<PullRequestItem pullRequest={failedPR} />);
@@ -104,7 +111,8 @@ describe('PullRequestItem', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('fixed_test.ts')).toBeInTheDocument();
+      expect(screen.getByText('test1.ts')).toBeInTheDocument();
+      expect(screen.queryByText('test2.ts')).not.toBeInTheDocument();
       expect(screen.getByTestId('react-diff-viewer')).toBeInTheDocument();
     });
   });
@@ -119,10 +127,6 @@ describe('PullRequestItem', () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
     } as Response);
-
-    const { useToast } = await import('@/hooks/use-toast');
-    const mockToast = vi.fn();
-    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
 
     render(<PullRequestItem pullRequest={mockPullRequest} />);
     const writeTestsButton = screen.getByText('Write new tests');
@@ -257,6 +261,27 @@ describe('PullRequestItem', () => {
         description: 'Failed to commit changes. Please try again.',
         variant: 'destructive',
       }));
+    });
+  });
+
+  it('displays pending build status', () => {
+    const pendingPR = { ...mockPullRequest, buildStatus: 'pending' };
+    render(<PullRequestItem pullRequest={pendingPR} />);
+    expect(screen.getByText('Build: pending')).toBeInTheDocument();
+  });
+
+  it('disables buttons when loading', async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => new Promise(resolve => setTimeout(() => resolve([]), 100)),
+    } as Response);
+
+    render(<PullRequestItem pullRequest={mockPullRequest} />);
+    const writeTestsButton = screen.getByText('Write new tests');
+    fireEvent.click(writeTestsButton);
+
+    await waitFor(() => {
+      expect(writeTestsButton).toBeDisabled();
     });
   });
 });

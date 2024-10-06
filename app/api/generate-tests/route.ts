@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const prompt = `You are an expert software engineer. ${
     mode === "write"
       ? "Write entirely new tests and update relevant existing tests in order to reflect the added/edited/removed functionality."
-      : "Update existing test files in order to get the PR build back to passing. Make updates to tests solely, do not add or remove tests."
+      : "Update the provided failing test files in order to get the PR build back to passing. Make updates to tests solely, do not add or remove tests."
   }
 
   PR Diff:
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   ${pr_diff}
   </PR Diff>
 
-  Existing test files:
+  ${mode === "update" ? "Failing test files:" : "Existing test files:"}
   <Test Files>
   ${test_files
     .map((file) => `${file.name}\n${file.content ? `: ${file.content}` : ""}`)
