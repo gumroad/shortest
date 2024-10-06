@@ -20,3 +20,10 @@ export interface TestFile {
   content: string;
   oldContent?: string;
 }
+
+export interface Issue {
+  id: string;
+  identifier: string;
+  title: string;
+  description: string;
+}

@@ -10,6 +10,10 @@ export const generateTestsSchema = z.object({
       content: z.string().optional(),
     })
   ),
+  issue: z.object({
+    title: z.string(),
+    description: z.string(),
+  }),
 });
 
 export const generateTestsResponseSchema = z.array(

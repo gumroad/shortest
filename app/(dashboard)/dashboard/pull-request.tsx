@@ -1,24 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  GitPullRequestDraft,
-  GitPullRequest,
-  CheckCircle,
-  XCircle,
-  Edit,
-  PlusCircle,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { Checkbox } from "@/components/ui/checkbox";
-import dynamic from "next/dynamic";
-import { PullRequest, TestFile } from "./types";
 import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { commitChangesToPullRequest, getPullRequestInfo } from "@/lib/github";
+import {
+  AlertCircle,
+  CheckCircle,
+  Edit,
+  GitPullRequest,
+  GitPullRequestDraft,
+  Link2,
+  Link2Off,
+  Loader2,
+  PlusCircle,
+  XCircle,
+} from "lucide-react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useState } from "react";
+import IssueModal from "./issue-modal";
+import { Issue, PullRequest, TestFile } from "./types";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -40,6 +43,13 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [issue, setIssue] = useState<Issue>({
+    id: "",
+    identifier: "",
+    title: "",
+    description: "",
+  });
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -63,6 +73,10 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           pr_id: pr.id,
           pr_diff: diff,
           test_files: oldTestFiles,
+          issue: {
+            title: issue.title,
+            description: issue.description,
+          },
         }),
       });
 
@@ -175,8 +189,18 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     }));
   };
 
+  const handleAddIssueDetails = () => {
+    setIsIssueModalOpen(true);
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="bg-white p-4 rounded-lg shadow-md relative group">
+      <IssueModal
+        isOpen={isIssueModalOpen}
+        onClose={() => setIsIssueModalOpen(false)}
+        setIssue={setIssue}
+        key={isIssueModalOpen.toString()}
+      />
       <div className="flex items-center justify-between mb-2">
         <span className="flex items-center">
           {pullRequest.isDraft ? (
@@ -209,44 +233,77 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
             Build: {pullRequest.buildStatus}
           </Link>
         </span>
-        {testFiles.length > 0 ? (
+        <div className="flex items-center space-x-2">
           <Button
             size="sm"
-            className="bg-white hover:bg-gray-100 text-black border border-gray-200"
-            onClick={handleCancelChanges}
-            disabled={loading}
+            variant="outline"
+            className={`border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-40 transition-opacity duration-200 ${
+              issue.title ? "" : "opacity-0 group-hover:opacity-100"
+            }`}
+            onClick={
+              issue.title
+                ? () =>
+                    setIssue({
+                      id: "",
+                      identifier: "",
+                      title: "",
+                      description: "",
+                    })
+                : handleAddIssueDetails
+            }
           >
-            Cancel
-          </Button>
-        ) : pullRequest.buildStatus === "success" ? (
-          <Button
-            size="sm"
-            className="bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleTests(pullRequest, "write")}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {issue.title ? (
+              <>
+                <Link2Off className="mr-2 h-4 w-4" />
+                Disconnect issue
+              </>
             ) : (
-              <PlusCircle className="mr-2 h-4 w-4" />
+              <>
+                <Link2 className="mr-2 h-4 w-4" />
+                Connect an issue
+              </>
             )}
-            {loading ? "Loading..." : "Write new tests"}
           </Button>
-        ) : (
-          <Button
-            size="sm"
-            className="bg-yellow-500 hover:bg-yellow-600 text-white"
-            onClick={() => handleTests(pullRequest, "update")}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Edit className="mr-2 h-4 w-4" />
-            )}
-            {loading ? "Loading..." : "Update tests to fix"}
-          </Button>
-        )}
+          {testFiles.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-40"
+              onClick={handleCancelChanges}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+          ) : pullRequest.buildStatus === "success" ? (
+            <Button
+              size="sm"
+              className="bg-green-500 hover:bg-green-600 text-white w-40"
+              onClick={() => handleTests(pullRequest, "write")}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <PlusCircle className="mr-2 h-4 w-4" />
+              )}
+              {loading ? "Loading..." : "Write new tests"}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white w-40"
+              onClick={() => handleTests(pullRequest, "update")}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Edit className="mr-2 h-4 w-4" />
+              )}
+              {loading ? "Loading..." : "Update tests to fix"}
+            </Button>
+          )}
+        </div>
       </div>
       {error && (
         <div className="mt-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
