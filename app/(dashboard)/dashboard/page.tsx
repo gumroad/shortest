@@ -1,16 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, GitPullRequest } from "lucide-react";
-import { PullRequestItem } from "./pull-request";
-import { PullRequest } from "./types";
 import { getAssignedPullRequests } from "@/lib/github";
+import { AlertCircle, GitPullRequest, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { PullRequestItem } from "./pull-request";
+import { PullRequestFilter } from "./pull-request-filter";
+import type { PullRequest } from "./types";
 
 export default function DashboardPage() {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filter-related state and logic
+  const [selectedRepoFilters, setSelectedRepoFilters] = useState<string[]>([]);
+  const [buildStatusFilter, setBuildStatusFilter] = useState<string[]>([]);
+
+  const uniqueRepositories = useMemo(
+    () =>
+      Array.from(new Set(pullRequests.map((pr) => pr.repository.full_name))),
+    [pullRequests]
+  );
+
+  const filteredPullRequests = useMemo(() => {
+    return pullRequests.filter((pr) => {
+      const repoMatch =
+        selectedRepoFilters.length === 0 ||
+        selectedRepoFilters.includes(pr.repository.full_name);
+      const statusMatch =
+        buildStatusFilter.length === 0 ||
+        buildStatusFilter.includes(pr.buildStatus.toLowerCase());
+      return repoMatch && statusMatch;
+    });
+  }, [pullRequests, selectedRepoFilters, buildStatusFilter]);
+
+  const handleRepoFilterChange = (value: string) => {
+    setSelectedRepoFilters((prev) =>
+      prev.includes(value)
+        ? prev.filter((filter) => filter !== value)
+        : [...prev, value]
+    );
+  };
+
+  const handleBuildStatusFilterChange = (value: string) => {
+    setBuildStatusFilter((prev) =>
+      prev.includes(value)
+        ? prev.filter((filter) => filter !== value)
+        : [...prev, value]
+    );
+  };
 
   useEffect(() => {
     const fetchAndSetPullRequests = async () => {
@@ -68,10 +106,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      <div className="p-6 flex-grow flex items-center">
-        {pullRequests.length > 0 ? (
+      {/* Filter UI */}
+      <div className="p-6">
+        <PullRequestFilter
+          uniqueRepositories={uniqueRepositories}
+          selectedRepoFilters={selectedRepoFilters}
+          buildStatusFilter={buildStatusFilter}
+          onRepoFilterChange={handleRepoFilterChange}
+          onBuildStatusFilterChange={handleBuildStatusFilterChange}
+        />
+      </div>
+
+      {/* Pull Requests List */}
+      <div className="p-6 flex-grow">
+        {filteredPullRequests.length > 0 ? (
           <ul className="space-y-8 w-full">
-            {pullRequests.map((pr) => (
+            {filteredPullRequests.map((pr) => (
               <li key={pr.id}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-lg">
@@ -90,7 +140,9 @@ export default function DashboardPage() {
                 No pull requests found
               </h3>
               <p className="text-gray-600 mb-4">
-                We couldn't find any pull requests assigned to you.
+                {selectedRepoFilters.length > 0 || buildStatusFilter.length > 0
+                  ? "No pull requests match the selected filters."
+                  : "We couldn't find any pull requests assigned to you."}
               </p>
             </div>
           </div>
