@@ -306,7 +306,7 @@ describe('PullRequestItem', () => {
       expect(screen.getByText('generated_test.ts')).toBeInTheDocument();
     });
 
-    const commitMessageInput = screen.getByPlaceholderText('Enter commit message');
+    const commitMessageInput = screen.getByPlaceholderText('Update test files');
     fireEvent.change(commitMessageInput, { target: { value: 'Custom commit message' } });
 
     const commitButton = screen.getByText('Commit changes');
