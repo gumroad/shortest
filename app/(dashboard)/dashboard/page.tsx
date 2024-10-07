@@ -104,7 +104,7 @@ export default function DashboardPage() {
         setError(null);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching requests:", error);
+        console.error("Error fetching pull requests:", error);
         setLoading(false);
         setError(
           "Failed to fetch pull requests. Please reconnect your GitHub and GitLab accounts."
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center text-center">
               <GitPullRequest className="h-16 w-16 text-gray-400 mb-4" />
               <h3 className="text-xl font-semibold mb-2">
-                No pull requests or merge requests found
+                No pull requests found
               </h3>
               <p className="text-gray-600 mb-4">
                 {selectedRepoFilters.length > 0 || buildStatusFilter.length > 0

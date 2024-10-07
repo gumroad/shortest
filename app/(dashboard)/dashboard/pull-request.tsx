@@ -48,7 +48,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
     setAnalyzing(true);
     setLoading(true);
     setError(null);
-  
+
     try {
       const { diff, testFiles: oldTestFiles } = await getPullRequestInfo(pr);
 
@@ -73,11 +73,11 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           test_files: testFilesToUpdate,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to generate test files");
       }
-  
+
       const data = await response.json();
       const parsedData = generateTestsResponseSchema.parse(data);
       handleTestFilesUpdate(oldTestFiles, parsedData);
@@ -143,7 +143,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
           </>
         ),
       });
-  
+
       setTestFiles([]);
       setSelectedFiles({});
       setExpandedFiles({});
