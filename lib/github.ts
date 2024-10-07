@@ -270,3 +270,59 @@ export async function getPullRequestInfo(
     throw new Error("Failed to fetch PR info");
   }
 }
+
+export async function getFailingTests(
+  owner: string,
+  repo: string,
+  pullNumber: number
+): Promise<TestFile[]> {
+  const octokit = await getOctokit();
+
+  try {
+    const { data: checkRuns } = await octokit.checks.listForRef({
+      owner,
+      repo,
+      ref: `refs/pull/${pullNumber}/head`,
+      status: 'completed',
+      filter: 'latest',
+    });
+
+    const failedChecks = checkRuns.check_runs.filter(
+      (run) => run.conclusion === 'failure'
+    );
+
+    const failingTestFiles: TestFile[] = [];
+    for (const check of failedChecks) {
+      if (check.output.annotations_count > 0) {
+        const { data: annotations } = await octokit.checks.listAnnotations({
+          owner,
+          repo,
+          check_run_id: check.id,
+        });
+
+        for (const annotation of annotations) {
+          if (annotation.path.includes('test') || annotation.path.includes('spec')) {
+            const { data: fileContent } = await octokit.repos.getContent({
+              owner,
+              repo,
+              path: annotation.path,
+              ref: `refs/pull/${pullNumber}/head`,
+            });
+
+            if ('content' in fileContent) {
+              failingTestFiles.push({
+                name: annotation.path,
+                content: Buffer.from(fileContent.content, 'base64').toString('utf-8'),
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return failingTestFiles;
+  } catch (error) {
+    console.error('Error fetching failing tests:', error);
+    throw error;
+  }
+}

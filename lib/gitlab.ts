@@ -179,3 +179,70 @@ export async function getMergeRequestInfo(
     throw new Error("Failed to fetch MR info");
   }
 }
+
+export async function getFailingTests(
+  projectId: number,
+  mergeRequestIid: number
+): Promise<TestFile[]> {
+  const gitlab = await getGitlabClient();
+
+  try {
+    // Get the latest pipeline for the merge request
+    const pipelines = await gitlab.MergeRequests.allPipelines(projectId, mergeRequestIid);
+    const latestPipeline = pipelines[0];
+
+    if (!latestPipeline || latestPipeline.status !== 'failed') {
+      return [];
+    }
+
+    // Fetch jobs related to the latest pipeline using gitlab.Jobs.all
+    const jobs = await gitlab.Jobs.all(projectId, { pipelineId: latestPipeline.id });
+    
+    // Filter failed jobs
+    const failedJobs = jobs.filter(job => job.status === 'failed');
+
+    const failingTestFiles: TestFile[] = [];
+
+    // Fetch the logs (trace) for each failed job
+    for (const job of failedJobs) {
+      try {
+        const log = await gitlab.Jobs.showLog(projectId, job.id);
+        const logContent = log.toString();
+
+        // Use a regular expression to identify test file names in the logs
+        const testFileRegex = /(\S+\.(test|spec)\.\S+)/g;
+        const matches = logContent.match(testFileRegex);
+
+        if (matches) {
+          // For each matching file, fetch its content
+          for (const match of matches) {
+            try {
+              const fileContent = await gitlab.RepositoryFiles.show(
+                projectId,
+                match,
+                latestPipeline.ref
+              );
+
+              failingTestFiles.push({
+                name: match,
+                content: Buffer.from(fileContent.content, 'base64').toString('utf-8'),
+              });
+            } catch (error) {
+              console.warn(`Failed to fetch content for file: ${match}`, error);
+            }
+          }
+        }
+      } catch (logError) {
+        console.warn(`Failed to fetch logs for job: ${job.id}`, logError);
+      }
+    }
+
+    return failingTestFiles;
+  } catch (error) {
+    console.error('Error fetching failing tests:', error);
+    if (error instanceof Error && error.message.includes("GitLab token expired")) {
+      throw new Error("GitLab authentication expired. Please re-authenticate.");
+    }
+    throw error;
+  }
+}

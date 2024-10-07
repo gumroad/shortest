@@ -38,3 +38,19 @@ export async function getPullRequestInfo(pullRequest: PullRequest) {
   }
   throw new Error(`Unsupported git provider: ${pullRequest.source}`);
 }
+
+export async function getFailingTests(pullRequest: PullRequest): Promise<TestFile[]> {
+  if (pullRequest.source === 'github') {
+    return github.getFailingTests(
+      pullRequest.repository.owner.login,
+      pullRequest.repository.name,
+      pullRequest.number
+    );
+  } else if (pullRequest.source === 'gitlab') {
+    return gitlab.getFailingTests(
+      pullRequest.repository.id,
+      pullRequest.number
+    );
+  }
+  throw new Error(`Unsupported git provider: ${pullRequest.source}`);
+}
