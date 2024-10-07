@@ -312,7 +312,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
               <div className="mt-4">
                 <Input
                   type="text"
-                  placeholder="Enter commit message"
+                  placeholder="Update test files"
                   value={commitMessage}
                   onChange={(e) => setCommitMessage(e.target.value)}
                   className="mb-2"
