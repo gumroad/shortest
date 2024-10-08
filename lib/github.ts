@@ -106,7 +106,8 @@ export async function commitChangesToPullRequest(
   owner: string,
   repo: string,
   pullNumber: number,
-  filesToCommit: TestFile[]
+  filesToCommit: TestFile[],
+  commitMessage: string
 ): Promise<string> {
   const octokit = await getOctokit();
 
@@ -181,7 +182,7 @@ export async function commitChangesToPullRequest(
     const { data: newCommit } = await octokit.git.createCommit({
       owner,
       repo,
-      message: "Update test files",
+      message: commitMessage,
       tree: newTree.sha,
       parents: [commit.sha],
     });
