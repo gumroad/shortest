@@ -10,47 +10,11 @@ export async function getGitlabClient() {
   if (!userId) throw new Error("Clerk: User not authenticated");
 
   const clerk = clerkClient();
-  try {
-    const [{ token: gitlabToken }] = await clerk.users
-      .getUserOauthAccessToken(userId, "oauth_gitlab")
-      .then(({ data }) => data);
+  const [{ token: gitlabToken }] = await clerk.users
+    .getUserOauthAccessToken(userId, "oauth_gitlab")
+    .then(({ data }) => data);
 
-    if (!gitlabToken) {
-      throw new Error("GitLab token not found");
-    }
-
-    const gitlab = new Gitlab({
-      oauthToken: gitlabToken,
-    });
-
-    // Test the token with a simple API call to get current user info
-    try {
-      await gitlab.Users.showCurrentUser();
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        const gitlabError = error as { response?: { status?: number } };
-        if (gitlabError.response?.status === 403) {
-          console.error("GitLab token doesn't have sufficient permissions");
-          await clerk.sessions.revokeSession(userId);
-          throw new Error("GitLab token invalid or lacks permissions. Please re-authenticate.");
-        }
-      }
-      throw error;
-    }
-
-    return gitlab;
-  } catch (error: unknown) {
-    console.error("Error creating GitLab client:", error);
-    if (error instanceof Error) {
-      const gitlabError = error as { response?: { status?: number } };
-      if (gitlabError.response?.status === 401) {
-        // Token might be expired, revoke the session
-        await clerk.sessions.revokeSession(userId);
-        throw new Error("GitLab authentication expired. Please re-authenticate.");
-      }
-    }
-    throw error;
-  }
+  return new Gitlab({ oauthToken: gitlabToken });
 }
 
 export async function getAssignedMergeRequests() {
