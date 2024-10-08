@@ -5,6 +5,7 @@ export interface PullRequest {
   buildStatus: string;
   isDraft: boolean;
   branchName: string;
+  source: 'github' | 'gitlab';
   repository: {
     id: number;
     name: string;

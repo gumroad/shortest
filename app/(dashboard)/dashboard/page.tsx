@@ -1,6 +1,7 @@
 "use client";
 
 import { getAssignedPullRequests } from "@/lib/github";
+import { getAssignedMergeRequests } from "@/lib/gitlab";
 import { AlertCircle, GitPullRequest, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PullRequestItem } from "./pull-request";
@@ -9,6 +10,8 @@ import type { PullRequest } from "./types";
 
 export default function DashboardPage() {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
+  const [mergeRequests, setMergeRequests] = useState<PullRequest[]>([]);
+  const allCodeChangeRequests = [...pullRequests, ...mergeRequests];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +26,7 @@ export default function DashboardPage() {
   );
 
   const filteredPullRequests = useMemo(() => {
-    return pullRequests.filter((pr) => {
+    return allCodeChangeRequests.filter((pr) => {
       const repoMatch =
         selectedRepoFilters.length === 0 ||
         selectedRepoFilters.includes(pr.repository.full_name);
@@ -51,16 +54,21 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const fetchAndSetPullRequests = async () => {
+    const fetchAndSetCodeChangeRequests = async () => {
       try {
-        const data = await getAssignedPullRequests();
-        if ("error" in data) {
-          setError(data.error as string);
+        const [githubData, gitlabData] = await Promise.all([
+          getAssignedPullRequests(),
+          getAssignedMergeRequests(),
+        ]);
+
+        if ("error" in githubData) {
+          setError(githubData.error as string);
           setPullRequests([]);
         } else {
           setPullRequests(
-            data.map((pr) => ({
+            githubData.map((pr) => ({
               ...pr,
+              source: 'github',
               repository: {
                 id: parseInt(pr.repoId, 10),
                 name: pr.repo,
@@ -71,20 +79,42 @@ export default function DashboardPage() {
               },
             }))
           );
-          setError(null);
         }
+
+        if ("error" in gitlabData) {
+          setError((prevError) => prevError ? `${prevError}\n${gitlabData.error}` : gitlabData.error as string);
+          setMergeRequests([]);
+        } else {
+          setMergeRequests(
+            gitlabData.map((mr) => ({
+              ...mr,
+              source: 'gitlab',
+              repository: {
+                id: mr.repoId,
+                name: mr.repo,
+                full_name: `${mr.owner}/${mr.repo}`,
+                owner: {
+                  login: mr.owner,
+                },
+              },
+            }))
+          );
+        }
+
+        setError(null);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching pull requests:", error);
         setLoading(false);
         setError(
-          "Failed to fetch pull requests. Please reconnect your GitHub account."
+          "Failed to fetch pull requests. Please reconnect your GitHub and GitLab accounts."
         );
         setPullRequests([]);
+        setMergeRequests([]);
       }
     };
 
-    fetchAndSetPullRequests();
+    fetchAndSetCodeChangeRequests();
   }, []);
 
   if (loading) {
