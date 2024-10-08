@@ -20,9 +20,7 @@ describe("commitChangesToPullRequest", () => {
       id: 1,
       name: "test-repo",
       full_name: "owner/test-repo",
-      owner: {
-        login: "owner",
-      },
+      owner: { login: "owner" },
     },
   };
 
@@ -47,7 +45,7 @@ describe("commitChangesToPullRequest", () => {
   });
 
   it("should call gitlab.commitChangesToMergeRequest for GitLab MRs", async () => {
-    const gitlabMR = { ...mockPullRequest, source: "gitlab", repoId: 1234 };
+    const gitlabMR = { ...mockPullRequest, source: "gitlab", repository: {id: 1234} };
     await actions.commitChangesToPullRequest(gitlabMR, mockFilesToCommit, mockCommitMessage);
     expect(gitlab.commitChangesToMergeRequest).toHaveBeenCalledWith(
       1234,
@@ -63,21 +61,65 @@ describe("commitChangesToPullRequest", () => {
       actions.commitChangesToPullRequest(unsupportedPR, mockFilesToCommit, mockCommitMessage)
     ).rejects.toThrowError("Unsupported git provider: bitbucket");
   });
+});
 
-  it('should call getPullRequestInfo with correct arguments for GitHub', async () => {
-    await actions.getPullRequestInfo(mockPullRequest);
-    expect(github.getPullRequestInfo).toHaveBeenCalledWith("owner", "test-repo", 123);
+describe("getPullRequestInfo", () => {
+    const mockPullRequest: PullRequest = {
+      id: 1,
+      title: "Test PR",
+      number: 123,
+      buildStatus: "success",
+      isDraft: false,
+      branchName: "main",
+      source: "github",
+      repository: {
+        id: 1,
+        name: "test-repo",
+        full_name: "owner/test-repo",
+        owner: { login: "owner" },
+      },
+    };
+  
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+  
+    it('should call getPullRequestInfo with correct arguments for GitHub', async () => {
+      await actions.getPullRequestInfo(mockPullRequest);
+      expect(github.getPullRequestInfo).toHaveBeenCalledWith("owner", "test-repo", 123);
+    });
+  
+    it('should call getMergeRequestInfo with correct arguments for GitLab', async () => {
+      const gitlabMR = { ...mockPullRequest, source: "gitlab", repository: {id: 1234} };
+      await actions.getPullRequestInfo(gitlabMR);
+      expect(gitlab.getMergeRequestInfo).toHaveBeenCalledWith(1234, 123);
+    });
+  
+    it('should throw error for unsupported provider in getPullRequestInfo', async () => {
+      const unsupportedPR = { ...mockPullRequest, source: "bitbucket" as any };
+      await expect(actions.getPullRequestInfo(unsupportedPR)).rejects.toThrowError("Unsupported git provider: bitbucket");
+    });
   });
 
-  it('should call getMergeRequestInfo with correct arguments for GitLab', async () => {
-    const gitlabMR = { ...mockPullRequest, source: "gitlab", repoId: 1234 };
-    await actions.getPullRequestInfo(gitlabMR);
-    expect(gitlab.getMergeRequestInfo).toHaveBeenCalledWith(1234, 123);
-  });
+describe("getFailingTests", () => {
+  const mockPullRequest: PullRequest = {
+    id: 1,
+    title: "Test PR",
+    number: 123,
+    buildStatus: "success",
+    isDraft: false,
+    branchName: "main",
+    source: "github",
+    repository: {
+      id: 1,
+      name: "test-repo",
+      full_name: "owner/test-repo",
+      owner: { login: "owner" },
+    },
+  };
 
-  it('should throw error for unsupported provider in getPullRequestInfo', async () => {
-    const unsupportedPR = { ...mockPullRequest, source: "bitbucket" as any };
-    await expect(actions.getPullRequestInfo(unsupportedPR)).rejects.toThrowError("Unsupported git provider: bitbucket");
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
   it('should call getFailingTests with correct arguments for GitHub', async () => {
@@ -86,7 +128,7 @@ describe("commitChangesToPullRequest", () => {
   });
 
   it('should call getFailingTests with correct arguments for GitLab', async () => {
-    const gitlabMR = { ...mockPullRequest, source: "gitlab", repoId: 1234 };
+    const gitlabMR = { ...mockPullRequest, source: "gitlab", repository: {id: 1234} };
     await actions.getFailingTests(gitlabMR);
     expect(gitlab.getFailingTests).toHaveBeenCalledWith(1234, 123);
   });

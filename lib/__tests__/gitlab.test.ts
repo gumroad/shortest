@@ -26,7 +26,7 @@ describe("getGitlabClient", () => {
           data: [{ token: mockGitlabToken }],
         }),
       },
-      sessions: { revokeSession: vi.fn() },
+      sessions: {revokeSession: vi.fn()},
     };
     vi.mocked(clerkClient).mockReturnValue(mockClerkClient as any);
     const mockGitlabInstance = { Users: { showCurrentUser: vi.fn() } };
@@ -51,7 +51,7 @@ describe("getGitlabClient", () => {
       users: {
         getUserOauthAccessToken: vi.fn().mockResolvedValue({ data: [] }),
       },
-      sessions: { revokeSession: vi.fn() },
+      sessions: {revokeSession: vi.fn()},
     } as any);
 
     await expect(getGitlabClient()).rejects.toThrowError("GitLab token not found");
