@@ -19,6 +19,7 @@ import { PullRequest, TestFile } from "./types";
 import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 import { useToast } from "@/hooks/use-toast";
 import { commitChangesToPullRequest, getPullRequestInfo, getFailingTests } from "@/lib/github";
+import { Input } from "@/components/ui/input";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -40,6 +41,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [commitMessage, setCommitMessage] = useState("Update test files");
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -139,7 +141,8 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         pullRequest.repository.owner.login,
         pullRequest.repository.name,
         pullRequest.number,
-        filesToCommit
+        filesToCommit,
+        commitMessage
       );
 
       toast({
@@ -306,21 +309,31 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
                   )}
                 </div>
               ))}
-              <Button
-                className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={commitChanges}
-                disabled={
-                  Object.values(selectedFiles).every((value) => !value) ||
-                  loading
-                }
-              >
-                {loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                )}
-                {loading ? "Committing changes..." : "Commit changes"}
-              </Button>
+              <div className="mt-4">
+                <Input
+                  type="text"
+                  placeholder="Update test files"
+                  value={commitMessage}
+                  onChange={(e) => setCommitMessage(e.target.value)}
+                  className="mb-2"
+                />
+                <Button
+                  className="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={commitChanges}
+                  disabled={
+                    Object.values(selectedFiles).every((value) => !value) ||
+                    loading ||
+                    !commitMessage.trim()
+                  }
+                >
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {loading ? "Committing changes..." : "Commit changes"}
+                </Button>
+              </div>
             </div>
           )}
         </div>
