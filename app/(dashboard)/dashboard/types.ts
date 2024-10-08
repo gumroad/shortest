@@ -21,3 +21,11 @@ export interface TestFile {
   content: string;
   oldContent?: string;
 }
+
+export type CommitChangesToPullRequest = (
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  filesToCommit: TestFile[],
+  commitMessage: string
+) => Promise<string>;

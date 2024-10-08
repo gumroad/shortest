@@ -284,4 +284,45 @@ describe('PullRequestItem', () => {
       expect(writeTestsButton).toBeDisabled();
     });
   });
+
+  it('handles committing changes with custom message', async () => {
+    const { commitChangesToPullRequest } = await import('@/lib/github');
+    vi.mocked(commitChangesToPullRequest).mockResolvedValue('https://github.com/commit/123');
+
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([{ name: 'generated_test.ts', content: 'generated content' }]),
+    } as Response);
+
+    const { useToast } = await import('@/hooks/use-toast');
+    const mockToast = vi.fn();
+    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
+
+    render(<PullRequestItem pullRequest={mockPullRequest} />);
+    const writeTestsButton = screen.getByText('Write new tests');
+    fireEvent.click(writeTestsButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('generated_test.ts')).toBeInTheDocument();
+    });
+
+    const commitMessageInput = screen.getByPlaceholderText('Update test files');
+    fireEvent.change(commitMessageInput, { target: { value: 'Custom commit message' } });
+
+    const commitButton = screen.getByText('Commit changes');
+    fireEvent.click(commitButton);
+
+    await waitFor(() => {
+      expect(commitChangesToPullRequest).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        'Custom commit message'
+      );
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Changes committed successfully',
+      }));
+    });
+  });
 });

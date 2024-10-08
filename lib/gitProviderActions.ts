@@ -4,20 +4,23 @@ import * as gitlab from "./gitlab";
 
 export async function commitChangesToPullRequest(
   pullRequest: PullRequest,
-  filesToCommit: TestFile[]
+  filesToCommit: TestFile[],
+  commitMessage: string
 ): Promise<string> {
   if (pullRequest.source === 'github') {
     return github.commitChangesToPullRequest(
       pullRequest.repository.owner.login,
       pullRequest.repository.name,
       pullRequest.number,
-      filesToCommit
+      filesToCommit,
+      commitMessage
     );
   } else if (pullRequest.source === 'gitlab') {
     return gitlab.commitChangesToMergeRequest(
       pullRequest.repository.id,
       pullRequest.number,
-      filesToCommit
+      filesToCommit,
+      commitMessage
     );
   }
   throw new Error(`Unsupported git provider: ${pullRequest.source}`);
