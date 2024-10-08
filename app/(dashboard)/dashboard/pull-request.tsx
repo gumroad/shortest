@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   GitPullRequestDraft,
@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import dynamic from "next/dynamic";
 import { PullRequest, TestFile } from "./types";
@@ -30,16 +31,47 @@ interface PullRequestItemProps {
 
 export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [analyzing, setAnalyzing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const savedTestFiles = localStorage.getItem(`testFiles_${pullRequest.id}`);
+    const savedSelectedFiles = searchParams.get(`selectedFiles_${pullRequest.id}`);
+    const savedExpandedFiles = searchParams.get(`expandedFiles_${pullRequest.id}`);
+
+    if (savedTestFiles) {
+      setTestFiles(JSON.parse(savedTestFiles));
+    }
+    if (savedSelectedFiles) {
+      setSelectedFiles(JSON.parse(decodeURIComponent(savedSelectedFiles)));
+    }
+    if (savedExpandedFiles) {
+      setExpandedFiles(JSON.parse(decodeURIComponent(savedExpandedFiles)));
+    }
+  }, [searchParams, pullRequest.id]);
+
+  const updateState = (
+    newTestFiles: TestFile[],
+    newSelectedFiles: Record<string, boolean>,
+    newExpandedFiles: Record<string, boolean>
+  ) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(`selectedFiles_${pullRequest.id}`, encodeURIComponent(JSON.stringify(newSelectedFiles)));
+    params.set(`expandedFiles_${pullRequest.id}`, encodeURIComponent(JSON.stringify(newExpandedFiles)));
+    router.push(`?${params.toString()}`, { scroll: false });
+
+    localStorage.setItem(`testFiles_${pullRequest.id}`, JSON.stringify(newTestFiles));
+
+    setTestFiles(newTestFiles);
+    setSelectedFiles(newSelectedFiles);
+    setExpandedFiles(newExpandedFiles);
+  };
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -111,7 +143,6 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
             oldContent: oldFile ? oldFile.content : "",
           };
         });
-      setTestFiles(filteredTestFiles);
       const newSelectedFiles: Record<string, boolean> = {};
       const newExpandedFiles: Record<string, boolean> = {};
       filteredTestFiles.forEach((file) => {
@@ -119,8 +150,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         newExpandedFiles[fileName] = true;
         newSelectedFiles[fileName] = true;
       });
-      setSelectedFiles(newSelectedFiles);
-      setExpandedFiles(newExpandedFiles);
+      updateState(filteredTestFiles, newSelectedFiles, newExpandedFiles);
     }
   };
 
@@ -154,9 +184,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
         ),
       });
 
-      setTestFiles([]);
-      setSelectedFiles({});
-      setExpandedFiles({});
+      updateState([], {}, {});
     } catch (error) {
       console.error("Error committing changes:", error);
       setError("Failed to commit changes. Please try again.");
@@ -171,21 +199,20 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
   };
 
   const handleCancelChanges = () => {
-    setTestFiles([]);
-    setSelectedFiles({});
-    setExpandedFiles({});
+    updateState([], {}, {});
     setError(null);
   };
 
   const handleFileToggle = (fileName: string) => {
-    setSelectedFiles((prev) => ({
-      ...prev,
-      [fileName]: !prev[fileName],
-    }));
-    setExpandedFiles((prev) => ({
-      ...prev,
-      [fileName]: !prev[fileName],
-    }));
+    const newSelectedFiles = {
+      ...selectedFiles,
+      [fileName]: !selectedFiles[fileName],
+    };
+    const newExpandedFiles = {
+      ...expandedFiles,
+      [fileName]: !expandedFiles[fileName],
+    };
+    updateState(testFiles, newSelectedFiles, newExpandedFiles);
   };
 
   return (
