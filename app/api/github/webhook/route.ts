@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOctokit } from "@/lib/github";
+import { revalidateTag } from "next/cache";
 
 const octokit = getOctokit();
 
@@ -56,5 +57,11 @@ async function handlePullRequestEvent(payload: any) {
 async function handleWorkflowRunEvent(payload: any) {
   const { action, workflow_run, repository } = payload;
   console.log(`Workflow run ${action} in ${repository.full_name}`);
-  // Process workflow run status
+
+  if (action === "completed") {
+    const pullRequests = workflow_run.pull_requests;
+    for (const pr of pullRequests) {
+      revalidateTag(`pullRequest-${pr.id}`);
+    }
+  }
 }
