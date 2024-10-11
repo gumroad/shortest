@@ -2,7 +2,7 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
-import { TestFile } from "../app/(dashboard)/dashboard/types";
+import { TestFile, PullRequest } from "../app/(dashboard)/dashboard/types";
 
 export async function getOctokit() {
   const { userId } = auth();
@@ -39,7 +39,7 @@ export async function getAssignedPullRequests() {
 
         const branchName = pullRequestData.head.ref;
 
-        const buildStatus = await fetchBuildStatus(
+        const buildStatus = await fetchBuildStatusForRef(
           octokit,
           owner,
           repo,
@@ -71,7 +71,41 @@ export async function getAssignedPullRequests() {
   }
 }
 
-async function fetchBuildStatus(
+export async function fetchBuildStatus(owner: string, repo: string, pullNumber: number): Promise<PullRequest> {
+  const octokit = await getOctokit();
+
+  try {
+    const { data: pr } = await octokit.pulls.get({
+      owner,
+      repo,
+      pull_number: pullNumber,
+    });
+
+    const buildStatus = await fetchBuildStatusForRef(octokit, owner, repo, pr.head.ref);
+
+    return {
+      id: pr.id,
+      title: pr.title,
+      number: pr.number,
+      buildStatus,
+      isDraft: pr.draft || false,
+      branchName: pr.head.ref,
+      repository: {
+        id: pr.base.repo.id,
+        name: pr.base.repo.name,
+        full_name: pr.base.repo.full_name,
+        owner: {
+          login: pr.base.repo.owner.login,
+        },
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching build status:", error);
+    throw error;
+  }
+}
+
+async function fetchBuildStatusForRef(
   octokit: Octokit,
   owner: string,
   repo: string,
@@ -88,10 +122,15 @@ async function fetchBuildStatus(
       return "pending";
     }
 
-    const statuses = data.check_runs.map((run) => run.conclusion);
-    if (statuses.every((status) => status === "success")) {
+    const statuses = data.check_runs.map((run) => run.status);
+    if (statuses.some((status) => status === "in_progress")) {
+      return "running";
+    }
+
+    const conclusions = data.check_runs.map((run) => run.conclusion);
+    if (conclusions.every((conclusion) => conclusion === "success")) {
       return "success";
-    } else if (statuses.some((status) => status === "failure")) {
+    } else if (conclusions.some((conclusion) => conclusion === "failure")) {
       return "failure";
     } else {
       return "pending";
