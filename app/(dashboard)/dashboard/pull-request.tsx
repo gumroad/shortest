@@ -10,7 +10,6 @@ import {
   Edit,
   PlusCircle,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +19,8 @@ import { generateTestsResponseSchema } from "@/app/api/generate-tests/schema";
 import { useToast } from "@/hooks/use-toast";
 import { commitChangesToPullRequest, getPullRequestInfo, getFailingTests } from "@/lib/github";
 import { Input } from "@/components/ui/input";
+import useSWR from 'swr';
+import { fetchBuildStatus } from '@/lib/github';
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -29,19 +30,26 @@ interface PullRequestItemProps {
   pullRequest: PullRequest;
 }
 
-export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
+export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequestItemProps) {
+  const { data: pullRequest, mutate } = useSWR(
+    `pullRequest-${initialPullRequest.id}`,
+    () => fetchBuildStatus(initialPullRequest.repository.owner.login, initialPullRequest.repository.name, initialPullRequest.number),
+    {
+      fallbackData: initialPullRequest,
+      refreshInterval: 10000, // Refresh every 10 seconds
+    }
+  );
+
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [analyzing, setAnalyzing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [commitMessage, setCommitMessage] = useState("Update test files");
+
+  const isRunning = pullRequest.buildStatus === "running" || pullRequest.buildStatus === "pending";
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -160,6 +168,9 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       setTestFiles([]);
       setSelectedFiles({});
       setExpandedFiles({});
+
+      // Trigger a revalidation of the build status
+      mutate();
     } catch (error) {
       console.error("Error committing changes:", error);
       setError("Failed to commit changes. Please try again.");
@@ -211,10 +222,10 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
       </div>
       <div className="flex items-center justify-between">
         <span className="flex items-center">
-          {pullRequest.buildStatus === "success" ? (
+          {isRunning ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-yellow-500" />
+          ) : pullRequest.buildStatus === "success" ? (
             <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-          ) : pullRequest.buildStatus === "pending" ? (
-            <AlertCircle className="mr-2 h-4 w-4 text-yellow-500" />
           ) : (
             <XCircle className="mr-2 h-4 w-4 text-red-500" />
           )}
@@ -222,7 +233,7 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
             href={`https://github.com/${pullRequest.repository.full_name}/pull/${pullRequest.number}/checks`}
             className="text-sm underline text-gray-600"
           >
-            Build: {pullRequest.buildStatus}
+            Build: {isRunning ? "Running" : pullRequest.buildStatus}
           </Link>
         </span>
         {testFiles.length > 0 ? (
@@ -239,28 +250,28 @@ export function PullRequestItem({ pullRequest }: PullRequestItemProps) {
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
             onClick={() => handleTests(pullRequest, "write")}
-            disabled={loading}
+            disabled={loading || isRunning}
           >
-            {loading ? (
+            {loading || isRunning ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <PlusCircle className="mr-2 h-4 w-4" />
             )}
-            {loading ? "Loading..." : "Write new tests"}
+            {loading ? "Loading..." : isRunning ? "Running..." : "Write new tests"}
           </Button>
         ) : (
           <Button
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
             onClick={() => handleTests(pullRequest, "update")}
-            disabled={loading}
+            disabled={loading || isRunning}
           >
-            {loading ? (
+            {loading || isRunning ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Edit className="mr-2 h-4 w-4" />
             )}
-            {loading ? "Loading..." : "Update tests to fix"}
+            {loading ? "Loading..." : isRunning ? "Running..." : "Update tests to fix"}
           </Button>
         )}
       </div>
