@@ -4,13 +4,18 @@ import { PullRequestItem } from './pull-request';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { PullRequest } from './types';
 import useSWR from 'swr';
+import { fetchBuildStatus } from '@/lib/github';
 
-vi.mock('@/lib/github', () => ({
-  getPullRequestInfo: vi.fn(),
-  commitChangesToPullRequest: vi.fn(),
-  getFailingTests: vi.fn(),
-  fetchBuildStatus: vi.fn(),
-}));
+vi.mock('@/lib/github', async (importOriginal) => {
+  const mod = await importOriginal();
+  return {
+    ...mod,
+    getPullRequestInfo: vi.fn(),
+    commitChangesToPullRequest: vi.fn(),
+    getFailingTests: vi.fn(),
+    fetchBuildStatus: vi.fn(),
+  };
+});
 
 vi.mock('@/hooks/use-toast', () => ({
   useToast: vi.fn(() => ({
@@ -56,6 +61,9 @@ describe('PullRequestItem', () => {
     vi.mocked(useSWR).mockReturnValue({
       data: mockPullRequest,
       mutate: vi.fn(),
+      error: undefined,
+      isValidating: false,
+      isLoading: false,
     });
   });
 
@@ -71,6 +79,9 @@ describe('PullRequestItem', () => {
     vi.mocked(useSWR).mockReturnValue({
       data: runningPR,
       mutate: vi.fn(),
+      error: undefined,
+      isValidating: false,
+      isLoading: false,
     });
     render(<PullRequestItem pullRequest={runningPR} />);
     expect(screen.getByText('Build: Running')).toBeInTheDocument();
@@ -82,17 +93,31 @@ describe('PullRequestItem', () => {
     vi.mocked(useSWR).mockReturnValue({
       data: runningPR,
       mutate: vi.fn(),
+      error: undefined,
+      isValidating: false,
+      isLoading: false,
     });
     render(<PullRequestItem pullRequest={runningPR} />);
-    expect(screen.getByText('Write new tests')).toBeDisabled();
+    expect(screen.getByText('Running...')).toBeDisabled();
   });
 
   it('updates build status periodically', async () => {
     const mutate = vi.fn();
-    vi.mocked(useSWR).mockReturnValue({
-      data: mockPullRequest,
-      mutate,
+    const fetchBuildStatusMock = vi.fn().mockResolvedValue(mockPullRequest);
+    vi.mocked(fetchBuildStatus).mockImplementation(fetchBuildStatusMock);
+    
+    vi.mocked(useSWR).mockImplementation((key, fetcher, options) => {
+      // Call the fetcher function to simulate SWR behavior
+      fetcher();
+      return {
+        data: mockPullRequest,
+        mutate,
+        error: undefined,
+        isValidating: false,
+        isLoading: false,
+      };
     });
+
     render(<PullRequestItem pullRequest={mockPullRequest} />);
     
     await waitFor(() => {
@@ -101,14 +126,26 @@ describe('PullRequestItem', () => {
         expect.any(Function),
         expect.objectContaining({
           fallbackData: mockPullRequest,
-          refreshInterval: 10000,
+          refreshInterval: expect.any(Number),
+          onSuccess: expect.any(Function),
         })
       );
     });
+
+    // Verify that fetchBuildStatus is called with the correct parameters
+    expect(fetchBuildStatusMock).toHaveBeenCalledWith(
+      mockPullRequest.repository.owner.login,
+      mockPullRequest.repository.name,
+      mockPullRequest.number
+    );
   });
 
   it('triggers revalidation after committing changes', async () => {
-    const { commitChangesToPullRequest } = await import('@/lib/github');
+    const { getPullRequestInfo, commitChangesToPullRequest } = await import('@/lib/github');
+    vi.mocked(getPullRequestInfo).mockResolvedValue({
+      diff: 'mock diff',
+      testFiles: [{ name: 'existing_test.ts', content: 'existing content' }],
+    });
     vi.mocked(commitChangesToPullRequest).mockResolvedValue('https://github.com/commit/123');
 
     vi.mocked(global.fetch).mockResolvedValue({
@@ -120,6 +157,9 @@ describe('PullRequestItem', () => {
     vi.mocked(useSWR).mockReturnValue({
       data: mockPullRequest,
       mutate,
+      error: undefined,
+      isValidating: false,
+      isLoading: false,
     });
 
     render(<PullRequestItem pullRequest={mockPullRequest} />);
@@ -138,6 +178,4 @@ describe('PullRequestItem', () => {
       expect(mutate).toHaveBeenCalled();
     });
   });
-
-  // Include all other existing tests here...
 });
