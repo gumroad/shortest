@@ -118,7 +118,7 @@ async function fetchBuildStatusForRef(
       ref,
     });
 
-    if (data.check_runs.length === 0) {
+    if (data.total_count === 0) {
       return "pending";
     }
 
@@ -137,7 +137,7 @@ async function fetchBuildStatusForRef(
     }
   } catch (error) {
     console.error("Error fetching build status:", error);
-    return "unknown";
+    return "pending";
   }
 }
 

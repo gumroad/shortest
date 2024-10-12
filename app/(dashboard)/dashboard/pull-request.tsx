@@ -10,6 +10,7 @@ import {
   Edit,
   PlusCircle,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,7 +50,8 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
   const { toast } = useToast();
   const [commitMessage, setCommitMessage] = useState("Update test files");
 
-  const isRunning = pullRequest.buildStatus === "running" || pullRequest.buildStatus === "pending";
+  const isRunning = pullRequest.buildStatus === "running";
+  const isPending = pullRequest.buildStatus === "pending";
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -224,6 +226,8 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
         <span className="flex items-center">
           {isRunning ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin text-yellow-500" />
+          ) : isPending ? (
+            <AlertCircle className="mr-2 h-4 w-4 text-yellow-500" />
           ) : pullRequest.buildStatus === "success" ? (
             <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
           ) : (
@@ -233,7 +237,7 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
             href={`https://github.com/${pullRequest.repository.full_name}/pull/${pullRequest.number}/checks`}
             className="text-sm underline text-gray-600"
           >
-            Build: {isRunning ? "Running" : pullRequest.buildStatus}
+            Build: {isRunning ? "Running" : isPending ? "Pending" : pullRequest.buildStatus}
           </Link>
         </span>
         {testFiles.length > 0 ? (
@@ -245,7 +249,7 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
           >
             Cancel
           </Button>
-        ) : pullRequest.buildStatus === "success" ? (
+        ) : pullRequest.buildStatus === "success" || isPending ? (
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
