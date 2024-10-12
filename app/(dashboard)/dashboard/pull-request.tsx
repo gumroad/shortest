@@ -32,12 +32,20 @@ interface PullRequestItemProps {
 }
 
 export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequestItemProps) {
+  const [optimisticRunning, setOptimisticRunning] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
   const { data: pullRequest, mutate } = useSWR(
     `pullRequest-${initialPullRequest.id}`,
     () => fetchBuildStatus(initialPullRequest.repository.owner.login, initialPullRequest.repository.name, initialPullRequest.number),
     {
       fallbackData: initialPullRequest,
-      refreshInterval: 10000, // Refresh every 10 seconds
+      refreshInterval: 10000,
+      onSuccess: () => {
+        if (initialLoad) {
+          setInitialLoad(false);
+        }
+      },
     }
   );
 
@@ -50,8 +58,8 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
   const { toast } = useToast();
   const [commitMessage, setCommitMessage] = useState("Update test files");
 
-  const isRunning = pullRequest.buildStatus === "running";
-  const isPending = pullRequest.buildStatus === "pending";
+  const isRunning = optimisticRunning || pullRequest.buildStatus === "running";
+  const isPending = !optimisticRunning && pullRequest.buildStatus === "pending";
 
   const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
     setAnalyzing(true);
@@ -139,6 +147,13 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
   const commitChanges = async () => {
     setLoading(true);
     setError(null);
+
+    // Set optimistic running state
+    setOptimisticRunning(true);
+
+    // Optimistically update the UI
+    mutate({ ...pullRequest, buildStatus: "running" }, false);
+
     try {
       const filesToCommit = testFiles
         .filter((file) => selectedFiles[file.name])
@@ -173,6 +188,11 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
 
       // Trigger a revalidation of the build status
       mutate();
+
+      // Keep optimistic running state for a short period
+      setTimeout(() => {
+        setOptimisticRunning(false);
+      }, 30000); // Maintain optimistic state for 30 seconds
     } catch (error) {
       console.error("Error committing changes:", error);
       setError("Failed to commit changes. Please try again.");
@@ -181,6 +201,10 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
         description: "Failed to commit changes. Please try again.",
         variant: "destructive",
       });
+
+      // Revert the optimistic update
+      setOptimisticRunning(false);
+      mutate();
     } finally {
       setLoading(false);
     }
@@ -226,7 +250,7 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
         <span className="flex items-center">
           {isRunning ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin text-yellow-500" />
-          ) : isPending ? (
+          ) : isPending && !initialLoad ? (
             <AlertCircle className="mr-2 h-4 w-4 text-yellow-500" />
           ) : pullRequest.buildStatus === "success" ? (
             <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
