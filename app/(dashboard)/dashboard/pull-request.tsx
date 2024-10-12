@@ -33,17 +33,16 @@ interface PullRequestItemProps {
 
 export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequestItemProps) {
   const [optimisticRunning, setOptimisticRunning] = useState(false);
-  const [initialLoad, setInitialLoad] = useState(true);
 
   const { data: pullRequest, mutate } = useSWR(
     `pullRequest-${initialPullRequest.id}`,
     () => fetchBuildStatus(initialPullRequest.repository.owner.login, initialPullRequest.repository.name, initialPullRequest.number),
     {
       fallbackData: initialPullRequest,
-      refreshInterval: 10000,
-      onSuccess: () => {
-        if (initialLoad) {
-          setInitialLoad(false);
+      refreshInterval: optimisticRunning ? 10000 : 0, // Poll every 5 seconds when optimisticRunning is true
+      onSuccess: (data) => {
+        if (data.buildStatus !== "running" && data.buildStatus !== "pending") {
+          setOptimisticRunning(false);
         }
       },
     }
@@ -148,10 +147,7 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
     setLoading(true);
     setError(null);
 
-    // Set optimistic running state
     setOptimisticRunning(true);
-
-    // Optimistically update the UI
     mutate({ ...pullRequest, buildStatus: "running" }, false);
 
     try {
@@ -186,13 +182,8 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
       setSelectedFiles({});
       setExpandedFiles({});
 
-      // Trigger a revalidation of the build status
       mutate();
 
-      // Keep optimistic running state for a short period
-      setTimeout(() => {
-        setOptimisticRunning(false);
-      }, 30000); // Maintain optimistic state for 30 seconds
     } catch (error) {
       console.error("Error committing changes:", error);
       setError("Failed to commit changes. Please try again.");
@@ -202,7 +193,6 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
         variant: "destructive",
       });
 
-      // Revert the optimistic update
       setOptimisticRunning(false);
       mutate();
     } finally {
@@ -250,7 +240,7 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
         <span className="flex items-center">
           {isRunning ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin text-yellow-500" />
-          ) : isPending && !initialLoad ? (
+          ) : isPending ? (
             <AlertCircle className="mr-2 h-4 w-4 text-yellow-500" />
           ) : pullRequest.buildStatus === "success" ? (
             <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
