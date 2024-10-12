@@ -25,4 +25,4 @@ jobs:
       - name: Install @vitest/coverage-v8
         run: pnpm add -D @vitest/coverage-v8
       - name: "Test"
-        run: npx vitest --coverage.enabled true
+        run: npx vitest run

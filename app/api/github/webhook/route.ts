@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOctokit } from "@/lib/github";
+import { revalidateTag } from "next/cache";
 
 const octokit = getOctokit();
 
@@ -24,8 +25,11 @@ export async function POST(request: Request) {
       case "pull_request":
         await handlePullRequestEvent(payload);
         break;
-      case "workflow_run":
-        await handleWorkflowRunEvent(payload);
+      case "check_run":
+        await handleCheckRunEvent(payload);
+        break;
+      case "check_suite":
+        await handleCheckSuiteEvent(payload);
         break;
       default:
         console.log(`Unhandled event type: ${githubEvent}`);
@@ -50,11 +54,25 @@ async function handlePushEvent(payload: any) {
 async function handlePullRequestEvent(payload: any) {
   const { action, pull_request, repository } = payload;
   console.log(`Pull request ${action} in ${repository.full_name}`);
-  // Process pull request
+  revalidateTag(`pullRequest-${pull_request.id}`);
 }
 
-async function handleWorkflowRunEvent(payload: any) {
-  const { action, workflow_run, repository } = payload;
-  console.log(`Workflow run ${action} in ${repository.full_name}`);
-  // Process workflow run status
+async function handleCheckRunEvent(payload: any) {
+  const { action, check_run, repository } = payload;
+  console.log(`Check run ${action} in ${repository.full_name}`);
+  if (check_run.pull_requests && check_run.pull_requests.length > 0) {
+    check_run.pull_requests.forEach((pr: any) => {
+      revalidateTag(`pullRequest-${pr.id}`);
+    });
+  }
+}
+
+async function handleCheckSuiteEvent(payload: any) {
+  const { action, check_suite, repository } = payload;
+  console.log(`Check suite ${action} in ${repository.full_name}`);
+  if (check_suite.pull_requests && check_suite.pull_requests.length > 0) {
+    check_suite.pull_requests.forEach((pr: any) => {
+      revalidateTag(`pullRequest-${pr.id}`);
+    });
+  }
 }

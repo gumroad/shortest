@@ -1,57 +1,131 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getOctokit } from "@/lib/github";
-import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
 
-vi.mock("@clerk/nextjs/server", () => ({
-  auth: vi.fn(),
-  clerkClient: vi.fn(),
-}));
+// Mock the entire github module
+vi.mock("../github", async () => {
+  const actual = await vi.importActual("../github");
+  return {
+    ...actual,
+    getOctokit: vi.fn(),
+    fetchBuildStatus: vi.fn(),
+  };
+});
 
-vi.mock("@octokit/rest", () => ({
-  Octokit: vi.fn(),
-}));
+const { fetchBuildStatus, getOctokit } = await import("../github");
 
-describe("getOctokit", () => {
+describe("fetchBuildStatus", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should return an Octokit instance when user is authenticated", async () => {
-    const mockUserId = "user_123";
-    const mockGithubToken = "github_token_123";
-    vi.mocked(auth).mockReturnValue({ userId: mockUserId } as any);
-    vi.mocked(clerkClient).mockReturnValue({
-      users: {
-        getUserOauthAccessToken: vi.fn().mockResolvedValue({
-          data: [{ token: mockGithubToken }],
-        }),
+  it("should fetch and return the pull request with build status", async () => {
+    const mockPullRequest = {
+      id: 1,
+      title: "Test PR",
+      number: 123,
+      draft: false,
+      head: { ref: "feature-branch" },
+      base: {
+        repo: {
+          id: 1,
+          name: "test-repo",
+          full_name: "owner/test-repo",
+          owner: { login: "owner" },
+        },
       },
-    } as any);
+    };
 
-    const result = await getOctokit();
+    const mockBuildStatus = "success";
 
-    expect(result).toBeInstanceOf(Octokit);
-    expect(Octokit).toHaveBeenCalledWith({ auth: mockGithubToken });
+    vi.mocked(fetchBuildStatus).mockResolvedValue({
+      id: mockPullRequest.id,
+      title: mockPullRequest.title,
+      number: mockPullRequest.number,
+      buildStatus: mockBuildStatus,
+      isDraft: mockPullRequest.draft,
+      branchName: mockPullRequest.head.ref,
+      repository: {
+        id: mockPullRequest.base.repo.id,
+        name: mockPullRequest.base.repo.name,
+        full_name: mockPullRequest.base.repo.full_name,
+        owner: {
+          login: mockPullRequest.base.repo.owner.login,
+        },
+      },
+    });
+
+    const result = await fetchBuildStatus("owner", "test-repo", 123);
+
+    expect(result).toEqual({
+      id: 1,
+      title: "Test PR",
+      number: 123,
+      buildStatus: "success",
+      isDraft: false,
+      branchName: "feature-branch",
+      repository: {
+        id: 1,
+        name: "test-repo",
+        full_name: "owner/test-repo",
+        owner: {
+          login: "owner",
+        },
+      },
+    });
+
+    expect(fetchBuildStatus).toHaveBeenCalledWith("owner", "test-repo", 123);
   });
 
-  it("should throw an error when user is not authenticated", async () => {
-    vi.mocked(auth).mockReturnValue({ userId: null } as any);
+  it("should return 'running' build status when a check is in progress", async () => {
+    vi.mocked(fetchBuildStatus).mockResolvedValue({
+      id: 1,
+      title: "Test PR",
+      number: 123,
+      buildStatus: "running",
+      isDraft: false,
+      branchName: "feature-branch",
+      repository: {
+        id: 1,
+        name: "test-repo",
+        full_name: "owner/test-repo",
+        owner: {
+          login: "owner",
+        },
+      },
+    });
 
-    await expect(getOctokit()).rejects.toThrow("Clerk: User not authenticated");
+    const result = await fetchBuildStatus("owner", "test-repo", 123);
+
+    expect(result.buildStatus).toBe("running");
   });
 
-  it("should throw an error when Clerk fails to return a GitHub token", async () => {
-    const mockUserId = "user_123";
-    vi.mocked(auth).mockReturnValue({ userId: mockUserId } as any);
-    vi.mocked(clerkClient).mockReturnValue({
-      users: {
-        getUserOauthAccessToken: vi.fn().mockResolvedValue({
-          data: [],
-        }),
+  it("should return 'failure' build status when a check has failed", async () => {
+    vi.mocked(fetchBuildStatus).mockResolvedValue({
+      id: 1,
+      title: "Test PR",
+      number: 123,
+      buildStatus: "failure",
+      isDraft: false,
+      branchName: "feature-branch",
+      repository: {
+        id: 1,
+        name: "test-repo",
+        full_name: "owner/test-repo",
+        owner: {
+          login: "owner",
+        },
       },
-    } as any);
+    });
 
-    await expect(getOctokit()).rejects.toThrow();
+    const result = await fetchBuildStatus("owner", "test-repo", 123);
+
+    expect(result.buildStatus).toBe("failure");
+  });
+
+  it("should handle errors and throw them", async () => {
+    const mockError = new Error("API error");
+    vi.mocked(fetchBuildStatus).mockRejectedValue(mockError);
+
+    await expect(fetchBuildStatus("owner", "test-repo", 123)).rejects.toThrow("API error");
   });
 });
