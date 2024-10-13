@@ -142,6 +142,7 @@ describe('PullRequestItem', () => {
       );
     });
 
+    // Verify that fetchBuildStatus is called with the correct parameters
     expect(fetchBuildStatusMock).toHaveBeenCalledWith(
       mockPullRequest.repository.owner.login,
       mockPullRequest.repository.name,
