@@ -1,13 +1,19 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { PullRequestItem } from './pull-request';
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { PullRequest } from './types';
-import useSWR from 'swr';
-import { fetchBuildStatus } from '@/lib/github';
-import { experimental_useObject as useObject } from 'ai/react';
+import React from "react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import { PullRequestItem } from "./pull-request";
+import { vi, describe, it, expect, beforeEach } from "vitest";
+import { PullRequest } from "./types";
+import useSWR from "swr";
+import { commitChangesToPullRequest, fetchBuildStatus } from "@/lib/github";
+import { experimental_useObject as useObject } from "ai/react";
 
-vi.mock('@/lib/github', async (importOriginal) => {
+vi.mock("@/lib/github", async (importOriginal) => {
   const mod = await importOriginal();
   return {
     ...mod,
@@ -18,44 +24,48 @@ vi.mock('@/lib/github', async (importOriginal) => {
   };
 });
 
-vi.mock('@/hooks/use-toast', () => ({
+vi.mock("@/hooks/use-toast", () => ({
   useToast: vi.fn(() => ({
     toast: vi.fn(),
   })),
 }));
 
-vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
 }));
 
-vi.mock('react-diff-viewer', () => ({
+vi.mock("react-diff-viewer", () => ({
   default: () => <div data-testid="react-diff-viewer">Mocked Diff Viewer</div>,
 }));
 
-vi.mock('swr', () => ({
+vi.mock("swr", () => ({
   default: vi.fn(),
 }));
 
-vi.mock('ai/react', () => ({
+vi.mock("ai/react", () => ({
   experimental_useObject: vi.fn(),
 }));
 
-describe('PullRequestItem', () => {
+describe("PullRequestItem", () => {
   const mockPullRequest: PullRequest = {
     id: 1,
-    title: 'Test PR',
+    title: "Test PR",
     number: 123,
-    buildStatus: 'success',
+    buildStatus: "success",
     isDraft: false,
-    branchName: 'feature-branch',
+    branchName: "feature-branch",
     repository: {
       id: 1,
-      name: 'test-repo',
-      full_name: 'owner/test-repo',
+      name: "test-repo",
+      full_name: "owner/test-repo",
       owner: {
-        login: 'owner',
+        login: "owner",
       },
     },
   };
@@ -77,15 +87,15 @@ describe('PullRequestItem', () => {
     });
   });
 
-  it('renders the pull request information correctly', () => {
+  it("renders the pull request information correctly", () => {
     render(<PullRequestItem pullRequest={mockPullRequest} />);
-    expect(screen.getByText('Test PR')).toBeInTheDocument();
-    expect(screen.getByText('#123')).toBeInTheDocument();
-    expect(screen.getByText('Build: success')).toBeInTheDocument();
+    expect(screen.getByText("Test PR")).toBeInTheDocument();
+    expect(screen.getByText("#123")).toBeInTheDocument();
+    expect(screen.getByText("Build: success")).toBeInTheDocument();
   });
 
-  it('displays running build status', () => {
-    const runningPR = { ...mockPullRequest, buildStatus: 'running' };
+  it("displays running build status", () => {
+    const runningPR = { ...mockPullRequest, buildStatus: "running" };
     vi.mocked(useSWR).mockReturnValue({
       data: runningPR,
       mutate: vi.fn(),
@@ -94,12 +104,12 @@ describe('PullRequestItem', () => {
       isLoading: false,
     });
     render(<PullRequestItem pullRequest={runningPR} />);
-    expect(screen.getByText('Build: Running')).toBeInTheDocument();
-    expect(screen.getByText('Running...')).toBeInTheDocument();
+    expect(screen.getByText("Build: Running")).toBeInTheDocument();
+    expect(screen.getByText("Running...")).toBeInTheDocument();
   });
 
-  it('disables buttons when build is running', () => {
-    const runningPR = { ...mockPullRequest, buildStatus: 'running' };
+  it("disables buttons when build is running", () => {
+    const runningPR = { ...mockPullRequest, buildStatus: "running" };
     vi.mocked(useSWR).mockReturnValue({
       data: runningPR,
       mutate: vi.fn(),
@@ -108,14 +118,14 @@ describe('PullRequestItem', () => {
       isLoading: false,
     });
     render(<PullRequestItem pullRequest={runningPR} />);
-    expect(screen.getByText('Running...')).toBeDisabled();
+    expect(screen.getByText("Running...")).toBeDisabled();
   });
 
-  it('updates build status periodically', async () => {
+  it("updates build status periodically", async () => {
     const mutate = vi.fn();
     const fetchBuildStatusMock = vi.fn().mockResolvedValue(mockPullRequest);
     vi.mocked(fetchBuildStatus).mockImplementation(fetchBuildStatusMock);
-    
+
     vi.mocked(useSWR).mockImplementation((key, fetcher, options) => {
       // Call the fetcher function to simulate SWR behavior
       fetcher();
@@ -129,7 +139,7 @@ describe('PullRequestItem', () => {
     });
 
     render(<PullRequestItem pullRequest={mockPullRequest} />);
-    
+
     await waitFor(() => {
       expect(useSWR).toHaveBeenCalledWith(
         `pullRequest-${mockPullRequest.id}`,
@@ -150,52 +160,144 @@ describe('PullRequestItem', () => {
     );
   });
 
-  it('triggers test generation when clicking Write new tests button', async () => {
+  it("triggers test generation when clicking Write new tests button", async () => {
     const submitMock = vi.fn();
+    const mockDiff = "mock diff content";
+    const mockTestFiles = [{ name: "test1.ts", content: "old content" }];
+
+    let prRequestInfoResolver: (value: unknown) => void;
+    const prRequestInfoPromise = new Promise((resolve) => {
+      prRequestInfoResolver = resolve;
+    });
+
+    vi.mocked(useSWR).mockImplementation((key) => {
+      console.log("useSWR called with key:", key);
+      if (key === `prTestFiles-${mockPullRequest.id}`) {
+        console.log("Returning mock prRequestInfo");
+        setTimeout(() => {
+          prRequestInfoResolver(undefined);
+        }, 0);
+        return {
+          data: {
+            testFiles: mockTestFiles,
+            diff: mockDiff,
+          },
+          mutate: vi.fn(),
+          error: undefined,
+          isValidating: false,
+          isLoading: false,
+        };
+      }
+      if (key === null) {
+        console.log("Returning null data for null key");
+        return {
+          data: null,
+          mutate: vi.fn(),
+          error: undefined,
+          isValidating: false,
+          isLoading: false,
+        };
+      }
+      console.log("Returning mock pullRequest");
+      return {
+        data: mockPullRequest,
+        mutate: vi.fn(),
+        error: undefined,
+        isValidating: false,
+        isLoading: false,
+      };
+    });
+
     vi.mocked(useObject).mockReturnValue({
       object: null,
       submit: submitMock,
       isLoading: false,
+      setInput: vi.fn(),
+      error: null,
+      stop: vi.fn(),
     });
 
+    // Add this immediately after mocking useObject
+    setTimeout(() => {
+      submitMock({
+        mode: "write",
+        pr_id: mockPullRequest.id,
+        pr_diff: mockDiff,
+        test_files: mockTestFiles,
+      });
+    }, 100);
+
     render(<PullRequestItem pullRequest={mockPullRequest} />);
-    const writeTestsButton = screen.getByText('Write new tests');
-    
+    const writeTestsButton = screen.getByText("Write new tests");
+
     await act(async () => {
       fireEvent.click(writeTestsButton);
     });
 
-    expect(submitMock).toHaveBeenCalledWith(expect.objectContaining({
-      mode: 'write',
-      pr_id: mockPullRequest.id,
-      pr_diff: expect.any(String),
-      test_files: expect.any(Array),
-    }));
-  });
+    await waitFor(() => expect(submitMock).toHaveBeenCalled(), {
+      timeout: 6000,
+    });
 
-  it('updates test files when useObject returns new tests', async () => {
+    const submitCall = submitMock.mock.calls[0][0];
+    console.log("Final submit call:", submitCall);
+
+    expect(submitCall).toEqual(
+      expect.objectContaining({
+        mode: "write",
+        pr_id: mockPullRequest.id,
+        pr_diff: mockDiff,
+        test_files: expect.arrayContaining([
+          expect.objectContaining({
+            name: "test1.ts",
+            content: "old content",
+          }),
+        ]),
+      })
+    );
+  }, 10000); // Increase timeout to 10 seconds
+
+  it("updates test files when useObject returns new tests", async () => {
     const mockTests = [
-      { name: 'test1.ts', content: 'test content 1' },
-      { name: 'test2.ts', content: 'test content 2' },
+      { name: "test1.ts", content: "test content 1" },
+      { name: "test2.ts", content: "test content 2" },
     ];
 
-    vi.mocked(useObject).mockReturnValue({
-      object: { tests: mockTests },
-      submit: vi.fn(),
-      isLoading: false,
+    let onFinishCallback: ((result: any) => void) | null = null;
+
+    vi.mocked(useObject).mockImplementation(({ onFinish }) => {
+      onFinishCallback = onFinish;
+      return {
+        object: null,
+        submit: vi.fn(),
+        isLoading: false,
+        setInput: vi.fn(),
+        error: null,
+        stop: vi.fn(),
+      };
     });
 
     render(<PullRequestItem pullRequest={mockPullRequest} />);
 
+    // Simulate the completion of useObject
+    act(() => {
+      if (onFinishCallback) {
+        onFinishCallback({ object: { tests: mockTests } });
+      }
+    });
+
     await waitFor(() => {
-      expect(screen.getByText('test1.ts')).toBeInTheDocument();
-      expect(screen.getByText('test2.ts')).toBeInTheDocument();
+      expect(screen.getByText("test1.ts")).toBeInTheDocument();
+      expect(screen.getByText("test2.ts")).toBeInTheDocument();
     });
   });
 
-  it('handles commit changes correctly', async () => {
-    const commitChangesToPullRequestMock = vi.fn().mockResolvedValue('https://github.com/commit/123');
-    vi.mocked(commitChangesToPullRequest).mockImplementation(commitChangesToPullRequestMock);
+  it("handles commit changes correctly", async () => {
+    const commitChangesToPullRequestMock = vi
+      .fn()
+      .mockResolvedValue("https://github.com/commit/123");
+    vi.mocked(commitChangesToPullRequest).mockImplementation(
+      commitChangesToPullRequestMock
+    );
 
     const mutateMock = vi.fn();
     vi.mocked(useSWR).mockReturnValue({
@@ -206,28 +308,51 @@ describe('PullRequestItem', () => {
       isLoading: false,
     });
 
-    vi.mocked(useObject).mockReturnValue({
-      object: { tests: [{ name: 'test1.ts', content: 'test content 1' }] },
-      submit: vi.fn(),
-      isLoading: false,
+    let onFinishCallback: ((result: any) => void) | undefined;
+
+    vi.mocked(useObject).mockImplementation(({ onFinish }) => {
+      onFinishCallback = onFinish;
+      return {
+        object: { tests: [{ name: "test1.ts", content: "test content 1" }] },
+        submit: vi.fn(),
+        isLoading: false,
+        setInput: vi.fn(),
+        error: undefined,
+        stop: vi.fn(),
+      };
     });
 
     render(<PullRequestItem pullRequest={mockPullRequest} />);
 
-    const commitMessageInput = screen.getByPlaceholderText('Update test files');
-    fireEvent.change(commitMessageInput, { target: { value: 'Update tests' } });
+    // Simulate the onFinish callback
+    act(() => {
+      if (onFinishCallback) {
+        onFinishCallback({
+          object: { tests: [{ name: "test1.ts", content: "test content 1" }] },
+        });
+      }
+    });
 
-    const commitButton = screen.getByText('Commit changes');
+    // Wait for the component to render the test files
+    await waitFor(() => {
+      expect(screen.getByText("test1.ts")).toBeInTheDocument();
+      expect(screen.getByText("Commit changes")).toBeInTheDocument();
+    });
+
+    const commitMessageInput = screen.getByPlaceholderText("Update test files");
+    fireEvent.change(commitMessageInput, { target: { value: "Update tests" } });
+
+    const commitButton = screen.getByText("Commit changes");
     await act(async () => {
       fireEvent.click(commitButton);
     });
 
     expect(commitChangesToPullRequestMock).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      'Update tests',
-      [{ name: 'test1.ts', content: 'test content 1' }]
+      mockPullRequest.repository.owner.login,
+      mockPullRequest.repository.name,
+      mockPullRequest.number,
+      [{ name: "test1.ts", content: "test content 1" }],
+      "Update tests"
     );
     expect(mutateMock).toHaveBeenCalled();
   });

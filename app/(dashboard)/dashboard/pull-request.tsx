@@ -62,6 +62,17 @@ export function PullRequestItem({
     }
   );
 
+  const [shouldFetchOldTestFiles, setShouldFetchOldTestFiles] = useState(false);
+  const { data: prRequestInfo, mutate: mutatePrRequestInfo } = useSWR(
+    shouldFetchOldTestFiles ? `prTestFiles-${initialPullRequest.id}` : null,
+    () =>
+      getPullRequestInfo(
+        pullRequest.repository.owner.login,
+        pullRequest.repository.name,
+        pullRequest.number
+      )
+  );
+
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
     {}
@@ -84,7 +95,10 @@ export function PullRequestItem({
     onFinish: (result) => {
       if (result?.object?.tests) {
         const { filteredTestFiles, newSelectedFiles, newExpandedFiles } =
-          handleTestFilesUpdate(testFiles, result.object.tests);
+          handleTestFilesUpdate(
+            prRequestInfo?.testFiles || [],
+            result.object.tests
+          );
         setTestFiles(filteredTestFiles);
         setSelectedFiles(newSelectedFiles);
         setExpandedFiles(newExpandedFiles);
@@ -100,41 +114,44 @@ export function PullRequestItem({
     },
   });
 
-  const handleTests = async (pr: PullRequest, mode: "write" | "update") => {
+  const handleTests = async (mode: "write" | "update") => {
     setExpandedFiles({});
     setAnalyzing(true);
     setLoading(true);
     setError(null);
+    setShouldFetchOldTestFiles(true);
 
     try {
-      const { diff, testFiles: oldTestFiles } = await getPullRequestInfo(
-        pr.repository.owner.login,
-        pr.repository.name,
-        pr.number
-      );
+      const updatedPrRequestInfo = await mutatePrRequestInfo();
 
-      let testFilesToUpdate = oldTestFiles;
+      if (!updatedPrRequestInfo) {
+        throw new Error("Failed to fetch PR request info");
+      }
+
+      let testFilesToUpdate = updatedPrRequestInfo.testFiles || [];
 
       if (mode === "update") {
         const failingTests = await getFailingTests(
-          pr.repository.owner.login,
-          pr.repository.name,
-          pr.number
+          pullRequest.repository.owner.login,
+          pullRequest.repository.name,
+          pullRequest.number
         );
-        testFilesToUpdate = oldTestFiles.filter((file) =>
+        testFilesToUpdate = testFilesToUpdate.filter((file) =>
           failingTests.some((failingFile) => failingFile.name === file.name)
         );
       }
 
       submit({
         mode,
-        pr_id: pr.id,
-        pr_diff: diff,
+        pr_id: pullRequest.id,
+        pr_diff: updatedPrRequestInfo.diff,
         test_files: testFilesToUpdate,
       });
     } catch (error) {
       console.error("Error generating test files:", error);
       setError("Failed to generate test files.");
+      setAnalyzing(false);
+      setLoading(false);
     }
   };
 
@@ -245,8 +262,8 @@ export function PullRequestItem({
   };
 
   const { filteredTestFiles, newSelectedFiles, newExpandedFiles } = useMemo(
-    () => handleTestFilesUpdate(testFiles, object?.tests),
-    [testFiles, object]
+    () => handleTestFilesUpdate(prRequestInfo?.testFiles || [], object?.tests),
+    [prRequestInfo?.testFiles, object?.tests]
   );
   const testFilesToShow = isLoading ? filteredTestFiles : testFiles;
   const selectedFilesToShow = isLoading ? newSelectedFiles : selectedFiles;
@@ -293,7 +310,7 @@ export function PullRequestItem({
               : pullRequest.buildStatus}
           </Link>
         </span>
-        {testFiles && testFiles.length > 0 ? (
+        {testFilesToShow && testFilesToShow.length > 0 ? (
           <Button
             size="sm"
             className="bg-white hover:bg-gray-100 text-black border border-gray-200"
@@ -306,7 +323,7 @@ export function PullRequestItem({
           <Button
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white"
-            onClick={() => handleTests(pullRequest, "write")}
+            onClick={() => handleTests("write")}
             disabled={loading || isRunning}
           >
             {loading || isRunning ? (
@@ -324,7 +341,7 @@ export function PullRequestItem({
           <Button
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
-            onClick={() => handleTests(pullRequest, "update")}
+            onClick={() => handleTests("update")}
             disabled={loading || isRunning}
           >
             {loading || isRunning ? (
