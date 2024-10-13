@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { PullRequestItem } from './pull-request';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { PullRequest } from './types';
 import useSWR from 'swr';
 import { fetchBuildStatus } from '@/lib/github';
+import { experimental_useObject as useObject } from 'ai/react';
 
 vi.mock('@/lib/github', async (importOriginal) => {
   const mod = await importOriginal();
@@ -37,6 +38,10 @@ vi.mock('swr', () => ({
   default: vi.fn(),
 }));
 
+vi.mock('ai/react', () => ({
+  experimental_useObject: vi.fn(),
+}));
+
 describe('PullRequestItem', () => {
   const mockPullRequest: PullRequest = {
     id: 1,
@@ -63,6 +68,11 @@ describe('PullRequestItem', () => {
       mutate: vi.fn(),
       error: undefined,
       isValidating: false,
+      isLoading: false,
+    });
+    vi.mocked(useObject).mockReturnValue({
+      object: null,
+      submit: vi.fn(),
       isLoading: false,
     });
   });
@@ -132,7 +142,6 @@ describe('PullRequestItem', () => {
       );
     });
 
-    // Verify that fetchBuildStatus is called with the correct parameters
     expect(fetchBuildStatusMock).toHaveBeenCalledWith(
       mockPullRequest.repository.owner.login,
       mockPullRequest.repository.name,
@@ -140,42 +149,85 @@ describe('PullRequestItem', () => {
     );
   });
 
-  it('triggers revalidation after committing changes', async () => {
-    const { getPullRequestInfo, commitChangesToPullRequest } = await import('@/lib/github');
-    vi.mocked(getPullRequestInfo).mockResolvedValue({
-      diff: 'mock diff',
-      testFiles: [{ name: 'existing_test.ts', content: 'existing content' }],
-    });
-    vi.mocked(commitChangesToPullRequest).mockResolvedValue('https://github.com/commit/123');
-
-    vi.mocked(global.fetch).mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([{ name: 'generated_test.ts', content: 'generated content' }]),
-    } as Response);
-
-    const mutate = vi.fn();
-    vi.mocked(useSWR).mockReturnValue({
-      data: mockPullRequest,
-      mutate,
-      error: undefined,
-      isValidating: false,
+  it('triggers test generation when clicking Write new tests button', async () => {
+    const submitMock = vi.fn();
+    vi.mocked(useObject).mockReturnValue({
+      object: null,
+      submit: submitMock,
       isLoading: false,
     });
 
     render(<PullRequestItem pullRequest={mockPullRequest} />);
     const writeTestsButton = screen.getByText('Write new tests');
-    fireEvent.click(writeTestsButton);
+    
+    await act(async () => {
+      fireEvent.click(writeTestsButton);
+    });
+
+    expect(submitMock).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'write',
+      pr_id: mockPullRequest.id,
+      pr_diff: expect.any(String),
+      test_files: expect.any(Array),
+    }));
+  });
+
+  it('updates test files when useObject returns new tests', async () => {
+    const mockTests = [
+      { name: 'test1.ts', content: 'test content 1' },
+      { name: 'test2.ts', content: 'test content 2' },
+    ];
+
+    vi.mocked(useObject).mockReturnValue({
+      object: { tests: mockTests },
+      submit: vi.fn(),
+      isLoading: false,
+    });
+
+    render(<PullRequestItem pullRequest={mockPullRequest} />);
 
     await waitFor(() => {
-      expect(screen.getByText('generated_test.ts')).toBeInTheDocument();
+      expect(screen.getByText('test1.ts')).toBeInTheDocument();
+      expect(screen.getByText('test2.ts')).toBeInTheDocument();
     });
+  });
+
+  it('handles commit changes correctly', async () => {
+    const commitChangesToPullRequestMock = vi.fn().mockResolvedValue('https://github.com/commit/123');
+    vi.mocked(commitChangesToPullRequest).mockImplementation(commitChangesToPullRequestMock);
+
+    const mutateMock = vi.fn();
+    vi.mocked(useSWR).mockReturnValue({
+      data: mockPullRequest,
+      mutate: mutateMock,
+      error: undefined,
+      isValidating: false,
+      isLoading: false,
+    });
+
+    vi.mocked(useObject).mockReturnValue({
+      object: { tests: [{ name: 'test1.ts', content: 'test content 1' }] },
+      submit: vi.fn(),
+      isLoading: false,
+    });
+
+    render(<PullRequestItem pullRequest={mockPullRequest} />);
+
+    const commitMessageInput = screen.getByPlaceholderText('Update test files');
+    fireEvent.change(commitMessageInput, { target: { value: 'Update tests' } });
 
     const commitButton = screen.getByText('Commit changes');
-    fireEvent.click(commitButton);
-
-    await waitFor(() => {
-      expect(commitChangesToPullRequest).toHaveBeenCalled();
-      expect(mutate).toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(commitButton);
     });
+
+    expect(commitChangesToPullRequestMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      'Update tests',
+      [{ name: 'test1.ts', content: 'test content 1' }]
+    );
+    expect(mutateMock).toHaveBeenCalled();
   });
 });
