@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Octokit } from "@octokit/rest";
+import AdmZip from "adm-zip";
 
 // Mock the entire github module
 vi.mock("../github", async () => {
@@ -8,10 +9,12 @@ vi.mock("../github", async () => {
     ...actual,
     getOctokit: vi.fn(),
     fetchBuildStatus: vi.fn(),
+    getWorkflowLogs: vi.fn(),
+    getLatestRunId: vi.fn(),
   };
 });
 
-const { fetchBuildStatus, getOctokit } = await import("../github");
+const { fetchBuildStatus, getOctokit, getWorkflowLogs, getLatestRunId } = await import("../github");
 
 describe("fetchBuildStatus", () => {
   beforeEach(() => {
@@ -127,5 +130,58 @@ describe("fetchBuildStatus", () => {
     vi.mocked(fetchBuildStatus).mockRejectedValue(mockError);
 
     await expect(fetchBuildStatus("owner", "test-repo", 123)).rejects.toThrow("API error");
+  });
+});
+
+describe("getWorkflowLogs", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch and return workflow logs", async () => {
+    const mockLogs = "File: log1.txt\nLog content 1\n\nFile: log2.txt\nLog content 2";
+    vi.mocked(getWorkflowLogs).mockResolvedValue(mockLogs);
+
+    const logs = await getWorkflowLogs("owner", "repo", "123");
+
+    expect(logs).toBe(mockLogs);
+    expect(getWorkflowLogs).toHaveBeenCalledWith("owner", "repo", "123");
+  });
+
+  it("should handle errors when fetching workflow logs", async () => {
+    const mockError = new Error("API error");
+    vi.mocked(getWorkflowLogs).mockRejectedValue(mockError);
+
+    await expect(getWorkflowLogs("owner", "repo", "123")).rejects.toThrow("API error");
+  });
+});
+
+describe("getLatestRunId", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch and return the latest run ID", async () => {
+    vi.mocked(getLatestRunId).mockResolvedValue("123");
+
+    const latestRunId = await getLatestRunId("owner", "repo", "main");
+
+    expect(latestRunId).toBe("123");
+    expect(getLatestRunId).toHaveBeenCalledWith("owner", "repo", "main");
+  });
+
+  it("should return null when no runs are found", async () => {
+    vi.mocked(getLatestRunId).mockResolvedValue(null);
+
+    const latestRunId = await getLatestRunId("owner", "repo", "main");
+
+    expect(latestRunId).toBeNull();
+  });
+
+  it("should handle errors when fetching the latest run ID", async () => {
+    const mockError = new Error("API error");
+    vi.mocked(getLatestRunId).mockRejectedValue(mockError);
+
+    await expect(getLatestRunId("owner", "repo", "main")).rejects.toThrow("API error");
   });
 });
