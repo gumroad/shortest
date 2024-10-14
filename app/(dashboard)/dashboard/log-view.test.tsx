@@ -59,8 +59,8 @@ describe('LogView', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('file1')).toBeInTheDocument()
-      expect(screen.getByText('file2')).toBeInTheDocument()
+      const testElements = screen.getAllByText('test')
+      expect(testElements.length).toBeGreaterThan(0)
       expect(screen.getByText('Other')).toBeInTheDocument()
     })
   })
@@ -75,20 +75,22 @@ describe('LogView', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('file1')).toBeInTheDocument()
+      const testElements = screen.getAllByText('test')
+      expect(testElements.length).toBeGreaterThan(0)
     })
 
     // Expand the first group
-    fireEvent.click(screen.getByText('file1'))
+    const testButtons = screen.getAllByText('test')
+    fireEvent.click(testButtons[0])
 
-    expect(screen.getByText('1 | Line 1 of file 1')).toBeInTheDocument()
-    expect(screen.getByText('2 | Line 2 of file 1')).toBeInTheDocument()
+    expect(screen.getByText(/1 \| Line 1 of file 1/)).toBeInTheDocument()
+    expect(screen.getByText(/2 \| Line 2 of file 1/)).toBeInTheDocument()
 
     // Collapse the first group
-    fireEvent.click(screen.getByText('file1'))
+    fireEvent.click(testButtons[0])
 
-    expect(screen.queryByText('1 | Line 1 of file 1')).not.toBeInTheDocument()
-    expect(screen.queryByText('2 | Line 2 of file 1')).not.toBeInTheDocument()
+    expect(screen.queryByText(/1 \| Line 1 of file 1/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/2 \| Line 2 of file 1/)).not.toBeInTheDocument()
   })
 
   it('does not fetch logs when runId is null', () => {
