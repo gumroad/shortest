@@ -19,5 +19,14 @@ export const generateTestsResponseSchema = z.array(
   })
 );
 
+export const TestFileSchema = z.object({
+  tests: z.array(
+    z.object({
+      name: z.string(),
+      content: z.string(),
+    })
+  ),
+});
+
 export type GenerateTestsInput = z.infer<typeof generateTestsSchema>;
 export type GenerateTestsResponse = z.infer<typeof generateTestsResponseSchema>;
