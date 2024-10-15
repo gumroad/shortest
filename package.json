@@ -36,6 +36,7 @@
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vercel/postgres": "^0.10.0",
+    "adm-zip": "^0.5.16",
     "ai": "^3.4.0",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^2.4.3",
@@ -70,6 +71,7 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
+    "@types/adm-zip": "^0.5.5",
     "@vitejs/plugin-react": "^4.3.1",
     "happy-dom": "^15.7.4",
     "jsdom": "^25.0.1",

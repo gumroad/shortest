@@ -11,6 +11,8 @@ import {
   PlusCircle,
   Loader2,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +24,9 @@ import { commitChangesToPullRequest, getPullRequestInfo, getFailingTests } from 
 import { Input } from "@/components/ui/input";
 import useSWR from 'swr';
 import { fetchBuildStatus } from '@/lib/github';
+import { LogView } from './log-view'
+import { getLatestRunId } from '@/lib/github'
+import { cn } from "@/lib/utils"
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -33,19 +38,27 @@ interface PullRequestItemProps {
 
 export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequestItemProps) {
   const [optimisticRunning, setOptimisticRunning] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
 
   const { data: pullRequest, mutate } = useSWR(
     `pullRequest-${initialPullRequest.id}`,
     () => fetchBuildStatus(initialPullRequest.repository.owner.login, initialPullRequest.repository.name, initialPullRequest.number),
     {
       fallbackData: initialPullRequest,
-      refreshInterval: optimisticRunning ? 10000 : 0, // Poll every 5 seconds when optimisticRunning is true
+      refreshInterval: optimisticRunning ? 10000 : 0,
       onSuccess: (data) => {
         if (data.buildStatus !== "running" && data.buildStatus !== "pending") {
           setOptimisticRunning(false);
         }
       },
     }
+  );
+
+  const { data: latestRunId } = useSWR(
+    pullRequest.buildStatus === 'success' || pullRequest.buildStatus === 'failure'
+      ? ['latestRunId', pullRequest.repository.owner.login, pullRequest.repository.name, pullRequest.branchName]
+      : null,
+    () => getLatestRunId(pullRequest.repository.owner.login, pullRequest.repository.name, pullRequest.branchName)
   );
 
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
@@ -253,6 +266,28 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
           >
             Build: {isRunning ? "Running" : isPending ? "Pending" : pullRequest.buildStatus}
           </Link>
+          {(pullRequest.buildStatus === 'success' || pullRequest.buildStatus === 'failure') && latestRunId && (
+            <button
+              className="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-100 ease-in-out"
+              onClick={() => setShowLogs(!showLogs)}
+            >
+              <span>{showLogs ? 'Hide Logs' : 'Show Logs'}</span>
+              <span className="relative w-4 h-4">
+                <ChevronUp
+                  className={cn(
+                    "absolute inset-0 h-4 w-4 transition-opacity duration-100",
+                    showLogs ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                <ChevronDown
+                  className={cn(
+                    "absolute inset-0 h-4 w-4 transition-opacity duration-100",
+                    showLogs ? "opacity-0" : "opacity-100"
+                  )}
+                />
+              </span>
+          </button>
+          )}
         </span>
         {testFiles.length > 0 ? (
           <Button
@@ -365,6 +400,15 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
               </div>
             </div>
           )}
+        </div>
+      )}
+      {showLogs && latestRunId && (
+        <div className="mt-4">
+          <LogView
+            owner={pullRequest.repository.owner.login}
+            repo={pullRequest.repository.name}
+            runId={latestRunId}
+          />
         </div>
       )}
     </div>
