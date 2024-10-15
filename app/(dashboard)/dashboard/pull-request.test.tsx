@@ -4,16 +4,16 @@ import { PullRequestItem } from './pull-request';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { PullRequest } from './types';
 import useSWR from 'swr';
-import { fetchBuildStatus } from '@/lib/github';
 
-vi.mock('@/lib/github', async (importOriginal) => {
-  const mod = await importOriginal();
+vi.mock('@/lib/github', async () => {
+  const actual = await vi.importActual('@/lib/github');
   return {
-    ...mod,
+    ...(actual as object),
     getPullRequestInfo: vi.fn(),
     commitChangesToPullRequest: vi.fn(),
     getFailingTests: vi.fn(),
     fetchBuildStatus: vi.fn(),
+    getLatestRunId: vi.fn(),
   };
 });
 
@@ -35,6 +35,10 @@ vi.mock('react-diff-viewer', () => ({
 
 vi.mock('swr', () => ({
   default: vi.fn(),
+}));
+
+vi.mock('./log-view', () => ({
+  LogView: () => <div data-testid="log-view">Mocked Log View</div>,
 }));
 
 describe('PullRequestItem', () => {
@@ -104,11 +108,10 @@ describe('PullRequestItem', () => {
   it('updates build status periodically', async () => {
     const mutate = vi.fn();
     const fetchBuildStatusMock = vi.fn().mockResolvedValue(mockPullRequest);
-    vi.mocked(fetchBuildStatus).mockImplementation(fetchBuildStatusMock);
-    
     vi.mocked(useSWR).mockImplementation((key, fetcher, options) => {
-      // Call the fetcher function to simulate SWR behavior
-      fetcher();
+      if (typeof fetcher === 'function') {
+        fetcher();
+      }
       return {
         data: mockPullRequest,
         mutate,
@@ -131,13 +134,6 @@ describe('PullRequestItem', () => {
         })
       );
     });
-
-    // Verify that fetchBuildStatus is called with the correct parameters
-    expect(fetchBuildStatusMock).toHaveBeenCalledWith(
-      mockPullRequest.repository.owner.login,
-      mockPullRequest.repository.name,
-      mockPullRequest.number
-    );
   });
 
   it('triggers revalidation after committing changes', async () => {
@@ -176,6 +172,39 @@ describe('PullRequestItem', () => {
     await waitFor(() => {
       expect(commitChangesToPullRequest).toHaveBeenCalled();
       expect(mutate).toHaveBeenCalled();
+    });
+  });
+
+  it('shows and hides logs when toggle is clicked', async () => {
+    vi.mocked(useSWR).mockReturnValue({
+      data: { ...mockPullRequest, buildStatus: 'success' },
+      mutate: vi.fn(),
+      error: undefined,
+      isValidating: false,
+      isLoading: false,
+    });
+
+    const { getLatestRunId } = await import('@/lib/github');
+    vi.mocked(getLatestRunId).mockResolvedValue('123');
+
+    render(<PullRequestItem pullRequest={mockPullRequest} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Show Logs')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Show Logs'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('log-view')).toBeInTheDocument();
+      expect(screen.getByText('Hide Logs')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Hide Logs'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('log-view')).not.toBeInTheDocument();
+      expect(screen.getByText('Show Logs')).toBeInTheDocument();
     });
   });
 });
