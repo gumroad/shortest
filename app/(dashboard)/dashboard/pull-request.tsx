@@ -28,7 +28,8 @@ import {
   getPullRequestInfo,
   getFailingTests,
   getLatestRunId,
-  fetchBuildStatus
+  fetchBuildStatus,
+  getWorkflowLogs
 } from "@/lib/github";
 import { LogView } from "./log-view";
 import { PullRequest, TestFile } from "./types";
@@ -82,6 +83,17 @@ export function PullRequestItem({
         pullRequest.repository.name,
         pullRequest.branchName
       )
+  );
+
+  const { data: logs, error: logsError } = useSWR(
+    showLogs && latestRunId
+      ? ['workflowLogs', pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId]
+      : null,
+    () => getWorkflowLogs(pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId!),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
   );
 
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
@@ -476,9 +488,9 @@ export function PullRequestItem({
       {showLogs && latestRunId && (
         <div className="mt-4">
           <LogView
-            owner={pullRequest.repository.owner.login}
-            repo={pullRequest.repository.name}
-            runId={latestRunId}
+            logs={logs}
+            error={logsError}
+            isLoading={!logs && !logsError}
           />
         </div>
       )}

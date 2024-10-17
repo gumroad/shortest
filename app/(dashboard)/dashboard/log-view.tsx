@@ -2,23 +2,13 @@
 
 import { useRef, useMemo, useState } from 'react'
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react'
-import { getWorkflowLogs } from '@/lib/github'
-import useSWR from 'swr'
-import { LogViewProps, LogGroup } from './types'
+import { LogGroup, LogViewProps } from './types'
 
 
-export function LogView({ owner, repo, runId }: LogViewProps) {
+
+export function LogView({ logs, error, isLoading }: LogViewProps) {
   const logContainerRef = useRef<HTMLDivElement>(null)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
-
-  const { data: logs, error, isLoading } = useSWR(
-    runId ? ['workflowLogs', owner, repo, runId] : null,
-    () => getWorkflowLogs(owner, repo, runId!),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    }
-  )
 
   const parsedLogs = useMemo(() => {
     if (!logs) return [];

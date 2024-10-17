@@ -29,11 +29,10 @@ export type CommitChangesToPullRequest = (
   commitMessage: string
 ) => Promise<string>;
 
-
 export interface LogViewProps {
-  owner: string;
-  repo: string;
-  runId: string | null;
+  logs: string | undefined;
+  error: Error | undefined;
+  isLoading: boolean;
 }
 
 export interface LogGroup {
