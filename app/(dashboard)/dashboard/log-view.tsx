@@ -1,10 +1,9 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState } from 'react'
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react'
 import { getWorkflowLogs } from '@/lib/github'
 import useSWR from 'swr'
-import { useState } from 'react'
 
 interface LogViewProps {
   owner: string;
