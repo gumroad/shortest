@@ -4,18 +4,8 @@ import { useRef, useMemo, useState } from 'react'
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react'
 import { getWorkflowLogs } from '@/lib/github'
 import useSWR from 'swr'
+import { LogViewProps, LogGroup } from './types'
 
-interface LogViewProps {
-  owner: string;
-  repo: string;
-  runId: string | null;
-}
-
-interface LogGroup {
-  id: string;
-  name: string;
-  logs: string[];
-}
 
 export function LogView({ owner, repo, runId }: LogViewProps) {
   const logContainerRef = useRef<HTMLDivElement>(null)
