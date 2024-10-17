@@ -28,3 +28,16 @@ export type CommitChangesToPullRequest = (
   filesToCommit: TestFile[],
   commitMessage: string
 ) => Promise<string>;
+
+
+export interface LogViewProps {
+  owner: string;
+  repo: string;
+  runId: string | null;
+}
+
+export interface LogGroup {
+  id: string;
+  name: string;
+  logs: string[];
+}
