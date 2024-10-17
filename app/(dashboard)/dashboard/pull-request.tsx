@@ -1,7 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { experimental_useObject as useObject } from "ai/react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+import useSWR from "swr";
+import { TestFileSchema } from "@/app/api/generate-tests/schema";
 import {
   GitPullRequestDraft,
   GitPullRequest,
@@ -14,24 +19,19 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import dynamic from "next/dynamic";
-import { PullRequest, TestFile } from "./types";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   commitChangesToPullRequest,
   getPullRequestInfo,
   getFailingTests,
+  getLatestRunId,
+  fetchBuildStatus
 } from "@/lib/github";
-import { Input } from "@/components/ui/input";
-import useSWR from "swr";
-import { fetchBuildStatus } from "@/lib/github";
-import { experimental_useObject as useObject } from "ai/react";
-import { TestFileSchema } from "@/app/api/generate-tests/schema";
 import { LogView } from "./log-view";
-import { getLatestRunId } from "@/lib/github";
-import { cn } from "@/lib/utils";
+import { PullRequest, TestFile } from "./types";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
