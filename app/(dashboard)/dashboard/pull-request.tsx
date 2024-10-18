@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { experimental_useObject as useObject } from "ai/react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -32,7 +32,8 @@ import {
   getWorkflowLogs
 } from "@/lib/github";
 import { LogView } from "./log-view";
-import { PullRequest, TestFile } from "./types";
+import { PullRequest, TestFile, LogGroup } from "./types";
+import { useLogGroups } from "@/hooks/use-log-groups";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -86,7 +87,7 @@ export function PullRequestItem({
   );
 
   const { data: logs, error: logsError } = useSWR(
-    showLogs && latestRunId
+    latestRunId
       ? ['workflowLogs', pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId]
       : null,
     () => getWorkflowLogs(pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId!),
@@ -95,6 +96,14 @@ export function PullRequestItem({
       revalidateOnReconnect: false,
     }
   );
+
+  const parsedLogs = useLogGroups(logs);
+
+  const filterTestLogs = useCallback((parsedLogs: LogGroup[]) => {
+    return parsedLogs.filter((group: LogGroup) => 
+      group.name.toLowerCase().includes('test')
+    );
+  }, []);
 
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
   const [oldTestFiles, setOldTestFiles] = useState<TestFile[]>([]);
@@ -155,6 +164,7 @@ export function PullRequestItem({
       );
 
       let testFilesToUpdate = oldTestFiles;
+      let relevantLogs: LogGroup[] = [];
 
       if (mode === "update") {
         const failingTests = await getFailingTests(
@@ -165,6 +175,9 @@ export function PullRequestItem({
         testFilesToUpdate = oldTestFiles.filter((file) =>
           failingTests.some((failingFile) => failingFile.name === file.name)
         );
+
+        // Filter and include relevant test logs
+        relevantLogs = filterTestLogs(parsedLogs);
       }
 
       setOldTestFiles(testFilesToUpdate);
@@ -173,10 +186,11 @@ export function PullRequestItem({
         pr_id: pr.id,
         pr_diff: diff,
         test_files: testFilesToUpdate,
+        test_logs: relevantLogs,
       });
     } catch (error) {
-      console.error("Error generating test files:", error);
-      setError("Failed to generate test files.");
+      console.error("Error handling tests:", error);
+      setError("Failed to handle tests.");
       setAnalyzing(false);
       setLoading(false);
     }

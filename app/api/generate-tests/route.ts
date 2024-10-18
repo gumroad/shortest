@@ -3,7 +3,7 @@ import { streamObject } from "ai";
 import { GenerateTestsInput, TestFileSchema } from "./schema";
 
 export async function POST(req: Request) {
-  const { mode, pr_diff, test_files } =
+  const { mode, pr_diff, test_files, test_logs } =
     (await req.json()) as GenerateTestsInput;
 
   const prompt = `You are an expert software engineer. ${
@@ -24,7 +24,20 @@ export async function POST(req: Request) {
     .join("\n")}
   </Test Files>
 
+  ${
+    test_logs && test_logs.length > 0
+      ? `
+  Relevant test logs:
+  <Test Logs>
+  ${test_logs.map((group) => `${group.name}:\n${group.logs.join("\n")}`).join("\n\n")}
+  </Test Logs>
+  `
+      : ""
+  }
+
   Respond with an array of test files with their name being the path to the file and the content being the full contents of the updated test file.`;
+
+  console.log("Sending prompt to AI:", prompt);
 
   const result = await streamObject({
     model: anthropic("claude-3-5-sonnet-20240620"),
