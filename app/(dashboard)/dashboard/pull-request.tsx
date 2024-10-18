@@ -502,7 +502,7 @@ export function PullRequestItem({
       {showLogs && latestRunId && (
         <div className="mt-4">
           <LogView
-            logs={logs}
+            parsedLogs={parsedLogs}
             error={logsError}
             isLoading={!logs && !logsError}
           />

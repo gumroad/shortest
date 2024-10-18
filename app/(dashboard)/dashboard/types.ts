@@ -29,12 +29,6 @@ export type CommitChangesToPullRequest = (
   commitMessage: string
 ) => Promise<string>;
 
-export interface LogViewProps {
-  logs: string | undefined;
-  error: Error | undefined;
-  isLoading: boolean;
-}
-
 export interface LogGroup {
   id: string;
   name: string;

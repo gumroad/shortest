@@ -2,14 +2,17 @@
 
 import { useRef, useState } from 'react'
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react'
-import { LogViewProps } from './types'
-import { useLogGroups } from '@/hooks/use-log-groups'
+import { LogGroup } from './types'
 
-export function LogView({ logs, error, isLoading }: LogViewProps) {
+interface LogViewProps {
+  parsedLogs: LogGroup[] | undefined;
+  error: Error | undefined;
+  isLoading: boolean;
+}
+
+export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
   const logContainerRef = useRef<HTMLDivElement>(null)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
-
-  const parsedLogs = useLogGroups(logs);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => ({
@@ -37,7 +40,7 @@ export function LogView({ logs, error, isLoading }: LogViewProps) {
         <h3 className="text-sm font-semibold">Logs</h3>
       </div>
       <div ref={logContainerRef} className="h-96 overflow-y-auto p-4 font-mono text-sm">
-        {parsedLogs.map((group) => (
+        {parsedLogs?.map((group) => (
           <div key={group.id} className="mb-4">
             <button
               onClick={() => toggleGroup(group.id)}
