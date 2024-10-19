@@ -34,6 +34,10 @@ export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
     return <div className="text-red-500">Error loading logs: {error.message}</div>
   }
 
+  if (parsedLogs?.length === 0) {
+    return <div>No logs available</div>
+  }
+
   return (
     <div className="bg-gray-900 text-gray-100 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between p-2 bg-gray-800">
