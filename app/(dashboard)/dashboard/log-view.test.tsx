@@ -75,7 +75,7 @@ describe('LogView', () => {
   })
 
   it('renders empty state when no logs are provided', () => {
-    render(<LogView parsedLogs={undefined} error={undefined} isLoading={false} />)
+    render(<LogView parsedLogs={[]} error={undefined} isLoading={false} />)
     expect(screen.getByText('No logs available.')).toBeInTheDocument()
   })
 })
