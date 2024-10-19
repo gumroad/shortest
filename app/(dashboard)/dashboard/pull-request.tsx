@@ -48,6 +48,15 @@ export function PullRequestItem({
 }: PullRequestItemProps) {
   const [optimisticRunning, setOptimisticRunning] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
+  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
+  const [oldTestFiles, setOldTestFiles] = useState<TestFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [analyzing, setAnalyzing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [commitMessage, setCommitMessage] = useState("Update test files");
+  const { toast } = useToast();
 
   const { data: pullRequest, mutate } = useSWR(
     `pullRequest-${initialPullRequest.id}`,
@@ -104,20 +113,6 @@ export function PullRequestItem({
       group.name.toLowerCase().includes('test')
     );
   }, []);
-
-  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [oldTestFiles, setOldTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [analyzing, setAnalyzing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [commitMessage, setCommitMessage] = useState("Update test files");
 
   const isRunning = optimisticRunning || pullRequest.buildStatus === "running";
   const isPending = !optimisticRunning && pullRequest.buildStatus === "pending";
