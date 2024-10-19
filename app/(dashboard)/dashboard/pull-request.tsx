@@ -70,6 +70,9 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
   const { toast } = useToast();
   const [commitMessage, setCommitMessage] = useState("Update test files");
 
+  const [streamedTestFiles, setStreamedTestFiles] = useState<TestFile[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+
   const isRunning = optimisticRunning || pullRequest.buildStatus === "running";
   const isPending = !optimisticRunning && pullRequest.buildStatus === "pending";
 
@@ -127,6 +130,22 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
     }
   };
 
+  function* streamTestFiles(files: TestFile[]) {
+    const chunkSize = 70;
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      const file = files[fileIndex];
+      let contentIndex = 0;
+      while (contentIndex < file.content.length) {
+        const nextChunk = file.content.slice(0, contentIndex + chunkSize);
+        yield {
+          fileIndex,
+          content: nextChunk,
+        };
+        contentIndex += chunkSize;
+      }
+    }
+  }
+
   const handleTestFilesUpdate = (
     oldTestFiles: TestFile[],
     newTestFiles: TestFile[]
@@ -144,6 +163,8 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
           };
         });
       setTestFiles(filteredTestFiles);
+      setStreamedTestFiles([]);
+      setIsStreaming(true);
       const newSelectedFiles: Record<string, boolean> = {};
       const newExpandedFiles: Record<string, boolean> = {};
       filteredTestFiles.forEach((file) => {
@@ -153,6 +174,26 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
       });
       setSelectedFiles(newSelectedFiles);
       setExpandedFiles(newExpandedFiles);
+
+      const generator = streamTestFiles(filteredTestFiles);
+      const streamNextChunk = () => {
+        const result = generator.next();
+        if (!result.done) {
+          const { fileIndex, content } = result.value;
+          setStreamedTestFiles((prev) => {
+            const updatedFiles = [...prev];
+            if (!updatedFiles[fileIndex]) {
+              updatedFiles[fileIndex] = { ...filteredTestFiles[fileIndex], content: "" };
+            }
+            updatedFiles[fileIndex].content = content;
+            return updatedFiles;
+          });
+          setTimeout(streamNextChunk, 50);
+        } else {
+          setIsStreaming(false);
+        }
+      };
+      streamNextChunk();
     }
   };
 
@@ -343,7 +384,7 @@ export function PullRequestItem({ pullRequest: initialPullRequest }: PullRequest
             </div>
           ) : (
             <div className="space-y-4">
-              {testFiles.map((file) => (
+              {(isStreaming ? streamedTestFiles : testFiles).map((file) => (
                 <div key={file.name} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
