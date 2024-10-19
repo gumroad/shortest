@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const prompt = `You are an expert software engineer. ${
     mode === "write"
       ? "Write entirely new tests and update relevant existing tests in order to reflect the added/edited/removed functionality."
-      : "Update the provided failing test files in order to get the PR build back to passing. Make updates to tests solely, do not add or remove tests."
+      : "Update the provided failing test files in order to get the PR build back to passing. I have provided the test logs for the PR build inside <Test Logs> tags. Use them to understand what tests are failing. Update tests to get a passing build."
   }
 
   PR Diff:
