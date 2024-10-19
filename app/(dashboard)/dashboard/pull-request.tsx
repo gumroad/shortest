@@ -96,7 +96,7 @@ export function PullRequestItem({
   );
 
   const { data: logs, error: logsError } = useSWR(
-    latestRunId
+    showLogs || latestRunId
       ? ['workflowLogs', pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId]
       : null,
     () => getWorkflowLogs(pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId!),
@@ -402,9 +402,9 @@ export function PullRequestItem({
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
             onClick={() => handleTests(pullRequest, "update")}
-            disabled={loading || isRunning}
+            disabled={loading || isRunning || parsedLogs.length === 0}
           >
-            {loading || isRunning ? (
+            {loading || isRunning || parsedLogs.length === 0 ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Edit className="mr-2 h-4 w-4" />
@@ -413,6 +413,8 @@ export function PullRequestItem({
               ? "Loading..."
               : isRunning
               ? "Running..."
+              : parsedLogs.length === 0
+              ? "Preparing logs..."
               : "Update tests to fix"}
           </Button>
         )}
