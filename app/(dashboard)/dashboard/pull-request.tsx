@@ -109,9 +109,33 @@ export function PullRequestItem({
   const parsedLogs = useLogGroups(logs);
 
   const filterTestLogs = useCallback((parsedLogs: LogGroup[]) => {
-    return parsedLogs.filter((group: LogGroup) => 
+    const relevantKeywords = ['error', 'typeerror', 'fail'];
+    const filteredLogs = parsedLogs.filter((group: LogGroup) => 
       group.name.toLowerCase().includes('test')
-    );
+    ).map(group => {
+      const relevantLogs = [];
+      let isRelevantSection = false;
+      for (const log of group.logs) {
+        if (relevantKeywords.some(keyword => log.toLowerCase().includes(keyword))) {
+          isRelevantSection = true;
+        }
+        if (isRelevantSection) {
+          relevantLogs.push(log);
+        }
+        if (log.trim() === '' || log.startsWith('✓')) {
+          isRelevantSection = false;
+        }
+      }
+      return { ...group, logs: relevantLogs };
+    }).filter(group => group.logs.length > 0);
+
+    // TODO: Uncomment this when we implement token counting
+    // const tokenCount = filteredLogs.reduce((count, group) => 
+    //   count + group.name.length + group.logs.join(' ').length, 0);
+    
+    // console.log(`Filtered log token count: ${tokenCount}`);
+
+    return filteredLogs;
   }, []);
 
   const isRunning = optimisticRunning || pullRequest.buildStatus === "running";
