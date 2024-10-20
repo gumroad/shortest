@@ -1,79 +1,18 @@
 'use client'
 
-import { useRef, useMemo } from 'react'
+import { useRef, useState } from 'react'
 import { Loader2, ChevronRight, ChevronDown } from 'lucide-react'
-import { getWorkflowLogs } from '@/lib/github'
-import useSWR from 'swr'
-import { useState } from 'react'
+import { LogGroup } from './types'
 
 interface LogViewProps {
-  owner: string;
-  repo: string;
-  runId: string | null;
+  parsedLogs: LogGroup[] | undefined;
+  error: Error | undefined;
+  isLoading: boolean;
 }
 
-interface LogGroup {
-  id: string;
-  name: string;
-  logs: string[];
-}
-
-export function LogView({ owner, repo, runId }: LogViewProps) {
+export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
   const logContainerRef = useRef<HTMLDivElement>(null)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
-
-  const { data: logs, error, isLoading } = useSWR(
-    runId ? ['workflowLogs', owner, repo, runId] : null,
-    () => getWorkflowLogs(owner, repo, runId!),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    }
-  )
-
-  const parsedLogs = useMemo(() => {
-    if (!logs) return [];
-
-    const groups: LogGroup[] = [];
-    let currentGroup: LogGroup | null = null;
-    const lines = logs.split('\n');
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s*/, '');
-      if (line.startsWith('File:')) {
-        if (currentGroup) {
-          groups.push(currentGroup);
-        }
-        currentGroup = {
-          id: `group-${groups.length}`,
-          name: line.trim(),
-          logs: []
-        };
-      } else if (currentGroup) {
-        currentGroup.logs.push(line);
-      } else {
-        if (!groups.length || groups[groups.length - 1].name !== 'Other') {
-          groups.push({ id: `group-${groups.length}`, name: 'Other', logs: [] });
-        }
-        groups[groups.length - 1].logs.push(line);
-      }
-    }
-
-    if (currentGroup) {
-      groups.push(currentGroup);
-    }
-
-    // Add line numbers and trim group names
-    return groups.map(group => ({
-      ...group,
-      name: group.name
-        .replace(/^File:\s*/, '')
-        .replace(/^.*?_/, '')
-        .replace(/\.txt$/, '')
-        .split('/')[0],
-      logs: group.logs.map((log, index) => `${(index + 1).toString().padStart(4, ' ')} | ${log}`)
-    }));
-  }, [logs]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => ({
@@ -95,13 +34,17 @@ export function LogView({ owner, repo, runId }: LogViewProps) {
     return <div className="text-red-500">Error loading logs: {error.message}</div>
   }
 
+  if (parsedLogs?.length === 0) {
+    return <div>No logs available</div>
+  }
+
   return (
     <div className="bg-gray-900 text-gray-100 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between p-2 bg-gray-800">
         <h3 className="text-sm font-semibold">Logs</h3>
       </div>
       <div ref={logContainerRef} className="h-96 overflow-y-auto p-4 font-mono text-sm">
-        {parsedLogs.map((group) => (
+        {parsedLogs?.map((group) => (
           <div key={group.id} className="mb-4">
             <button
               onClick={() => toggleGroup(group.id)}

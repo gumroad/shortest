@@ -28,3 +28,9 @@ export type CommitChangesToPullRequest = (
   filesToCommit: TestFile[],
   commitMessage: string
 ) => Promise<string>;
+
+export interface LogGroup {
+  id: string;
+  name: string;
+  logs: string[];
+}
