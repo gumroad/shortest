@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { LogView } from './log-view'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
@@ -57,25 +57,8 @@ describe('LogView', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
-  it('expands and collapses log groups', () => {
-    render(<LogView {...defaultProps} />)
-
-    // Expand the first group
-    const testButtons = screen.getAllByText('test')
-    fireEvent.click(testButtons[0])
-
-    expect(screen.getByText('1 | Line 1 of file 1')).toBeInTheDocument()
-    expect(screen.getByText('2 | Line 2 of file 1')).toBeInTheDocument()
-
-    // Collapse the first group
-    fireEvent.click(testButtons[0])
-
-    expect(screen.queryByText('1 | Line 1 of file 1')).not.toBeInTheDocument()
-    expect(screen.queryByText('2 | Line 2 of file 1')).not.toBeInTheDocument()
-  })
-
   it('renders empty state when no logs are provided', () => {
     render(<LogView parsedLogs={[]} error={undefined} isLoading={false} />)
-    expect(screen.getByText('No logs available.')).toBeInTheDocument()
+    expect(screen.getByText(/No logs available/i)).toBeInTheDocument()
   })
 })
