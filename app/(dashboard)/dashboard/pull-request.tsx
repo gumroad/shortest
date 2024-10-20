@@ -1,7 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useCallback } from "react";
+import { experimental_useObject as useObject } from "ai/react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { cn } from "@/lib/utils";
+import useSWR from "swr";
+import { TestFileSchema } from "@/app/api/generate-tests/schema";
 import {
   GitPullRequestDraft,
   GitPullRequest,
@@ -14,24 +19,21 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import dynamic from "next/dynamic";
-import { PullRequest, TestFile } from "./types";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   commitChangesToPullRequest,
   getPullRequestInfo,
   getFailingTests,
+  getLatestRunId,
+  fetchBuildStatus,
+  getWorkflowLogs
 } from "@/lib/github";
-import { Input } from "@/components/ui/input";
-import useSWR from "swr";
-import { fetchBuildStatus } from "@/lib/github";
-import { experimental_useObject as useObject } from "ai/react";
-import { TestFileSchema } from "@/app/api/generate-tests/schema";
 import { LogView } from "./log-view";
-import { getLatestRunId } from "@/lib/github";
-import { cn } from "@/lib/utils";
+import { PullRequest, TestFile, LogGroup } from "./types";
+import { useLogGroups } from "@/hooks/use-log-groups";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -46,6 +48,15 @@ export function PullRequestItem({
 }: PullRequestItemProps) {
   const [optimisticRunning, setOptimisticRunning] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
+  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
+  const [oldTestFiles, setOldTestFiles] = useState<TestFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [analyzing, setAnalyzing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [commitMessage, setCommitMessage] = useState("Update test files");
+  const { toast } = useToast();
 
   const { data: pullRequest, mutate } = useSWR(
     `pullRequest-${initialPullRequest.id}`,
@@ -84,19 +95,48 @@ export function PullRequestItem({
       )
   );
 
-  const [testFiles, setTestFiles] = useState<TestFile[]>([]);
-  const [oldTestFiles, setOldTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
-    {}
+  const { data: logs, error: logsError } = useSWR(
+    showLogs || latestRunId
+      ? ['workflowLogs', pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId]
+      : null,
+    () => getWorkflowLogs(pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId!),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
   );
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [analyzing, setAnalyzing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [commitMessage, setCommitMessage] = useState("Update test files");
+
+  const parsedLogs = useLogGroups(logs);
+
+  const filterTestLogs = useCallback((parsedLogs: LogGroup[]) => {
+    const relevantKeywords = ['error', 'typeerror', 'fail'];
+    const filteredLogs = parsedLogs.filter((group: LogGroup) => 
+      group.name.toLowerCase().includes('test')
+    ).map(group => {
+      const relevantLogs = [];
+      let isRelevantSection = false;
+      for (const log of group.logs) {
+        if (relevantKeywords.some(keyword => log.toLowerCase().includes(keyword))) {
+          isRelevantSection = true;
+        }
+        if (isRelevantSection) {
+          relevantLogs.push(log);
+        }
+        if (log.trim() === '' || log.startsWith('✓')) {
+          isRelevantSection = false;
+        }
+      }
+      return { ...group, logs: relevantLogs };
+    }).filter(group => group.logs.length > 0);
+
+    // TODO: Uncomment this when we implement token counting
+    // const tokenCount = filteredLogs.reduce((count, group) => 
+    //   count + group.name.length + group.logs.join(' ').length, 0);
+    
+    // console.log(`Filtered log token count: ${tokenCount}`);
+
+    return filteredLogs;
+  }, []);
 
   const isRunning = optimisticRunning || pullRequest.buildStatus === "running";
   const isPending = !optimisticRunning && pullRequest.buildStatus === "pending";
@@ -143,6 +183,7 @@ export function PullRequestItem({
       );
 
       let testFilesToUpdate = oldTestFiles;
+      let relevantLogs: LogGroup[] = [];
 
       if (mode === "update") {
         const failingTests = await getFailingTests(
@@ -153,6 +194,9 @@ export function PullRequestItem({
         testFilesToUpdate = oldTestFiles.filter((file) =>
           failingTests.some((failingFile) => failingFile.name === file.name)
         );
+
+        // Filter and include relevant test logs
+        relevantLogs = filterTestLogs(parsedLogs);
       }
 
       setOldTestFiles(testFilesToUpdate);
@@ -161,10 +205,11 @@ export function PullRequestItem({
         pr_id: pr.id,
         pr_diff: diff,
         test_files: testFilesToUpdate,
+        test_logs: relevantLogs,
       });
     } catch (error) {
-      console.error("Error generating test files:", error);
-      setError("Failed to generate test files.");
+      console.error("Error handling tests:", error);
+      setError("Failed to handle tests.");
       setAnalyzing(false);
       setLoading(false);
     }
@@ -381,9 +426,9 @@ export function PullRequestItem({
             size="sm"
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
             onClick={() => handleTests(pullRequest, "update")}
-            disabled={loading || isRunning}
+            disabled={loading || isRunning || parsedLogs.length === 0}
           >
-            {loading || isRunning ? (
+            {loading || isRunning || parsedLogs.length === 0 ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Edit className="mr-2 h-4 w-4" />
@@ -392,6 +437,8 @@ export function PullRequestItem({
               ? "Loading..."
               : isRunning
               ? "Running..."
+              : parsedLogs.length === 0
+              ? "Preparing logs..."
               : "Update tests to fix"}
           </Button>
         )}
@@ -476,9 +523,9 @@ export function PullRequestItem({
       {showLogs && latestRunId && (
         <div className="mt-4">
           <LogView
-            owner={pullRequest.repository.owner.login}
-            repo={pullRequest.repository.name}
-            runId={latestRunId}
+            parsedLogs={parsedLogs}
+            error={logsError}
+            isLoading={!logs && !logsError}
           />
         </div>
       )}
