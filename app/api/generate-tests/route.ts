@@ -37,8 +37,6 @@ export async function POST(req: Request) {
 
   Respond with an array of test files with their name being the path to the file and the content being the full contents of the updated test file.`;
 
-  console.log("Sending prompt to AI:", prompt);
-
   const result = await streamObject({
     model: anthropic("claude-3-5-sonnet-20240620"),
     output: "object",
