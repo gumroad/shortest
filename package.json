@@ -48,6 +48,7 @@
     "drizzle-orm": "^0.33.0",
     "jose": "^5.8.0",
     "lucide-react": "^0.439.0",
+    "minimatch": "^10.0.1",
     "next": "15.0.0-canary.152",
     "postcss": "^8.4.45",
     "postgres": "^3.4.4",
@@ -72,8 +73,10 @@
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
     "@types/adm-zip": "^0.5.5",
+    "@types/js-yaml": "^4.0.9",
     "@vitejs/plugin-react": "^4.3.1",
     "happy-dom": "^15.7.4",
+    "js-yaml": "^4.1.0",
     "jsdom": "^25.0.1",
     "smee-client": "^2.0.3",
     "vitest": "^2.1.1"

@@ -41,3 +41,6 @@ next-env.d.ts
 .docker
 docker-compose.override.yml
 docker-compose.yml
+
+# config
+shortest.yml
