@@ -4,6 +4,14 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
 import { TestFile, PullRequest } from "../app/(dashboard)/dashboard/types";
 import AdmZip from "adm-zip";
+import { getTestPatternsConfig } from "./config";
+import { minimatch } from "minimatch";
+
+function matchTestPatterns(testPatterns: string[], filePath: string) {
+  return testPatterns.some((pattern) =>
+    minimatch(filePath, pattern, { dot: true, matchBase: true })
+  );
+}
 
 export async function getOctokit() {
   const { userId } = auth();
@@ -72,7 +80,11 @@ export async function getAssignedPullRequests() {
   }
 }
 
-export async function fetchBuildStatus(owner: string, repo: string, pullNumber: number): Promise<PullRequest> {
+export async function fetchBuildStatus(
+  owner: string,
+  repo: string,
+  pullNumber: number
+): Promise<PullRequest> {
   const octokit = await getOctokit();
 
   try {
@@ -82,7 +94,12 @@ export async function fetchBuildStatus(owner: string, repo: string, pullNumber: 
       pull_number: pullNumber,
     });
 
-    const buildStatus = await fetchBuildStatusForRef(octokit, owner, repo, pr.head.ref);
+    const buildStatus = await fetchBuildStatusForRef(
+      octokit,
+      owner,
+      repo,
+      pr.head.ref
+    );
 
     return {
       id: pr.id,
@@ -247,6 +264,7 @@ export async function getPullRequestInfo(
   pullNumber: number
 ) {
   const octokit = await getOctokit();
+  const testPatterns = await getTestPatternsConfig({ owner, repo });
 
   try {
     const [diffResponse, repoContentsResponse] = await Promise.all([
@@ -268,6 +286,7 @@ export async function getPullRequestInfo(
 
     while (queue.length > 0) {
       const item = queue.shift();
+
       if (item && item.type === "dir") {
         const dirContents = await octokit.rest.repos.getContent({
           owner,
@@ -278,7 +297,7 @@ export async function getPullRequestInfo(
       } else if (
         item &&
         item.type === "file" &&
-        item.path.toLowerCase().includes(".test.")
+        matchTestPatterns(testPatterns, item.path)
       ) {
         const fileContent = await octokit.rest.repos.getContent({
           owner,
@@ -318,18 +337,18 @@ export async function getFailingTests(
   pullNumber: number
 ): Promise<TestFile[]> {
   const octokit = await getOctokit();
-
+  const testPatterns = await getTestPatternsConfig({ owner, repo });
   try {
     const { data: checkRuns } = await octokit.checks.listForRef({
       owner,
       repo,
       ref: `refs/pull/${pullNumber}/head`,
-      status: 'completed',
-      filter: 'latest',
+      status: "completed",
+      filter: "latest",
     });
 
     const failedChecks = checkRuns.check_runs.filter(
-      (run) => run.conclusion === 'failure'
+      (run) => run.conclusion === "failure"
     );
 
     const failingTestFiles: TestFile[] = [];
@@ -342,7 +361,7 @@ export async function getFailingTests(
         });
 
         for (const annotation of annotations) {
-          if (annotation.path.includes('test') || annotation.path.includes('spec')) {
+          if (matchTestPatterns(testPatterns, annotation.path)) {
             const { data: fileContent } = await octokit.repos.getContent({
               owner,
               repo,
@@ -350,10 +369,12 @@ export async function getFailingTests(
               ref: `refs/pull/${pullNumber}/head`,
             });
 
-            if ('content' in fileContent) {
+            if ("content" in fileContent) {
               failingTestFiles.push({
                 name: annotation.path,
-                content: Buffer.from(fileContent.content, 'base64').toString('utf-8'),
+                content: Buffer.from(fileContent.content, "base64").toString(
+                  "utf-8"
+                ),
               });
             }
           }
@@ -363,12 +384,16 @@ export async function getFailingTests(
 
     return failingTestFiles;
   } catch (error) {
-    console.error('Error fetching failing tests:', error);
+    console.error("Error fetching failing tests:", error);
     throw error;
   }
 }
 
-export async function getWorkflowLogs(owner: string, repo: string, runId: string): Promise<string> {
+export async function getWorkflowLogs(
+  owner: string,
+  repo: string,
+  runId: string
+): Promise<string> {
   const octokit = await getOctokit();
 
   try {
@@ -384,7 +409,7 @@ export async function getWorkflowLogs(owner: string, repo: string, runId: string
       owner,
       repo,
       run_id: parseInt(runId),
-      headers: { accept: 'application/vnd.github.v3+json' },
+      headers: { accept: "application/vnd.github.v3+json" },
     });
 
     let buffer: Buffer;
@@ -393,7 +418,7 @@ export async function getWorkflowLogs(owner: string, repo: string, runId: string
       buffer = response.data;
     } else if (response.data instanceof ArrayBuffer) {
       buffer = Buffer.from(response.data);
-    } else if (typeof response.data === 'object' && response.data !== null) {
+    } else if (typeof response.data === "object" && response.data !== null) {
       // If it's a ReadableStream or similar
       const chunks = [];
       for await (const chunk of response.data as any) {
@@ -411,12 +436,12 @@ export async function getWorkflowLogs(owner: string, repo: string, runId: string
     const logs: Record<string, string> = {};
     zipEntries.forEach((entry) => {
       if (!entry.isDirectory) {
-        logs[entry.entryName] = entry.getData().toString('utf8');
+        logs[entry.entryName] = entry.getData().toString("utf8");
       }
     });
 
     // Combine all logs into a single string
-    let logsContent = '';
+    let logsContent = "";
     for (const [filename, content] of Object.entries(logs)) {
       logsContent += `File: ${filename}\n${content}\n\n`;
     }
@@ -424,11 +449,19 @@ export async function getWorkflowLogs(owner: string, repo: string, runId: string
     return logsContent;
   } catch (error) {
     console.error("Error downloading workflow logs:", error);
-    throw new Error(`Failed to download workflow logs: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to download workflow logs: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 }
 
-export async function getLatestRunId(owner: string, repo: string, branchName: string): Promise<string | null> {
+export async function getLatestRunId(
+  owner: string,
+  repo: string,
+  branchName: string
+): Promise<string | null> {
   const octokit = await getOctokit();
 
   try {
@@ -445,7 +478,7 @@ export async function getLatestRunId(owner: string, repo: string, branchName: st
 
     return null;
   } catch (error) {
-    console.error('Error fetching latest run ID:', error);
+    console.error("Error fetching latest run ID:", error);
     throw error;
   }
 }
