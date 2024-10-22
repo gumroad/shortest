@@ -29,7 +29,9 @@ export async function POST(req: Request) {
       ? `
   Relevant test logs:
   <Test Logs>
-  ${test_logs.map((group) => `${group.name}:\n${group.logs.join("\n")}`).join("\n\n")}
+  ${test_logs
+    .map((group) => `${group.name}:\n${group.logs.join("\n")}`)
+    .join("\n\n")}
   </Test Logs>
   `
       : ""
@@ -39,7 +41,6 @@ export async function POST(req: Request) {
 
   const result = await streamObject({
     model: anthropic("claude-3-5-sonnet-20240620"),
-    output: "object",
     schema: TestFileSchema,
     prompt,
   });
