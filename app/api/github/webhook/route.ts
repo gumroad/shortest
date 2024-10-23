@@ -5,7 +5,18 @@ import { type NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
   const octokit = await getOctokit();
-  const payload = await request.json();
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch (error) {
+    console.error("Failed to parse webhook payload:", error);
+    return NextResponse.json(
+      { error: "Failed to parse webhook payload" },
+      { status: 500 }
+    );
+  }
+
   const githubEvent = request.headers.get("x-github-event");
 
   if (!githubEvent) {
