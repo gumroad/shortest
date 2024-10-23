@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Octokit } from "@octokit/rest";
 import AdmZip from "adm-zip";
+import { minimatch } from "minimatch";
 
 // Mock the entire github module
 vi.mock("../github", async () => {
@@ -11,10 +12,11 @@ vi.mock("../github", async () => {
     fetchBuildStatus: vi.fn(),
     getWorkflowLogs: vi.fn(),
     getLatestRunId: vi.fn(),
+    getTestPatternsConfig: vi.fn(),
   };
 });
 
-const { fetchBuildStatus, getOctokit, getWorkflowLogs, getLatestRunId } = await import("../github");
+const { fetchBuildStatus, getOctokit, getWorkflowLogs, getLatestRunId, getTestPatternsConfig } = await import("../github");
 
 describe("fetchBuildStatus", () => {
   beforeEach(() => {
@@ -183,5 +185,39 @@ describe("getLatestRunId", () => {
     vi.mocked(getLatestRunId).mockRejectedValue(mockError);
 
     await expect(getLatestRunId("owner", "repo", "main")).rejects.toThrow("API error");
+  });
+});
+
+describe("getTestPatternsConfig", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should fetch and return test patterns", async () => {
+    const mockPatterns = ["**/*.test.*", "**/*.spec.*"];
+    vi.mocked(getTestPatternsConfig).mockResolvedValue(mockPatterns);
+
+    const patterns = await getTestPatternsConfig({ owner: "owner", repo: "repo" });
+
+    expect(patterns).toEqual(mockPatterns);
+    expect(getTestPatternsConfig).toHaveBeenCalledWith({ owner: "owner", repo: "repo" });
+  });
+
+  it("should handle errors when fetching test patterns", async () => {
+    const mockError = new Error("Config error");
+    vi.mocked(getTestPatternsConfig).mockRejectedValue(mockError);
+
+    await expect(getTestPatternsConfig({ owner: "owner", repo: "repo" })).rejects.toThrow("Config error");
+  });
+});
+
+describe("matchTestPatterns", () => {
+  it("should match files according to test patterns", () => {
+    const testPatterns = ["**/*.test.*", "**/*.spec.*"];
+    
+    expect(minimatch("src/components/Button.test.tsx", testPatterns[0])).toBe(true);
+    expect(minimatch("src/utils/helper.spec.js", testPatterns[1])).toBe(true);
+    expect(minimatch("src/index.ts", testPatterns[0])).toBe(false);
+    expect(minimatch("src/index.ts", testPatterns[1])).toBe(false);
   });
 });
