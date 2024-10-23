@@ -70,3 +70,8 @@ async function getTestPatternsConfig({
 }
 
 export { getConfig, getRepoConfig, getTestPatternsConfig };
+
+// Add this export for testing
+export function _resetConfigForTesting(): void {
+  config = Object.freeze({});
+}
