@@ -1,9 +1,9 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamObject } from "ai";
 import { GenerateTestsInput, TestFileSchema } from "./schema";
+import { getModelInstance } from "@/lib/ai-models";
 
 export async function POST(req: Request) {
-  const { mode, pr_diff, test_files, test_logs } =
+  const { mode, pr_diff, test_files, test_logs, ai_model } =
     (await req.json()) as GenerateTestsInput;
 
   const prompt = `You are an expert software engineer. ${
@@ -39,8 +39,10 @@ export async function POST(req: Request) {
 
   Respond with an array of test files with their name being the path to the file and the content being the full contents of the updated test file.`;
 
+  const model = getModelInstance(ai_model);
+
   const result = await streamObject({
-    model: anthropic("claude-3-5-sonnet-20240620"),
+    model,
     schema: TestFileSchema,
     prompt,
   });

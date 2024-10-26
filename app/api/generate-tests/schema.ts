@@ -29,6 +29,7 @@ export const TestFileSchema = z.object({
 });
 
 export const GenerateTestsInput = z.object({
+  ai_model: z.string(),
   mode: z.enum(["write", "update"]),
   pr_id: z.number(),
   pr_diff: z.string(),

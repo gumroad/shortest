@@ -102,7 +102,7 @@ describe('PullRequestItem', () => {
 
     render(
       <SWRConfig value={{ provider: () => new Map() }}>
-        <PullRequestItem pullRequest={{...mockPullRequest, buildStatus: 'success', isDraft: false}} />
+        <PullRequestItem pullRequest={{ ...mockPullRequest, buildStatus: 'success', isDraft: false }} />
       </SWRConfig>
     )
 
@@ -117,4 +117,36 @@ describe('PullRequestItem', () => {
     fireEvent.click(screen.getByText('Hide Logs'))
     expect(screen.getByText('Show Logs')).toBeInTheDocument()
   })
+
+  it('sends the selected AI model to the backend', async () => {
+    const mockGenerateTests = vi.fn().mockResolvedValue({ testFiles: [] });
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ testFiles: [] }),
+    } as Response);
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <PullRequestItem pullRequest={mockPullRequest} />
+      </SWRConfig>
+    );
+
+    const selectElement = screen.getByRole('combobox') as HTMLSelectElement;
+    fireEvent.change(selectElement, { target: { value: 'gpt-4' } });
+
+    const generateTestsButton = await screen.findByText('Generate Tests');
+    fireEvent.click(generateTestsButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith('/api/generate-tests', expect.objectContaining({
+        body: JSON.stringify({
+          mode: 'write',
+          pr_diff: '',
+          test_files: [],
+          test_logs: '',
+          ai_model: 'gpt-4',
+        }),
+      }));
+    });
+  });
 })

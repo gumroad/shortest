@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { experimental_useObject as useObject } from "ai/react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   commitChangesToPullRequest,
@@ -57,6 +58,25 @@ export function PullRequestItem({
   const [error, setError] = useState<string | null>(null);
   const [commitMessage, setCommitMessage] = useState("Update test files");
   const { toast } = useToast();
+
+  const { data: availableModels, isLoading: modelsLoading } = useSWR(
+    'api/ai-models',
+    async () => {
+      const res = await fetch('/api/ai-models');
+      if (!res.ok) {
+        throw new Error('Failed to fetch AI models');
+      }
+      return res.json();
+    }
+  );
+
+  const [ai_model, setAiModel] = useState(availableModels ? availableModels[0] : null);
+
+  useEffect(() => {
+    if (availableModels && availableModels.length > 0) {
+      setAiModel(availableModels[0]);
+    }
+  }, [availableModels]);
 
   const { data: pullRequest, mutate } = useSWR(
     `pullRequest-${initialPullRequest.id}`,
@@ -206,6 +226,7 @@ export function PullRequestItem({
         pr_diff: diff,
         test_files: testFilesToUpdate,
         test_logs: relevantLogs,
+        ai_model
       });
     } catch (error) {
       console.error("Error handling tests:", error);
@@ -394,6 +415,18 @@ export function PullRequestItem({
               </button>
             )}
         </span>
+        <div className="flex items-center">
+        {modelsLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Select
+              label="AI Model"
+              options={availableModels.map((model: any) => ({ label: model, value: model }))}
+              selectedValue={ai_model}
+              onChange={(value) => setAiModel(value)}
+              className="mr-2"
+            />
+          )}
         {testFilesToShow.length > 0 ? (
           <Button
             size="sm"
@@ -442,6 +475,7 @@ export function PullRequestItem({
               : "Update tests to fix"}
           </Button>
         )}
+        </div>
       </div>
       {error && (
         <div className="mt-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
