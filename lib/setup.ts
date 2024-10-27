@@ -291,9 +291,15 @@ async function main() {
   const ANTHROPIC_API_KEY = await promptForAnthropicApiKey();
   await promptForGitHubOAuth();
   const CLERK_SIGN_IN_FALLBACK_REDIRECT_URL = '/dashboard';
+  const CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = '/dashboard';
+  const NEXT_PUBLIC_CLERK_SIGN_IN_URL = '/signin';
+  const NEXT_PUBLIC_CLERK_SIGN_UP_URL = '/signup';
 
   await writeEnvFile({
     CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,
+    CLERK_SIGN_UP_FALLBACK_REDIRECT_URL,
+    NEXT_PUBLIC_CLERK_SIGN_IN_URL,
+    NEXT_PUBLIC_CLERK_SIGN_UP_URL,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
