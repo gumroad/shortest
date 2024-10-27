@@ -290,12 +290,10 @@ async function main() {
   const { publishableKey: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, secretKey: CLERK_SECRET_KEY } = await promptForClerkKeys();
   const ANTHROPIC_API_KEY = await promptForAnthropicApiKey();
   await promptForGitHubOAuth();
-  const NEXT_PUBLIC_BASE_URL = 'http://localhost:3000';
   const BASE_URL = 'http://localhost:3000';
   const CLERK_SIGN_IN_FALLBACK_REDIRECT_URL = '/dashboard';
 
   await writeEnvFile({
-    NEXT_PUBLIC_BASE_URL,
     BASE_URL,
     CLERK_SIGN_IN_FALLBACK_REDIRECT_URL,
     STRIPE_SECRET_KEY,

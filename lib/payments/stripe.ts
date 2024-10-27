@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { User } from "@/lib/db/schema";
 import { updateUserSubscription } from "@/lib/db/queries";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { baseUrl } from "@/lib/utils";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -29,8 +30,8 @@ export async function createCheckoutSession({
       },
     ],
     mode: "subscription",
-    success_url: `${process.env.BASE_URL}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.BASE_URL}/pricing`,
+    success_url: `${baseUrl()}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl()}/pricing`,
     customer: user.stripeCustomerId || undefined,
     client_reference_id: user.id.toString(),
     allow_promotion_codes: true,
@@ -102,7 +103,7 @@ export async function createCustomerPortalSession(user: User) {
 
   return stripe.billingPortal.sessions.create({
     customer: user.stripeCustomerId,
-    return_url: `${process.env.BASE_URL}/dashboard`,
+    return_url: `${baseUrl()}/dashboard`,
     configuration: configuration.id,
   });
 }
