@@ -482,3 +482,46 @@ export async function getLatestRunId(
     throw error;
   }
 }
+
+export async function getRepos() {
+  const octokit = await getOctokit();
+
+  try {
+    const { data } = await octokit.repos.listForAuthenticatedUser({
+      sort: "updated",
+      direction: "desc",
+      per_page: 100,
+    });
+
+    return data.map((repo) => ({
+      id: repo.id,
+      name: repo.name,
+      fullName: repo.full_name,
+      owner: repo.owner.login,
+      private: repo.private,
+    }));
+  } catch (error) {
+    console.error("Error fetching repositories:", error);
+    throw error;
+  }
+}
+
+export async function getBranches(owner: string, repo: string) {
+  const octokit = await getOctokit();
+
+  try {
+    const { data } = await octokit.repos.listBranches({
+      owner,
+      repo,
+      per_page: 100,
+    });
+
+    return data.map((branch) => ({
+      name: branch.name,
+      sha: branch.commit.sha,
+    }));
+  } catch (error) {
+    console.error("Error fetching branches:", error);
+    throw error;
+  }
+}
