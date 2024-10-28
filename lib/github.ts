@@ -526,18 +526,21 @@ export async function getBranches(owner: string, repo: string) {
   }
 }
 
-export async function getRepoFiles(owner: string, repo: string, branch: string) {
+interface TreeItem {
+  path: string;
+  type: 'blob' | 'tree';
+}
+
+export async function getRepoFiles(owner: string, repo: string, branch: string): Promise<TreeItem[]> {
   const octokit = await getOctokit();
 
   try {
-    // First, get the commit SHA for the branch
     const { data: ref } = await octokit.git.getRef({
       owner,
       repo,
       ref: `heads/${branch}`,
     });
     
-    // Then get the tree using the commit SHA
     const { data: tree } = await octokit.git.getTree({
       owner,
       repo,
@@ -545,15 +548,13 @@ export async function getRepoFiles(owner: string, repo: string, branch: string) 
       recursive: 'true'
     });
 
-    // Filter out non-file entries and transform the data
     return tree.tree
-      .filter(item => item.type === 'blob')
+      .filter((item): item is TreeItem => 
+        item.type === 'blob' && typeof item.path === 'string'
+      )
       .map(item => ({
         path: item.path,
-        size: item.size,
-        sha: item.sha,
         type: item.type,
-        url: item.url,
       }));
   } catch (error) {
     console.error("Error fetching repository files:", error);
