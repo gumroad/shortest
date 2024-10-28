@@ -588,3 +588,50 @@ export async function getFileContent(
     throw error;
   }
 }
+
+export async function commitChangesToFile(
+  owner: string,
+  repo: string,
+  branch: string,
+  path: string,
+  content: string
+): Promise<void> {
+  const octokit = await getOctokit();
+
+  try {
+    // First, get the current file (if it exists) to get its SHA
+    let fileSha: string | undefined;
+    try {
+      const { data: existingFile } = await octokit.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref: branch,
+      });
+      
+      if ('sha' in existingFile) {
+        fileSha = existingFile.sha;
+      }
+    } catch (error) {
+      // File doesn't exist yet, which is fine
+    }
+
+    // Create or update the file
+    await octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path,
+      message: `test: Add/Update ${path}`,
+      content: Buffer.from(content).toString('base64'),
+      branch,
+      ...(fileSha ? { sha: fileSha } : {}),
+    });
+  } catch (error) {
+    console.error("Error committing file:", error);
+    throw new Error(
+      `Failed to commit file: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}

@@ -28,6 +28,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { FilePreviewCard } from "./file-preview-card";
+import { experimental_useObject as useObject } from "ai/react";
+import { TestFileSchemaLoose } from "@/app/api/generate-file-tests/schema";
+import { useToast } from "@/hooks/use-toast";
+import { GeneratedTestCard } from "./generated-test-card";
 
 interface Repository {
   id: number;
@@ -62,6 +66,26 @@ export function FileSelectTab() {
   const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
   const [owner, setOwner] = useState<string>("");
   const [repo, setRepo] = useState<string>("");
+  const [generatedTests, setGeneratedTests] = useState<Array<{ name: string, content: string }>>([]);
+  const { toast } = useToast();
+
+  const {
+    object,
+    submit,
+    isLoading: isGenerating,
+  } = useObject({
+    api: "/api/generate-file-tests",
+    schema: TestFileSchemaLoose,
+    onFinish: (result) => {
+      setGeneratedTests(result.object?.tests || []);
+      setLoading(false);
+    },
+    onError: (error) => {
+      console.error("Error generating test files:", error);
+      setError("Failed to generate test files");
+      setLoading(false);
+    },
+  });
 
   useEffect(() => {
     async function fetchRepositories() {
@@ -160,6 +184,38 @@ export function FileSelectTab() {
     });
   }, [selectedFiles, owner, repo, selectedBranch]);
 
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error Generating Tests",
+        description: error,
+        variant: "destructive",
+      });
+    }
+  }, [error]);
+
+  const handleGenerateTests = async () => {
+    setLoading(true);
+    try {
+      const files = Array.from(fileContents.entries()).map(([path, content]) => ({
+        path,
+        content,
+      }));
+
+      // Check if we have content for all files
+      const missingContent = selectedFiles.filter(path => !fileContents.has(path));
+      if (missingContent.length > 0) {
+        throw new Error(`Still loading content for: ${missingContent.join(", ")}`);
+      }
+
+      submit({ files });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to generate tests";
+      setError(message);
+      setLoading(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="p-6 text-center">
@@ -245,8 +301,18 @@ export function FileSelectTab() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button disabled={!selectedRepo || !selectedBranch || selectedFiles.length === 0}>
-                Generate Tests
+              <Button 
+                disabled={!selectedRepo || !selectedBranch || selectedFiles.length === 0 || isGenerating}
+                onClick={handleGenerateTests}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Tests'
+                )}
               </Button>
             </div>
           </CardContent>
@@ -310,6 +376,29 @@ export function FileSelectTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {generatedTests.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Generated Test Files</h3>
+          <div className="space-y-6">
+            {generatedTests.map((test) => (
+              <GeneratedTestCard
+                key={test.name}
+                name={test.name}
+                content={test.content}
+                owner={owner}
+                repo={repo}
+                branch={selectedBranch}
+                onDismiss={(name) => {
+                  setGeneratedTests(prev => 
+                    prev.filter(t => t.name !== name)
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }

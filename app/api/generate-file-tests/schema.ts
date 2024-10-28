@@ -9,7 +9,7 @@ export const generateFileTestsSchema = z.object({
   ),
 });
 
-export const TestFileSchema = z.object({
+export const TestFileSchemaLoose = z.object({
   tests: z.array(
     z.object({
       name: z.string(),
@@ -17,5 +17,20 @@ export const TestFileSchema = z.object({
     })
   ),
 });
+
+export const createTestFileSchema = (inputLength: number) => 
+  z.object({
+    tests: z
+      .array(
+        z.object({
+          name: z.string(),
+          content: z.string(),
+        })
+      )
+      .refine(
+        (tests) => tests.length === inputLength,
+        `Number of test files must match number of input files (expected ${inputLength})`
+      ),
+  });
 
 export type GenerateFileTestsInput = z.infer<typeof generateFileTestsSchema>; 
