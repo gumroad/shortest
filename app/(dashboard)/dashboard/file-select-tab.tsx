@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GitBranch, FileCode, Loader2, FolderIcon, FileIcon } from "lucide-react";
+import { GitBranch, FileCode, Loader2, FolderIcon, FileIcon, Check } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,12 +13,12 @@ import {
 import { useEffect, useState } from "react";
 import { getRepos, getBranches, getRepoFiles } from "@/lib/github";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-} from "@/components/ui/drawer";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Command,
   CommandEmpty,
@@ -52,10 +52,10 @@ export function FileSelectTab() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
   const [selectedBranch, setSelectedBranch] = useState<string>("");
-  const [selectedFile, setSelectedFile] = useState<string>("");
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);  // renamed from selectedFile
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -104,7 +104,7 @@ export function FileSelectTab() {
       const [owner, repo] = selectedRepo.split("/");
       const fileData = await getRepoFiles(owner, repo, selectedBranch);
       setFiles(fileData);
-      setIsDrawerOpen(true);
+      setIsDialogOpen(true);
       setError(null);
     } catch (err) {
       setError("Failed to fetch files");
@@ -148,7 +148,7 @@ export function FileSelectTab() {
                   onValueChange={(value) => {
                     setSelectedRepo(value);
                     setSelectedBranch("");
-                    setSelectedFile("");
+                    setSelectedFiles([]);
                   }}
                 >
                   <SelectTrigger>
@@ -168,7 +168,7 @@ export function FileSelectTab() {
                     value={selectedBranch}
                     onValueChange={(value) => {
                       setSelectedBranch(value);
-                      setSelectedFile("");
+                      setSelectedFiles([]);
                     }}
                     disabled={!selectedRepo || loading}
                   >
@@ -196,12 +196,14 @@ export function FileSelectTab() {
                   disabled={!selectedRepo || !selectedBranch}
                   onClick={handleBrowseFiles}
                 >
-                  {selectedFile ? selectedFile : "Browse Files"}
+                  {selectedFiles.length 
+                    ? `${selectedFiles.length} files selected` 
+                    : "Browse Files"}
                 </Button>
               </div>
             </div>
             <div className="flex justify-end">
-              <Button disabled={!selectedRepo || !selectedBranch || !selectedFile}>
+              <Button disabled={!selectedRepo || !selectedBranch || selectedFiles.length === 0}>
                 Generate Tests
               </Button>
             </div>
@@ -209,12 +211,12 @@ export function FileSelectTab() {
         </Card>
       </div>
 
-      <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerContent className="h-[80vh]">
-          <DrawerHeader>
-            <DrawerTitle>Browse Repository Files</DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Browse Repository Files</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto pr-2">
             <Command className="rounded-lg border shadow-md">
               <CommandInput
                 placeholder="Search files..."
@@ -228,25 +230,29 @@ export function FileSelectTab() {
                     <CommandItem
                       key={file.path}
                       onSelect={() => {
-                        setSelectedFile(file.path);
-                        setIsDrawerOpen(false);
+                        setSelectedFiles(prev => 
+                          prev.includes(file.path) 
+                            ? prev.filter(f => f !== file.path)
+                            : [...prev, file.path]
+                        );
                       }}
                     >
                       <FileIcon className="mr-2 h-4 w-4" />
                       {file.path}
+                      {selectedFiles.includes(file.path) && <Check className="ml-auto h-4 w-4" />}
                     </CommandItem>
                   ))}
                 </CommandGroup>
               </CommandList>
             </Command>
           </div>
-          <DrawerFooter>
-            <Button variant="outline" onClick={() => setIsDrawerOpen(false)}>
-              Cancel
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Done
             </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
