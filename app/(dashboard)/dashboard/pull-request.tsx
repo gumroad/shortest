@@ -96,8 +96,8 @@ export function PullRequestItem({
       },
     }
   );
-
-  const { data: latestRunId } = useSWR(
+  
+  const { data: latestRunId, error: latestRunIdError } = useSWR(
     pullRequest.buildStatus === "success" ||
       pullRequest.buildStatus === "failure"
       ? [
@@ -107,13 +107,22 @@ export function PullRequestItem({
           pullRequest.branchName,
         ]
       : null,
-    () =>
-      getLatestRunId(
-        pullRequest.repository.owner.login,
-        pullRequest.repository.name,
-        pullRequest.branchName
-      )
+    () => getLatestRunId(
+      pullRequest.repository.owner.login,
+      pullRequest.repository.name,
+      pullRequest.branchName
+    )
   );
+  
+  useEffect(() => {
+    if (latestRunId === null && !latestRunIdError) {
+      toast({
+        title: `GitHub Actions needed for PR #${initialPullRequest.number}`,
+        description: `Repository "${initialPullRequest.repository.full_name}" needs GitHub Actions to analyze test failures. Without access to test logs via Actions, we can't help fix failing tests.`,
+        variant: "destructive",
+      });
+    }
+  }, [latestRunId]);
 
   const { data: logs, error: logsError } = useSWR(
     showLogs || latestRunId
