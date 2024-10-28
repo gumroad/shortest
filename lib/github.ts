@@ -525,3 +525,38 @@ export async function getBranches(owner: string, repo: string) {
     throw error;
   }
 }
+
+export async function getRepoFiles(owner: string, repo: string, branch: string) {
+  const octokit = await getOctokit();
+
+  try {
+    // First, get the commit SHA for the branch
+    const { data: ref } = await octokit.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${branch}`,
+    });
+    
+    // Then get the tree using the commit SHA
+    const { data: tree } = await octokit.git.getTree({
+      owner,
+      repo,
+      tree_sha: ref.object.sha,
+      recursive: 'true'
+    });
+
+    // Filter out non-file entries and transform the data
+    return tree.tree
+      .filter(item => item.type === 'blob')
+      .map(item => ({
+        path: item.path,
+        size: item.size,
+        sha: item.sha,
+        type: item.type,
+        url: item.url,
+      }));
+  } catch (error) {
+    console.error("Error fetching repository files:", error);
+    throw error;
+  }
+}
