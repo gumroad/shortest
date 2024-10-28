@@ -32,6 +32,7 @@ import { experimental_useObject as useObject } from "ai/react";
 import { TestFileSchemaLoose } from "@/app/api/generate-file-tests/schema";
 import { useToast } from "@/hooks/use-toast";
 import { GeneratedTestCard } from "./generated-test-card";
+import { minimatch } from "minimatch";
 
 interface Repository {
   id: number;
@@ -67,6 +68,8 @@ export function FileSelectTab() {
   const [owner, setOwner] = useState<string>("");
   const [repo, setRepo] = useState<string>("");
   const [generatedTests, setGeneratedTests] = useState<Array<{ name: string, content: string }>>([]);
+  const [testFiles, setTestFiles] = useState<Map<string, string>>(new Map());
+  const [loadingTestFiles, setLoadingTestFiles] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -139,8 +142,34 @@ export function FileSelectTab() {
     setLoading(true);
     try {
       const [owner, repo] = selectedRepo.split("/");
-      const fileData = await getRepoFiles(owner, repo, selectedBranch);
-      setFiles(fileData);
+      const allFiles = await getRepoFiles(owner, repo, selectedBranch);
+      
+      // Split files into test files and regular files
+      const testFilePatterns = [
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        '**/*.spec.ts',
+        '**/*.spec.tsx'
+      ];
+      
+      const testFiles = allFiles
+        .filter(file => 
+          testFilePatterns.some(pattern => 
+            minimatch(file.path, pattern, { matchBase: true })
+          )
+        )
+        .slice(0, 5); // Only keep first 5 test files
+
+      // Get content for test files
+      const testContents = new Map();
+      for (const file of testFiles) {
+        const content = await getFileContent(owner, repo, file.path, selectedBranch);
+        testContents.set(file.path, content);
+      }
+      setTestFiles(testContents);
+
+      // Store regular files for file browser
+      setFiles(allFiles);
       setIsDialogOpen(true);
       setError(null);
     } catch (err) {
@@ -208,11 +237,61 @@ export function FileSelectTab() {
         throw new Error(`Still loading content for: ${missingContent.join(", ")}`);
       }
 
-      submit({ files });
+      // Include test files in the submission
+      const test_files = Array.from(testFiles.entries()).map(([name, content]) => ({
+        name,
+        content,
+      }));
+
+      submit({ 
+        files,
+        test_files 
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to generate tests";
       setError(message);
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedRepo && selectedBranch) {
+      fetchTestFiles();
+    }
+  }, [selectedRepo, selectedBranch]);
+
+  const fetchTestFiles = async () => {
+    if (!owner || !repo || !selectedBranch) return;
+    
+    setLoadingTestFiles(true);
+    try {
+      // Get all files that match test patterns
+      const allFiles = await getRepoFiles(owner, repo, selectedBranch);
+      const testFilePatterns = [
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        '**/*.spec.ts',
+        '**/*.spec.tsx'
+      ];
+      
+      const matchingTestFiles = allFiles.filter(file => 
+        testFilePatterns.some(pattern => 
+          minimatch(file.path, pattern, { matchBase: true })
+        )
+      ).slice(0, 5); // Only get first 5 test files
+
+      // Fetch content for each test file
+      const testContents = new Map();
+      for (const file of matchingTestFiles) {
+        const content = await getFileContent(owner, repo, file.path, selectedBranch);
+        testContents.set(file.path, content);
+      }
+      
+      setTestFiles(testContents);
+    } catch (err) {
+      console.error('Error fetching test files:', err);
+    } finally {
+      setLoadingTestFiles(false);
     }
   };
 

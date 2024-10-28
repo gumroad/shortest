@@ -7,6 +7,12 @@ export const generateFileTestsSchema = z.object({
       content: z.string(),
     })
   ),
+  test_files: z.array(
+    z.object({
+      name: z.string(),
+      content: z.string(),
+    })
+  ).optional(),
 });
 
 export const TestFileSchemaLoose = z.object({
