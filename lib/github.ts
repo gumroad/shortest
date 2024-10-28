@@ -561,3 +561,30 @@ export async function getRepoFiles(owner: string, repo: string, branch: string):
     throw error;
   }
 }
+
+export async function getFileContent(
+  owner: string,
+  repo: string,
+  path: string,
+  branch: string
+): Promise<string> {
+  const octokit = await getOctokit();
+
+  try {
+    const { data: fileContent } = await octokit.repos.getContent({
+      owner,
+      repo,
+      path,
+      ref: branch,
+    });
+
+    if (!('content' in fileContent) || typeof fileContent.content !== 'string') {
+      throw new Error('Invalid file content response');
+    }
+
+    return Buffer.from(fileContent.content, 'base64').toString('utf-8');
+  } catch (error) {
+    console.error(`Error fetching file content for ${path}:`, error);
+    throw error;
+  }
+}
