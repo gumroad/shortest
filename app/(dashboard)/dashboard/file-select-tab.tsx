@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { getRepos, getBranches, getRepoFiles } from "@/lib/github";
+import { getRepos, getBranches, getRepoFiles, getFileContent } from "@/lib/github";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { FilePreviewCard } from "./file-preview-card";
 
 interface Repository {
   id: number;
@@ -57,6 +58,10 @@ export function FileSelectTab() {
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [fileContents, setFileContents] = useState<Map<string, string>>(new Map());
+  const [loadingFiles, setLoadingFiles] = useState<Set<string>>(new Set());
+  const [owner, setOwner] = useState<string>("");
+  const [repo, setRepo] = useState<string>("");
 
   useEffect(() => {
     async function fetchRepositories() {
@@ -96,6 +101,14 @@ export function FileSelectTab() {
     fetchBranches();
   }, [selectedRepo]);
 
+  useEffect(() => {
+    if (selectedRepo) {
+      const [ownerPart, repoPart] = selectedRepo.split('/');
+      setOwner(ownerPart);
+      setRepo(repoPart);
+    }
+  }, [selectedRepo]);
+
   const handleBrowseFiles = async () => {
     if (!selectedRepo || !selectedBranch) return;
 
@@ -118,6 +131,35 @@ export function FileSelectTab() {
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  useEffect(() => {
+    selectedFiles.forEach(async (path) => {
+      if (!fileContents.has(path) && !loadingFiles.has(path)) {
+        setLoadingFiles(prev => new Set(prev).add(path));
+        try {
+          const content = await getFileContent(owner, repo, path, selectedBranch);
+          setFileContents(prev => new Map(prev).set(path, content));
+        } finally {
+          setLoadingFiles(prev => {
+            const next = new Set(prev);
+            next.delete(path);
+            return next;
+          });
+        }
+      }
+    });
+
+    // Cleanup deselected files
+    setFileContents(prev => {
+      const next = new Map(prev);
+      for (const path of prev.keys()) {
+        if (!selectedFiles.includes(path)) {
+          next.delete(path);
+        }
+      }
+      return next;
+    });
+  }, [selectedFiles, owner, repo, selectedBranch]);
+
   if (error) {
     return (
       <div className="p-6 text-center">
@@ -129,7 +171,7 @@ export function FileSelectTab() {
 
   return (
     <>
-      <div className="p-6 h-full">
+      <div className="p-6 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Select Files for Test Generation</CardTitle>
@@ -209,6 +251,21 @@ export function FileSelectTab() {
             </div>
           </CardContent>
         </Card>
+
+        {selectedFiles.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Selected Files</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {selectedFiles.map((path) => (
+                <FilePreviewCard
+                  key={path}
+                  path={path}
+                  content={fileContents.get(path) ?? 'Loading...'}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
