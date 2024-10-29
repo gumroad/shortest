@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { baseUrl } from './utils-server';
 import { headers } from 'next/headers';
+
+vi.mock("server-only", () => ({}));
+import { baseUrl } from './utils-server';
 
 vi.mock('next/headers', () => ({
   headers: vi.fn(),
@@ -12,7 +14,7 @@ describe('baseUrl', () => {
       get: vi.fn().mockReturnValue('localhost:3000'),
     } as any);
 
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
 
     expect(baseUrl()).toBe('http://localhost:3000');
   });
@@ -22,7 +24,7 @@ describe('baseUrl', () => {
       get: vi.fn().mockReturnValue('example.com'),
     } as any);
 
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('NODE_ENV', 'production');
 
     expect(baseUrl()).toBe('https://example.com');
   });
