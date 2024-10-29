@@ -1,3 +1,5 @@
+import "server-only"
+
 import Stripe from "stripe";
 import { redirect } from "next/navigation";
 import { User } from "@/lib/db/schema";
