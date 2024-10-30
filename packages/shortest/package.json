@@ -1,0 +1,27 @@
+{
+    "name": "shortest",
+    "version": "0.0.1",
+    "description": "AI-powered testing framework",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      }
+    },
+    "files": [
+      "dist"
+    ],
+    "scripts": {
+      "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap",
+      "dev": "tsup src/index.ts --format cjs,esm --dts --sourcemap --watch"
+    },
+    "devDependencies": {
+      "typescript": "~5.6.2",
+      "tsup": "^8.0.0"
+    }
+}
