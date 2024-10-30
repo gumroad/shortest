@@ -6,9 +6,11 @@ export interface BrowserConfig {
 export interface ShortestConfig {
   browsers?: BrowserConfig[];
   baseUrl?: string;
+  testDir?: string | string[];
 }
 
 export const defaultConfig: ShortestConfig = {
   browsers: [{ name: 'chrome', headless: true }],
-  baseUrl: 'http://localhost:3000'
+  baseUrl: 'http://localhost:3000',
+  testDir: 'tests'
 }; 
