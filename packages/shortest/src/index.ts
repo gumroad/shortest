@@ -1,15 +1,33 @@
 import { TestSuite, BeforeAllFunction, AfterAllFunction } from './types';
-import { ShortestConfig } from './config/types';
-import { loadConfig } from './config/loader';
+import { ShortestConfig, defaultConfig } from './config/types';
+import { TestCompiler } from './core/compiler';
 
 export let currentSuite: TestSuite | null = null;
 export const beforeAllFns: BeforeAllFunction[] = [];
 export const afterAllFns: AfterAllFunction[] = [];
 
 let config: ShortestConfig;
+const compiler = new TestCompiler();
 
 export async function initialize() {
-  config = await loadConfig();
+  const configFiles = [
+    'shortest.config.ts',
+    'shortest.config.js',
+    'shortest.config.mjs'
+  ];
+
+  for (const file of configFiles) {
+    try {
+      const module = await compiler.loadModule(file, process.cwd());
+      config = { ...defaultConfig, ...module.default };
+      return;
+    } catch (error) {
+      continue;
+    }
+  }
+
+  // If no config file is found, use default config
+  config = defaultConfig;
 }
 
 export function getConfig(): ShortestConfig {
