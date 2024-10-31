@@ -12,5 +12,5 @@ export interface BrowserConfig {
   export const defaultConfig: ShortestConfig = {
     browsers: [{ name: 'chrome', headless: true }],
     baseUrl: 'http://localhost:3000',
-    testDir: 'tests'
+    testDir: '__tests__'
   }; 

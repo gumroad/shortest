@@ -1,32 +1,51 @@
 import { watch } from 'chokidar';
 import { glob } from 'glob';
 import { resolve } from 'path';
-import { loadConfig } from '../config/loader';
 import type { ShortestConfig } from '../config/types';
+import { defaultConfig } from '../config/types';
 import { Reporter } from './reporter';
+import { TestCompiler } from './compiler';
 
 export class TestRunner {
   private config!: ShortestConfig;
   private cwd: string;
   private reporter: Reporter;
   private exitOnSuccess: boolean;
+  private compiler: TestCompiler;
 
   constructor(cwd: string, exitOnSuccess = true) {
     this.cwd = cwd;
     this.reporter = new Reporter();
     this.exitOnSuccess = exitOnSuccess;
+    this.compiler = new TestCompiler();
   }
 
   async initialize() {
-    this.config = await loadConfig(this.cwd);
+    const configFiles = [
+      'shortest.config.ts',
+      'shortest.config.js',
+      'shortest.config.mjs'
+    ];
+
+    for (const file of configFiles) {
+      try {
+        const module = await this.compiler.loadModule(file, this.cwd);
+        if (module.default) {
+          this.config = { ...defaultConfig, ...module.default };
+          return;
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+
+    this.config = defaultConfig;
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    await this.initialize();
-    
     const testDirs = Array.isArray(this.config.testDir) 
       ? this.config.testDir 
-      : [this.config.testDir || 'tests'];
+      : [this.config.testDir || '__tests__'];
 
     const files = [];
     for (const dir of testDirs) {
@@ -56,6 +75,10 @@ export class TestRunner {
       }
     }
 
+    if (files.length === 0) {
+      console.log(`No test files found in directories: ${testDirs.join(', ')}`);
+    }
+
     return files;
   }
 
@@ -65,6 +88,7 @@ export class TestRunner {
   }
 
   async runFile(pattern: string) {
+    await this.initialize();
     const files = await this.findTestFiles(pattern);
     
     if (files.length === 0) {
