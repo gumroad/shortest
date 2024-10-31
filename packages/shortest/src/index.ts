@@ -1,6 +1,6 @@
 import { TestSuite, BeforeAllFunction, AfterAllFunction } from './types';
-import { ShortestConfig } from './types/config';
-import { loadConfig } from './config-loader';
+import { ShortestConfig } from './config/types';
+import { loadConfig } from './config/loader';
 
 export let currentSuite: TestSuite | null = null;
 export const beforeAllFns: BeforeAllFunction[] = [];
@@ -47,4 +47,4 @@ export function afterAll(fn: AfterAllFunction): void {
 
 export { UITestBuilder } from './ui-test-builder';
 export * from './types';
-export * from './types/config';
+export * from './config/types';
