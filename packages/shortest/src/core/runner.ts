@@ -3,21 +3,21 @@ import { glob } from 'glob';
 import { resolve } from 'path';
 import type { ShortestConfig } from '../config/types';
 import { defaultConfig } from '../config/types';
-import { Reporter } from './reporter';
+import { TestExecutor } from './executor';
 import { TestCompiler } from './compiler';
 
 export class TestRunner {
   private config!: ShortestConfig;
   private cwd: string;
-  private reporter: Reporter;
   private exitOnSuccess: boolean;
   private compiler: TestCompiler;
+  private executor: TestExecutor;
 
   constructor(cwd: string, exitOnSuccess = true) {
     this.cwd = cwd;
-    this.reporter = new Reporter();
     this.exitOnSuccess = exitOnSuccess;
     this.compiler = new TestCompiler();
+    this.executor = new TestExecutor();
   }
 
   async initialize() {
@@ -82,11 +82,6 @@ export class TestRunner {
     return files;
   }
 
-  private async executeTest(file: string) {
-    this.reporter.startFile(file);
-    this.reporter.reportTest('Sample test');
-  }
-
   async runFile(pattern: string) {
     await this.initialize();
     const files = await this.findTestFiles(pattern);
@@ -97,12 +92,13 @@ export class TestRunner {
     }
 
     for (const file of files) {
-      await this.executeTest(file);
+      await this.executor.executeTest(file);
     }
     
-    this.reporter.summary();
+    const reporter = this.executor.getReporter();
+    reporter.summary();
 
-    if (this.exitOnSuccess && this.reporter.allTestsPassed()) {
+    if (this.exitOnSuccess && reporter.allTestsPassed()) {
       process.exit(0);
     }
 
@@ -114,12 +110,13 @@ export class TestRunner {
     const files = await this.findTestFiles();
     
     for (const file of files) {
-      await this.executeTest(file);
+      await this.executor.executeTest(file);
     }
     
-    this.reporter.summary();
+    const reporter = this.executor.getReporter();
+    reporter.summary();
 
-    if (this.exitOnSuccess && this.reporter.allTestsPassed()) {
+    if (this.exitOnSuccess && reporter.allTestsPassed()) {
       process.exit(0);
     }
 
@@ -127,16 +124,17 @@ export class TestRunner {
   }
 
   private watchMode(files: string[]) {
-    this.reporter.watchMode();
+    const reporter = this.executor.getReporter();
+    reporter.watchMode();
     
     const watcher = watch(files, {
       ignoreInitial: true
     });
 
     watcher.on('change', async (file) => {
-      this.reporter.fileChanged(file);
-      await this.executeTest(file);
-      this.reporter.summary();
+      reporter.fileChanged(file);
+      await this.executor.executeTest(file);
+      reporter.summary();
     });
   }
 }
