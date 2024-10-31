@@ -10,7 +10,6 @@ let config: ShortestConfig;
 
 export async function initialize() {
   config = await loadConfig();
-  // TODO: use config values in test setup
 }
 
 export function getConfig(): ShortestConfig {
@@ -24,8 +23,6 @@ export function define(name: string, fn: () => void): void {
   };
 
   fn();
-
-  // Reset suite after execution
   currentSuite = null;
 }
 
@@ -46,5 +43,5 @@ export function afterAll(fn: AfterAllFunction): void {
 }
 
 export { UITestBuilder } from './ui-test-builder';
-export * from './types';
-export * from './config/types';
+export type { TestSuite, BeforeAllFunction, AfterAllFunction } from './types';
+export type { ShortestConfig, BrowserConfig } from './config/types';
