@@ -1,8 +1,8 @@
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 import { pathToFileURL } from 'url';
-import type { ShortestConfig } from './types/config';
-import { defaultConfig } from './types/config';
+import type { ShortestConfig } from './types';
+import { defaultConfig } from './types';
 
 export async function loadConfig(cwd = process.cwd()): Promise<ShortestConfig> {
   const configFiles = [

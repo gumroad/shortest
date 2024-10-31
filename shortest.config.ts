@@ -6,5 +6,5 @@ export default {
     { name: 'firefox', headless: false }
   ],
   baseUrl: 'http://localhost:3000',
-  testDir: ['src/__tests__']
+  testDir: ['app/__tests__']
 } satisfies ShortestConfig; 
