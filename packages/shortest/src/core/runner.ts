@@ -22,24 +22,40 @@ export class TestRunner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
+    await this.initialize();
+    
     const testDirs = Array.isArray(this.config.testDir) 
       ? this.config.testDir 
       : [this.config.testDir || 'tests'];
 
-    if (pattern) {
-      const files = [];
-      for (const dir of testDirs) {
-        const matches = await glob(`${dir}/**/*${pattern}*`, { cwd: this.cwd });
-        files.push(...matches.map(f => resolve(this.cwd, f)));
-      }
-      return files;
-    }
-
     const files = [];
     for (const dir of testDirs) {
-      const matches = await glob(`${dir}/**/*.test.ts`, { cwd: this.cwd });
-      files.push(...matches.map(f => resolve(this.cwd, f)));
+      if (pattern) {
+        const cleanPattern = pattern
+          .replace(/\.ts$/, '')
+          .replace(/\.test$/, '')
+          .split('/')
+          .pop();
+        
+        const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
+        
+        console.log('Clean pattern:', cleanPattern);
+        console.log('Full glob pattern:', globPattern);
+        
+        const matches = await glob(globPattern, { 
+          cwd: this.cwd,
+          absolute: true
+        });
+        
+        console.log('Found matches:', matches);
+        files.push(...matches);
+      } else {
+        const globPattern = `${dir}/**/*.test.ts`;
+        const matches = await glob(globPattern, { cwd: this.cwd });
+        files.push(...matches.map(f => resolve(this.cwd, f)));
+      }
     }
+
     return files;
   }
 
@@ -49,7 +65,6 @@ export class TestRunner {
   }
 
   async runFile(pattern: string) {
-    await this.initialize();
     const files = await this.findTestFiles(pattern);
     
     if (files.length === 0) {
@@ -63,7 +78,6 @@ export class TestRunner {
     
     this.reporter.summary();
 
-    // Exit if all tests passed and exitOnSuccess is true
     if (this.exitOnSuccess && this.reporter.allTestsPassed()) {
       process.exit(0);
     }
@@ -81,7 +95,6 @@ export class TestRunner {
     
     this.reporter.summary();
 
-    // Exit if all tests passed and exitOnSuccess is true
     if (this.exitOnSuccess && this.reporter.allTestsPassed()) {
       process.exit(0);
     }
