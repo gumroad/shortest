@@ -1,6 +1,6 @@
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
-import { pathToFileURL } from 'url';
+import { build } from 'esbuild';
 import type { ShortestConfig } from './types';
 import { defaultConfig } from './types';
 
@@ -15,7 +15,25 @@ export async function loadConfig(cwd = process.cwd()): Promise<ShortestConfig> {
     const configPath = resolve(cwd, file);
     if (existsSync(configPath)) {
       try {
-        const userConfig = await import(pathToFileURL(configPath).href);
+        if (file.endsWith('.ts')) {
+          // Transpile TypeScript to JavaScript
+          const result = await build({
+            entryPoints: [configPath],
+            write: false,
+            platform: 'node',
+            format: 'esm',
+            target: 'node18',
+            bundle: true
+          });
+          
+          // Create temporary module from transpiled code
+          const code = result.outputFiles[0].text;
+          const module = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+          
+          return { ...defaultConfig, ...module.default };
+        }
+        
+        const userConfig = await import(configPath);
         return { ...defaultConfig, ...userConfig.default };
       } catch (error) {
         console.error(`Error loading config from ${file}:`, error);
