@@ -1,4 +1,4 @@
-import { getConfig } from './index';
+import { getConfig, TestRegistry } from './index';
 import { 
   AfterFunction, 
   BeforeFunction, 
@@ -7,16 +7,18 @@ import {
   TestStep,
   ActionParams 
 } from './types';
+import { UITestBuilderInterface } from './types/builder';
 
-export class UITestBuilder<T = void> {
-    private path: string;
-    private testName: string;
-    private testFn?: TestFunction;
-    private steps: TestStep[] = [];
+export class UITestBuilder<T = void> implements UITestBuilderInterface {
+    path: string;
+    testName: string;
+    private suiteName: string = '';
+    steps: TestStep[] = [];
   
     constructor(path: string) {
       this.path = path;
       this.testName = '';
+      TestRegistry.registerTest(this);
     }
   
     test(name: string): this {
@@ -75,6 +77,15 @@ export class UITestBuilder<T = void> {
       const baseUrl = config.baseUrl?.replace(/\/$/, '') || '';
       const path = this.path.startsWith('/') ? this.path : `/${this.path}`;
       return `${baseUrl}${path}`;
+    }
+
+    setSuiteName(name: string): this {
+      this.suiteName = name;
+      return this;
+    }
+
+    getSuiteName(): string {
+      return this.suiteName;
     }
 }
   
