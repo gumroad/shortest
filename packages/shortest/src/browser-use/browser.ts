@@ -1,11 +1,21 @@
 import { BrowserTool, ToolError, ToolResult } from './base';
 import { ActionInput, BrowserAction, BrowserToolOptions, ClickType } from './types';
 import CDP from 'chrome-remote-interface';
+import { writeFileSync, mkdirSync } from 'fs';
+import { join } from 'path';
+import { BrowserManager } from '../core/browser-manager';
 
 export class BrowserActionTool extends BrowserTool {
   name = 'browser';
   private cdpClient: CDP.Client | null = null;
   private typingDelay = 50; // ms between keystrokes
+  private screenshotDir = join(process.cwd(), 'test-screenshots');
+
+  constructor(browserManager: BrowserManager) {
+    super(browserManager);
+    // Create screenshots directory if it doesn't exist
+    mkdirSync(this.screenshotDir, { recursive: true });
+  }
 
   async execute(input: ActionInput, options: BrowserToolOptions = {}): Promise<ToolResult> {
     try {
@@ -115,6 +125,13 @@ export class BrowserActionTool extends BrowserTool {
     try {
       const { Page } = this.cdpClient!;
       const { data } = await Page.captureScreenshot();
+      
+      // Save screenshot to file
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filePath = join(this.screenshotDir, `screenshot-${timestamp}.png`);
+      writeFileSync(filePath, Buffer.from(data, 'base64'));
+      
+      console.log(`Screenshot saved to: ${filePath}`);
       return data;
     } catch (error) {
       throw new ToolError(`Screenshot failed: ${error}`);
