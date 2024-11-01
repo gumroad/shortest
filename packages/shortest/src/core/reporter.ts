@@ -1,30 +1,43 @@
 import pc from 'picocolors';
+import { ParsedTestSuite } from '../types';
+
+export type TestStatus = 'pending' | 'running' | 'passed' | 'failed';
+
+interface TestResult {
+  name: string;
+  status: TestStatus;
+  error?: Error;
+}
+
+interface SuiteResult {
+  name: string;
+  tests: TestResult[];
+}
 
 export class Reporter {
-  private testCount = 0;
-  private fileCount = 0;
-  private failedTests = 0;
+  private currentFile: string = '';
+  private suiteResults: SuiteResult[] = [];
+  private startTime: number = Date.now();
 
   startFile(file: string) {
-    this.fileCount++;
-    console.log(pc.blue(`\nRunning tests in ${pc.bold(file)}`));
+    this.currentFile = file.split('/').pop() || file;
+    this.startTime = Date.now();
+    console.log(pc.blue(`\n📄 ${pc.bold(this.currentFile)}`));
   }
 
-  reportTest(name: string, passed = true) {
-    this.testCount++;
-    if (!passed) this.failedTests++;
-    const icon = passed ? pc.green('✓') : pc.red('✗');
-    console.log(`  ${icon} ${name}`);
+  startSuite(name: string) {
+    console.log(pc.cyan(`\n  Suite: ${name}`));
+    this.suiteResults.push({ name, tests: [] });
   }
 
-  summary() {
-    console.log(
-      pc.blue(`\nRan ${this.testCount} tests from ${this.fileCount} files`)
-    );
-  }
-
-  allTestsPassed(): boolean {
-    return this.failedTests === 0 && this.testCount > 0;
+  reportTest(name: string, status: TestStatus = 'passed', error?: Error) {
+    const icon = this.getStatusIcon(status);
+    console.log(`    ${icon} ${name}`);
+    
+    const currentSuite = this.suiteResults[this.suiteResults.length - 1];
+    if (currentSuite) {
+      currentSuite.tests.push({ name, status, error });
+    }
   }
 
   watchMode() {
@@ -34,5 +47,52 @@ export class Reporter {
   fileChanged(file: string) {
     console.clear();
     console.log(pc.yellow(`\nFile changed: ${file}`));
+  }
+
+  private getStatusIcon(status: TestStatus): string {
+    switch (status) {
+      case 'pending':
+        return pc.yellow('○');
+      case 'running':
+        return pc.blue('●');
+      case 'passed':
+        return pc.green('✓');
+      case 'failed':
+        return pc.red('✗');
+    }
+  }
+
+  summary() {
+    const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
+    const totalTests = this.suiteResults.reduce((sum, suite) => sum + suite.tests.length, 0);
+    const failedTests = this.suiteResults.reduce(
+      (sum, suite) => sum + suite.tests.filter(t => t.status === 'failed').length, 
+      0
+    );
+
+    console.log(pc.dim('⎯'.repeat(50)));
+    
+    // Test Files summary
+    console.log(pc.bold('\n Test Files '), 
+      failedTests ? pc.red(`${failedTests} failed`) : '',
+      failedTests && totalTests-failedTests ? ' | ' : '',
+      pc.green(`${totalTests-failedTests} passed`),
+      pc.dim(`(${totalTests})`)
+    );
+
+    // Duration
+    console.log(pc.bold(' Duration  '), pc.dim(`${duration}s`));
+
+    // Start time
+    const startTimeStr = new Date(this.startTime).toLocaleTimeString();
+    console.log(pc.bold(' Start at  '), pc.dim(startTimeStr));
+
+    console.log(pc.dim('\n' + '⎯'.repeat(50)));
+  }
+
+  allTestsPassed(): boolean {
+    return !this.suiteResults.some(suite => 
+      suite.tests.some(test => test.status === 'failed')
+    );
   }
 }
