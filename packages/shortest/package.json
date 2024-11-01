@@ -23,14 +23,17 @@
       "build": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outfile=dist/cli/bin.js --external:fsevents --external:chokidar --external:glob --external:esbuild --banner:js='import { createRequire } from \"module\"; const require = createRequire(import.meta.url); import { fileURLToPath } from \"url\"; const __filename = fileURLToPath(import.meta.url); import { dirname } from \"path\"; const __dirname = dirname(__filename);' --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url",
       "dev": "pnpm build --watch",
       "prepare": "pnpm build && chmod +x dist/cli/bin.js",
-      "preinstall": "pnpm build"
+      "preinstall": "pnpm build",
+      "test:browser": "tsx scripts/test-browser.ts"
     },
     "dependencies": {
       "chokidar": "^3.5.3",
       "glob": "^10.3.10",
       "picocolors": "^1.0.0",
       "esbuild": "^0.20.1",
-      "chrome-launcher": "^1.1.0"
+      "chrome-launcher": "^1.1.0",
+      "chrome-remote-interface": "^0.33.0",
+      "@types/chrome-remote-interface": "^0.31.14"
     },
     "devDependencies": {
       "@types/node": "^20.11.24",
