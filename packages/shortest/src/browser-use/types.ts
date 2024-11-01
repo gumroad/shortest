@@ -1,15 +1,19 @@
 export type BrowserAction = 
-  | 'click'
+  | 'mouse_move'
+  | 'key'
   | 'type'
   | 'screenshot';
 
-export type ClickType = 'left' | 'right' | 'double';
+export type MouseButton = 'left' | 'right' | 'middle';
+export type ClickCount = 1 | 2;
 
 export interface ActionInput {
   action: BrowserAction;
   coordinates?: [number, number];
-  clickType?: ClickType;
+  button?: MouseButton;
+  clickCount?: ClickCount;
   text?: string;
+  key?: string;
   options?: Record<string, any>;
 }
 
