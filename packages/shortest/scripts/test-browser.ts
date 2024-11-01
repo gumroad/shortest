@@ -14,31 +14,52 @@ async function testBrowser() {
 
     console.log('\n2. Launching browser...');
     await browserManager.launch();
+    
+    // Wait longer for browser to fully initialize
+    console.log('\nWaiting for browser window to settle...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    console.log('\n3. Taking initial screenshot...');
-    const screenshotResult = await browserTool.execute({
-      action: 'screenshot'
-    });
-    console.log('Screenshot taken:', screenshotResult.screenshot ? '✅' : '❌');
+    // Test with more distinct coordinates
+    const testCoords = [
+      [900, 400],    // Top left area
+      [100, 600],    // Top left area
+      [300, 800],    // Top right area
+      [150, 100],    // Bottom left area
+      [200, 290],    // Bottom right area
+    ];
 
-    console.log('\n4. Clicking at coordinates (100, 100)...');
-    const clickResult = await browserTool.execute({
-      action: 'click',
-      coordinates: [100, 100],
-      clickType: 'left'
-    });
-    console.log('Click result:', clickResult.output);
+    for (const [x, y] of testCoords) {
+      console.log(`\n📍 Moving to coordinates (${x}, ${y})`);
+      
+      // Move mouse with delay
+      await browserTool.execute({
+        action: 'mouse_move',
+        coordinates: [x, y]
+      });
+      
+      // Longer wait between move and clicks
+      console.log('   Waiting before clicks...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Click 3 times with longer delays
+      for (let i = 1; i <= 3; i++) {
+        console.log(`   Click ${i}/3 at (${x}, ${y})`);
+        await browserTool.execute({
+          action: 'mouse_move',
+          coordinates: [x, y],
+          button: 'left',
+          clickCount: 1
+        });
+        // Wait between clicks
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
-    console.log('\n5. Typing text...');
-    const typeResult = await browserTool.execute({
-      action: 'type',
-      text: 'Hello, Browser Testing!'
-    });
-    console.log('Type result:', typeResult.output);
+      // Wait before moving to next position
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 
-    // Keep browser open for inspection
-    console.log('\n✨ Test complete! Keeping browser open for 10 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    console.log('\n✨ Test complete! Keeping browser open for inspection...');
+    await new Promise(resolve => setTimeout(resolve, 30000));
 
   } catch (error) {
     console.error('\n❌ Test failed:', error);
@@ -49,6 +70,6 @@ async function testBrowser() {
 }
 
 // Run the test
-console.log('🧪 Browser Action Test');
-console.log('====================');
+console.log('🧪 Coordinate Consistency Test');
+console.log('=============================');
 testBrowser().catch(console.error); 
