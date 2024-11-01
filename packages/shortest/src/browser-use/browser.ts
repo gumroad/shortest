@@ -30,6 +30,18 @@ interface TargetDestroyedEvent {
   targetId: string;
 }
 
+interface Resolution {
+  width: number;
+  height: number;
+}
+
+// Similar to Python version's scaling targets
+const MAX_SCALING_TARGETS: { [key: string]: Resolution } = {
+  XGA: { width: 1024, height: 768 },    // 4:3
+  WXGA: { width: 1280, height: 800 },   // 16:10
+  FWXGA: { width: 1366, height: 768 }   // ~16:9
+};
+
 export class BrowserActionTool extends BrowserTool {
   name = 'browser';
   private cdpClient: CDP.Client | null = null;
@@ -37,10 +49,18 @@ export class BrowserActionTool extends BrowserTool {
   private screenshotDir = join(process.cwd(), 'test-screenshots');
   private reconnectAttempts = 3;
   private windowTargets = new Map<string, TargetInfo>();
+  private width: number;
+  private height: number;
+  private displayNum: number;
+  private scalingEnabled = true;
 
   constructor(browserManager: BrowserManager) {
     super(browserManager);
     mkdirSync(this.screenshotDir, { recursive: true });
+    // Get from environment or default
+    this.width = parseInt(process.env.WIDTH || '1920', 10);
+    this.height = parseInt(process.env.HEIGHT || '1080', 10);
+    this.displayNum = parseInt(process.env.DISPLAY_NUM || '0', 10);
   }
 
   async execute(input: ActionInput, options: BrowserToolOptions = {}): Promise<ToolResult> {
@@ -330,6 +350,46 @@ export class BrowserActionTool extends BrowserTool {
       // Close CDP connection
       await this.cdpClient.close();
       this.cdpClient = null;
+    }
+  }
+
+  private scaleCoordinates(x: number, y: number, fromBrowser: boolean = false): [number, number] {
+    if (!this.scalingEnabled) return [x, y];
+
+    // Check bounds
+    if (x > this.width || y > this.height) {
+      throw new ToolError(`Coordinates (${x}, ${y}) are out of bounds`);
+    }
+
+    const ratio = this.width / this.height;
+    let targetDimension: Resolution | null = null;
+
+    // Find matching aspect ratio target
+    for (const dimension of Object.values(MAX_SCALING_TARGETS)) {
+      const dimensionRatio = dimension.width / dimension.height;
+      if (Math.abs(dimensionRatio - ratio) < 0.02 && dimension.width < this.width) {
+        targetDimension = dimension;
+        break;
+      }
+    }
+
+    if (!targetDimension) return [x, y];
+
+    const xScalingFactor = targetDimension.width / this.width;
+    const yScalingFactor = targetDimension.height / this.height;
+
+    if (fromBrowser) {
+      // Scale up from browser coordinates
+      return [
+        Math.round(x / xScalingFactor),
+        Math.round(y / yScalingFactor)
+      ];
+    } else {
+      // Scale down to browser coordinates
+      return [
+        Math.round(x * xScalingFactor),
+        Math.round(y * yScalingFactor)
+      ];
     }
   }
 } 
