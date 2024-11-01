@@ -95,4 +95,12 @@ export class Reporter {
       suite.tests.some(test => test.status === 'failed')
     );
   }
+
+  reportStatus(message: string) {
+    console.log(pc.blue(`\n${message}`));
+  }
+
+  reportError(context: string, message: string) {
+    console.error(pc.red(`\n${context} Error: ${message}`));
+  }
 }
