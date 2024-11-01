@@ -1,7 +1,7 @@
 import { Reporter } from './reporter';
 import { TestCompiler } from './compiler';
 import { TestParser } from './parser';
-import { BrowserManager } from './browser';
+import { BrowserManager } from './browser-manager';
 import { initialize } from '../index';
 
 export class TestExecutor {
