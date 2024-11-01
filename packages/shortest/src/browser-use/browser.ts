@@ -35,6 +35,20 @@ interface Resolution {
   height: number;
 }
 
+interface Viewport {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
+interface TabInfo {
+  id: string;
+  url: string;
+  title: string;
+  type: string;
+}
+
 // Similar to Python version's scaling targets
 const MAX_SCALING_TARGETS: { [key: string]: Resolution } = {
   XGA: { width: 1024, height: 768 },    // 4:3
@@ -53,6 +67,8 @@ export class BrowserActionTool extends BrowserTool {
   private height: number;
   private displayNum: number;
   private scalingEnabled = true;
+  private activeTabId: string | null = null;
+  private viewport: Viewport | null = null;
 
   constructor(browserManager: BrowserManager) {
     super(browserManager);
@@ -65,15 +81,71 @@ export class BrowserActionTool extends BrowserTool {
 
   async execute(input: ActionInput, options: BrowserToolOptions = {}): Promise<ToolResult> {
     try {
-      await this.ensureConnection();
-      const result = await this.executeAction(input);
-      
-      if (options.screenshot) {
-        const screenshot = await this.takeScreenshot();
-        return { output: result, screenshot };
+      this.cdpClient = this.browserManager.getCdpClient();
+      if (!this.cdpClient) {
+        throw new ToolError('Browser not connected');
       }
 
-      return { output: result };
+      // Handle tab management actions
+      switch (input.action) {
+        case 'new_tab':
+          const tabId = await this.createTab(input.url);
+          return { output: `Created new tab with ID: ${tabId}` };
+
+        case 'close_tab':
+          if (!input.tabId) {
+            throw new ToolError('Tab ID required for close_tab action');
+          }
+          await this.closeTab(input.tabId);
+          return { output: `Closed tab: ${input.tabId}` };
+
+        case 'switch_tab':
+          if (!input.tabId) {
+            throw new ToolError('Tab ID required for switch_tab action');
+          }
+          await this.switchTab(input.tabId);
+          return { output: `Switched to tab: ${input.tabId}` };
+
+        case 'list_tabs':
+          const tabs = await this.getTabs();
+          return { 
+            output: `Current tabs:\n${tabs.map(tab => 
+              `${tab.id} - ${tab.title} (${tab.url})`
+            ).join('\n')}` 
+          };
+
+        case 'mouse_move':
+          if (!input.coordinates) {
+            throw new ToolError('Coordinates required for mouse_move');
+          }
+          await this.ensureActiveTab();
+          await this.mouseMove(input.coordinates[0], input.coordinates[1]);
+          if (input.button) {
+            await this.click(input.coordinates[0], input.coordinates[1], input.button, input.clickCount);
+          }
+          return { output: `Mouse moved to (${input.coordinates[0]}, ${input.coordinates[1]})${input.button ? ' and clicked' : ''}` };
+
+        case 'key':
+          if (!input.key) {
+            throw new ToolError('Key required for key action');
+          }
+          await this.sendKey(input.key);
+          return { output: `Pressed key: ${input.key}` };
+
+        case 'type':
+          if (!input.text) {
+            throw new ToolError('Text required for type action');
+          }
+          await this.type(input.text);
+          return { output: `Typed text: "${input.text}"` };
+
+        case 'screenshot':
+          const screenshot = await this.takeScreenshot();
+          return { output: 'Screenshot taken', screenshot };
+
+        default:
+          throw new ToolError(`Unsupported action: ${input.action}`);
+      }
     } catch (error) {
       if (await this.handleError(error)) {
         return this.execute(input, options);
@@ -390,6 +462,69 @@ export class BrowserActionTool extends BrowserTool {
         Math.round(x * xScalingFactor),
         Math.round(y * yScalingFactor)
       ];
+    }
+  }
+
+  private async getTabs(): Promise<TabInfo[]> {
+    if (!this.cdpClient) {
+      throw new ToolError('Browser not connected');
+    }
+
+    const { Target } = this.cdpClient;
+    const targets = await Target.getTargets();
+    
+    return targets.targetInfos
+      .filter(target => target.type === 'page')
+      .map(target => ({
+        id: target.targetId,
+        url: target.url,
+        title: target.title,
+        type: target.type
+      }));
+  }
+
+  private async switchTab(tabId: string): Promise<void> {
+    if (!this.cdpClient) {
+      throw new ToolError('Browser not connected');
+    }
+
+    const { Target } = this.cdpClient;
+    await Target.activateTarget({ targetId: tabId });
+    this.activeTabId = tabId;
+    
+    // Reset viewport cache as it might be different in new tab
+    this.viewport = null;
+  }
+
+  private async createTab(url?: string): Promise<string> {
+    if (!this.cdpClient) {
+      throw new ToolError('Browser not connected');
+    }
+
+    const { Target } = this.cdpClient;
+    const { targetId } = await Target.createTarget({
+      url: url || 'about:blank',
+      newWindow: false
+    });
+
+    await this.switchTab(targetId);
+    return targetId;
+  }
+
+  private async closeTab(tabId: string): Promise<void> {
+    if (!this.cdpClient) {
+      throw new ToolError('Browser not connected');
+    }
+
+    const { Target } = this.cdpClient;
+    await Target.closeTarget({ targetId: tabId });
+    
+    // If we closed the active tab, switch to another one
+    if (tabId === this.activeTabId) {
+      const tabs = await this.getTabs();
+      if (tabs.length > 0) {
+        await this.switchTab(tabs[0].id);
+      }
     }
   }
 } 

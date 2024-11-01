@@ -8,58 +8,83 @@ async function testBrowser() {
 
   try {
     console.log('🚀 Starting browser test...');
-
-    console.log('\n1. Initializing config...');
     await initialize();
-
-    console.log('\n2. Launching browser...');
     await browserManager.launch();
+
+    // List initial tabs
+    console.log('\n1. Listing initial tabs...');
+    const initialTabs = await browserTool.execute({ action: 'list_tabs' });
+    console.log(initialTabs.output);
+
+    // Create new tabs
+    console.log('\n2. Creating new tabs...');
+    const tab1 = await browserTool.execute({ 
+      action: 'new_tab',
+      url: 'https://example.com'
+    });
+    console.log('Created first tab:', tab1.output);
+
+    const tab2 = await browserTool.execute({ 
+      action: 'new_tab',
+      url: 'https://google.com'
+    });
+    console.log('Created second tab:', tab2.output);
+
+    // Wait for tabs to load
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // List all tabs
+    console.log('\n3. Listing all tabs...');
+    const allTabs = await browserTool.execute({ action: 'list_tabs' });
     
-    // Wait longer for browser to fully initialize
-    console.log('\nWaiting for browser window to settle...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    if (!allTabs.output) {
+      throw new Error('Failed to get tab list');
+    }
+    console.log(allTabs.output);
 
-    // Test with more distinct coordinates
-    const testCoords = [
-      [900, 400],    // Top left area
-      [100, 600],    // Top left area
-      [300, 800],    // Top right area
-      [150, 100],    // Bottom left area
-      [200, 290],    // Bottom right area
-    ];
-
-    for (const [x, y] of testCoords) {
-      console.log(`\n📍 Moving to coordinates (${x}, ${y})`);
-      
-      // Move mouse with delay
-      await browserTool.execute({
-        action: 'mouse_move',
-        coordinates: [x, y]
-      });
-      
-      // Longer wait between move and clicks
-      console.log('   Waiting before clicks...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Click 3 times with longer delays
-      for (let i = 1; i <= 3; i++) {
-        console.log(`   Click ${i}/3 at (${x}, ${y})`);
-        await browserTool.execute({
-          action: 'mouse_move',
-          coordinates: [x, y],
-          button: 'left',
-          clickCount: 1
-        });
-        // Wait between clicks
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
-      // Wait before moving to next position
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    // Extract tab IDs from the output
+    const tabIds = allTabs.output.match(/[^\n]*google.com[^\n]*/)?.[0]?.split(' ')[0];
+    if (!tabIds) {
+      throw new Error('Could not find Google tab ID');
     }
 
-    console.log('\n✨ Test complete! Keeping browser open for inspection...');
-    await new Promise(resolve => setTimeout(resolve, 30000));
+    // Switch to Google tab
+    console.log('\n4. Switching to Google tab...');
+    await browserTool.execute({ 
+      action: 'switch_tab',
+      tabId: tabIds
+    });
+
+    // Test mouse movement in new tab
+    console.log('\n5. Testing mouse movement in Google tab...');
+    await browserTool.execute({
+      action: 'mouse_move',
+      coordinates: [500, 300]
+    });
+
+    // Take screenshot to verify
+    await browserTool.execute({
+      action: 'screenshot'
+    });
+
+    // Wait to see the result
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Close the Google tab
+    console.log('\n6. Closing Google tab...');
+    await browserTool.execute({
+      action: 'close_tab',
+      tabId: tabIds
+    });
+
+    // Final tab list
+    console.log('\n7. Final tab list...');
+    const finalTabs = await browserTool.execute({ action: 'list_tabs' });
+    console.log(finalTabs.output || 'No tabs found');
+
+    // Keep browser open for inspection
+    console.log('\n✨ Test complete! Keeping browser open for 10 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
   } catch (error) {
     console.error('\n❌ Test failed:', error);
@@ -70,6 +95,6 @@ async function testBrowser() {
 }
 
 // Run the test
-console.log('🧪 Coordinate Consistency Test');
+console.log('🧪 Browser Tab Management Test');
 console.log('=============================');
-testBrowser().catch(console.error); 
+testBrowser().catch(console.error);
