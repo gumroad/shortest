@@ -204,12 +204,18 @@ importers:
 
   packages/shortest:
     dependencies:
+      '@types/chrome-remote-interface':
+        specifier: ^0.31.14
+        version: 0.31.14
       chokidar:
         specifier: ^3.5.3
         version: 3.6.0
       chrome-launcher:
         specifier: ^1.1.0
         version: 1.1.2
+      chrome-remote-interface:
+        specifier: ^0.33.0
+        version: 0.33.2(bufferutil@4.0.8)
       esbuild:
         specifier: ^0.20.1
         version: 0.20.2
@@ -2085,6 +2091,9 @@ packages:
   '@types/bcryptjs@2.4.6':
     resolution: {integrity: sha512-9xlo6R2qDs5uixm0bcIqCeMCE6HiQsIyel9KQySStiyqNl2tnj2mP3DX1Nf56MD6KMenNNlBBsy3LJ7gUEQPXQ==}
 
+  '@types/chrome-remote-interface@0.31.14':
+    resolution: {integrity: sha512-H9hTcLu1y+Ms6GDPXXeGhgxaOSD69yEo674vjJw5EeW1tTwYo8fEkf7A9nWlnO6ArJsS7c41iZeX6mRDQ1LhEw==}
+
   '@types/diff-match-patch@1.0.36':
     resolution: {integrity: sha512-xFdR6tkm0MWvBfO8xXCSsinYxHcqkQUlcHeSpMC2ukzOb6lwQAfDmW+Qt0AvlGd8HpsS28qKsB+oPeJn9I39jg==}
 
@@ -2397,6 +2406,10 @@ packages:
     engines: {node: '>=12.13.0'}
     hasBin: true
 
+  chrome-remote-interface@0.33.2:
+    resolution: {integrity: sha512-wvm9cOeBTrb218EC+6DteGt92iXr2iY0+XJP30f15JVDhqvWvJEVACh9GvUm8b9Yd8bxQivaLSb8k7mgrbyomQ==}
+    hasBin: true
+
   class-variance-authority@0.7.0:
     resolution: {integrity: sha512-jFI8IQw4hczaL4ALINxqLEXQbWcNjoSkloa4IaufXCJr6QawJyw7tuRysRsrE8w2p/4gGaxKIt/hX3qz/IbD1A==}
 
@@ -2450,6 +2463,9 @@ packages:
   commander@12.1.0:
     resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
     engines: {node: '>=18'}
+
+  commander@2.11.0:
+    resolution: {integrity: sha512-b0553uYA5YAEGgyYIGYROzKQ7X5RAqedkfjiZxwi0kL1g3bOaBNNZfYkzt/CL0umgD5wc9Jec2FbB98CjkMRvQ==}
 
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
@@ -2556,6 +2572,9 @@ packages:
 
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
+
+  devtools-protocol@0.0.927104:
+    resolution: {integrity: sha512-5jfffjSuTOv0Lz53wTNNTcCUV8rv7d82AhYcapj28bC2B5tDxEZzVb7k51cNxZP2KHw24QE+sW7ZuSeD9NfMpA==}
 
   didyoumean@1.2.2:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
@@ -3918,6 +3937,18 @@ packages:
   wrap-ansi@8.1.0:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
+
+  ws@7.5.10:
+    resolution: {integrity: sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ==}
+    engines: {node: '>=8.3.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   ws@8.18.0:
     resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
@@ -5507,6 +5538,10 @@ snapshots:
 
   '@types/bcryptjs@2.4.6': {}
 
+  '@types/chrome-remote-interface@0.31.14':
+    dependencies:
+      devtools-protocol: 0.0.927104
+
   '@types/diff-match-patch@1.0.36': {}
 
   '@types/estree@1.0.5': {}
@@ -5884,6 +5919,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  chrome-remote-interface@0.33.2(bufferutil@4.0.8):
+    dependencies:
+      commander: 2.11.0
+      ws: 7.5.10(bufferutil@4.0.8)
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   class-variance-authority@0.7.0:
     dependencies:
       clsx: 2.0.0
@@ -5943,6 +5986,8 @@ snapshots:
       delayed-stream: 1.0.0
 
   commander@12.1.0: {}
+
+  commander@2.11.0: {}
 
   commander@4.1.1: {}
 
@@ -6032,6 +6077,8 @@ snapshots:
     optional: true
 
   detect-node-es@1.1.0: {}
+
+  devtools-protocol@0.0.927104: {}
 
   didyoumean@1.2.2: {}
 
@@ -7397,6 +7444,10 @@ snapshots:
       ansi-styles: 6.2.1
       string-width: 5.1.2
       strip-ansi: 7.1.0
+
+  ws@7.5.10(bufferutil@4.0.8):
+    optionalDependencies:
+      bufferutil: 4.0.8
 
   ws@8.18.0(bufferutil@4.0.8):
     optionalDependencies:
