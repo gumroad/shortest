@@ -1,6 +1,6 @@
 import { build, transformSync, BuildOptions } from 'esbuild';
 import { join, resolve } from 'path';
-import { mkdirSync, existsSync, readFileSync } from 'fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { defaultConfig } from '../config/types';
 
@@ -11,7 +11,21 @@ export class TestCompiler {
     platform: 'node',
     target: 'node18',
     sourcemap: true,
-    bundle: true
+    bundle: true,
+    external: [
+      'shortest',
+      'fs',
+      'path',
+      'os',
+      'util',
+      'events',
+      'stream',
+      'assert',
+      'url',
+      'crypto',
+      'buffer',
+      'querystring'
+    ]
   };
 
   constructor() {
@@ -25,11 +39,25 @@ export class TestCompiler {
     const fileName = filePath.split('/').pop()!.replace('.ts', '.mjs');
     const outputPath = join(this.cacheDir, fileName);
 
+    const packageJson = {
+      type: 'module',
+      imports: {
+        'shortest': resolve(process.cwd(), 'packages/shortest/src/index.ts')
+      }
+    };
+    writeFileSync(join(this.cacheDir, 'package.json'), JSON.stringify(packageJson));
+
     await build({
       ...this.defaultOptions,
       entryPoints: [filePath],
       outfile: outputPath,
-      external: ['shortest']
+      alias: {
+        shortest: resolve(process.cwd(), 'packages/shortest/src/index.ts')
+      },
+      resolveExtensions: ['.ts', '.js', '.mjs'],
+      banner: {
+        js: 'import { createRequire } from "module";const require = createRequire(import.meta.url);'
+      }
     });
 
     return outputPath;
