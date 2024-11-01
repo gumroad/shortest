@@ -42,3 +42,22 @@ export interface TestStep {
   action: string;
   payload?: any;
 }
+
+export interface ParsedTestStep {
+  type: 'BEFORE' | 'GIVEN' | 'WHEN' | 'EXPECT' | 'AFTER';
+  description: string;
+  payload?: any;
+}
+
+export interface ParsedTest {
+  suiteName: string;
+  path: string;
+  fullPath: string; // with baseUrl
+  testName: string;
+  steps: ParsedTestStep[];
+}
+
+export interface ParsedTestSuite {
+  name: string;
+  tests: ParsedTest[];
+}
