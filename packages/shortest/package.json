@@ -3,12 +3,12 @@
     "version": "0.0.1",
     "description": "AI-powered testing framework",
     "type": "module",
-    "bin": {
-      "shortest": "./dist/cli/bin.js"
-    },
     "main": "./dist/index.js",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
+    "bin": {
+      "shortest": "./dist/cli/bin.js"
+    },
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
@@ -20,12 +20,14 @@
       "dist"
     ],
     "scripts": {
-      "build": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outfile=dist/cli/bin.js --external:fsevents --external:chokidar --external:glob --external:esbuild --external:playwright --external:playwright-core --external:chromium-bidi --banner:js='import { createRequire } from \"module\"; const require = createRequire(import.meta.url); import { fileURLToPath } from \"url\"; const __filename = fileURLToPath(import.meta.url); import { dirname } from \"path\"; const __dirname = dirname(__filename);' --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url",
-      "dev": "pnpm build --watch",
-      "prepare": "pnpm build && chmod +x dist/cli/bin.js && pnpm exec playwright install chromium",
+      "build": "rm -rf dist && pnpm build:types && pnpm build:js && pnpm build:cli",
+      "build:types": "tsc --emitDeclarationOnly",
+      "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents --external:chokidar --external:glob --external:esbuild --external:playwright --external:playwright-core --external:chromium-bidi",
+      "build:cli": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outfile=dist/cli/bin.js --external:fsevents --external:chokidar --external:glob --external:esbuild --banner:js='import { createRequire } from \"module\"; const require = createRequire(import.meta.url); import { fileURLToPath } from \"url\"; const __filename = fileURLToPath(import.meta.url); import { dirname } from \"path\"; const __dirname = dirname(__filename);' --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url",
+      "dev": "pnpm build:types --watch",
+      "prepare": "pnpm build && chmod +x dist/cli/bin.js",
       "preinstall": "pnpm build",
-      "test:browser": "tsx scripts/test-browser.ts",
-      "postinstall": "playwright install chromium"
+      "test:browser": "tsx scripts/test-ai.ts"
     },
     "dependencies": {
       "chokidar": "^3.5.3",
@@ -34,7 +36,8 @@
       "esbuild": "^0.20.1",
       "playwright": "^1.42.1",
       "@playwright/test": "^1.42.1",
-      "chromium-bidi": "^0.5.2"
+      "chromium-bidi": "^0.5.2",
+      "@anthropic-ai/sdk": "^0.18.0"
     },
     "devDependencies": {
       "@types/node": "^20.11.24",

@@ -2,7 +2,7 @@ import { build, transformSync, BuildOptions } from 'esbuild';
 import { join, resolve } from 'path';
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { defaultConfig } from '../config/types';
+import { defaultConfig } from '../types';
 
 export class TestCompiler {
   private cacheDir: string;

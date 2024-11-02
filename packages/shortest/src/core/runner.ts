@@ -1,8 +1,8 @@
 import { watch } from 'chokidar';
 import { glob } from 'glob';
 import { resolve } from 'path';
-import type { ShortestConfig } from '../config/types';
-import { defaultConfig } from '../config/types';
+import type { ShortestConfig } from '../types';
+import { defaultConfig } from '../types';
 import { TestExecutor } from './executor';
 import { TestCompiler } from './compiler';
 
