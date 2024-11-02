@@ -1,14 +1,15 @@
 import { ParsedTest, ParsedTestSuite, ParsedTestStep } from '../types';
 import { getConfig, TestRegistry } from '../index';
+import { UITestBuilderInterface } from '../types/builder';
 
 export class TestParser {
+  private processedSuites = new Set<string>();
+
   private getFullPath(path: string): string {
     const config = getConfig();
     const baseUrl = config.baseUrl?.replace(/\/$/, '') || '';
     return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   }
-
-  private processedSuites = new Set<string>();
 
   async parseModule(compiledModule: any): Promise<ParsedTestSuite[]> {
     const suites: ParsedTestSuite[] = [];
@@ -21,7 +22,7 @@ export class TestParser {
       
       const suite: ParsedTestSuite = {
         name: suiteName,
-        tests: builders.map(builder => this.parseTestBuilder(builder))
+        tests: builders.map((builder: UITestBuilderInterface) => this.parseTestBuilder(builder))
       };
       
       console.log(`Test Suite: ${suiteName}`);

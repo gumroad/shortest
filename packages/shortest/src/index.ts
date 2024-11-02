@@ -1,9 +1,12 @@
-import { TestSuite, BeforeAllFunction, AfterAllFunction } from './types';
-import { UITestBuilderInterface } from './types/builder';
-import { ShortestConfig, defaultConfig } from './config/types';
+// Import types
+import { ShortestConfig } from './types';
+import { defaultConfig } from './types';
 import { TestCompiler } from './core/compiler';
 import { UITestBuilder } from './ui-test-builder';
+import { UITestBuilderInterface } from './types/builder';
+import { BeforeAllFunction, AfterAllFunction, TestSuite } from './types';
 
+// Define global registry type
 declare global {
   var __shortest_registry__: {
     suites: Map<string, UITestBuilderInterface[]>;
@@ -13,77 +16,17 @@ declare global {
   };
 }
 
+// Initialize global registry
 if (!global.__shortest_registry__) {
   global.__shortest_registry__ = {
-    suites: new Map(),
+    suites: new Map<string, UITestBuilderInterface[]>(),
     currentSuite: null,
     beforeAllFns: [],
     afterAllFns: []
   };
 }
 
-export class TestRegistry {
-  static get suites() {
-    return global.__shortest_registry__.suites;
-  }
-
-  static get currentSuite() {
-    return global.__shortest_registry__.currentSuite;
-  }
-
-  static set currentSuite(name: string | null) {
-    global.__shortest_registry__.currentSuite = name;
-  }
-
-  static startSuite(name: string) {
-    this.currentSuite = name;
-    if (!this.suites.has(name)) {
-      this.suites.set(name, []);
-    }
-  }
-
-  static registerTest(builder: UITestBuilderInterface) {
-    if (this.currentSuite) {
-      const suite = this.suites.get(this.currentSuite)!;
-      suite.push(builder);
-      builder.setSuiteName(this.currentSuite);
-    }
-  }
-
-  static endSuite() {
-    this.currentSuite = null;
-  }
-
-  static getAllTests() {
-    return this.suites;
-  }
-
-  static clear() {
-    this.suites.clear();
-    this.currentSuite = null;
-  }
-
-  static get beforeAllFns() {
-    return global.__shortest_registry__.beforeAllFns;
-  }
-
-  static get afterAllFns() {
-    return global.__shortest_registry__.afterAllFns;
-  }
-
-  static getCurrentSuite(): TestSuite | null {
-    const name = this.currentSuite;
-    if (!name) return null;
-    
-    return {
-      name,
-      tests: [],
-      beforeAll: undefined,
-      afterAll: undefined
-    };
-  }
-}
-
+// Config and compiler instances
 let config: ShortestConfig;
 const compiler = new TestCompiler();
 
@@ -97,8 +40,10 @@ export async function initialize() {
   for (const file of configFiles) {
     try {
       const module = await compiler.loadModule(file, process.cwd());
-      config = { ...defaultConfig, ...module.default };
-      return;
+      if (module.default) {
+        config = { ...defaultConfig, ...module.default };
+        return;
+      }
     } catch (error) {
       continue;
     }
@@ -111,6 +56,44 @@ export function getConfig(): ShortestConfig {
   return config;
 }
 
+export class TestRegistry {
+  static get suites() {
+    return global.__shortest_registry__.suites;
+  }
+
+  static getAllTests(): Map<string, UITestBuilderInterface[]> {
+    return this.suites;
+  }
+
+  static getCurrentSuite(): string | null {
+    return global.__shortest_registry__.currentSuite;
+  }
+
+  static startSuite(name: string) {
+    global.__shortest_registry__.currentSuite = name;
+    if (!this.suites.has(name)) {
+      this.suites.set(name, []);
+    }
+  }
+
+  static endSuite() {
+    global.__shortest_registry__.currentSuite = null;
+  }
+
+  static beforeAllFns: BeforeAllFunction[] = [];
+  static afterAllFns: AfterAllFunction[] = [];
+
+  static registerTest(builder: UITestBuilderInterface): void {
+    const currentSuite = this.getCurrentSuite();
+    if (currentSuite) {
+      const suite = this.suites.get(currentSuite) || [];
+      suite.push(builder);
+      this.suites.set(currentSuite, suite);
+    }
+  }
+}
+
+// Export test functions
 export function define(name: string, fn: () => void): void {
   TestRegistry.startSuite(name);
   fn();
@@ -119,23 +102,16 @@ export function define(name: string, fn: () => void): void {
 
 export function beforeAll(fn: BeforeAllFunction): void {
   const currentSuite = TestRegistry.getCurrentSuite();
-  if (currentSuite) {
-    currentSuite.beforeAll = fn;
-  } else {
-    TestRegistry.beforeAllFns.push(fn);
-  }
+  TestRegistry.beforeAllFns.push(fn);
 }
 
 export function afterAll(fn: AfterAllFunction): void {
   const currentSuite = TestRegistry.getCurrentSuite();
-  if (currentSuite) {
-    currentSuite.afterAll = fn;
-  } else {
-    TestRegistry.afterAllFns.push(fn);
-  }
+  TestRegistry.afterAllFns.push(fn);
 }
 
-export { UITestBuilder } from './ui-test-builder';
-export type { UITestBuilderInterface } from './types/builder';
-export type { TestSuite, BeforeAllFunction, AfterAllFunction } from './types';
-export type { ShortestConfig, BrowserConfig } from './config/types';
+// Export other classes/functions
+export { UITestBuilder };
+export type { UITestBuilderInterface };
+export type { ShortestConfig };
+export * from './types';
