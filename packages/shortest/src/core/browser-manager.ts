@@ -1,49 +1,53 @@
-import { launch } from 'chrome-launcher';
-import CDP from 'chrome-remote-interface';
+import { chromium, Browser, BrowserContext } from 'playwright';
 import { getConfig } from '../index';
 
 export class BrowserManager {
-  private chromeInstance: any = null;
-  private cdpClient: CDP.Client | null = null;
-  private debugPort: number = 9222;
+  private browser: Browser | null = null;
+  private context: BrowserContext | null = null;
 
-  async launch() {
+  async launch(): Promise<BrowserContext> {
     const config = getConfig();
-    const browserConfig = config.browsers?.find(b => b.name === 'chrome');
-    const startUrl = config.baseUrl || 'about:blank';
-    
+    const browserConfig = config.browsers?.[0] || { name: 'chrome', headless: false };
+    const baseUrl = config.baseUrl || 'http://localhost:3000';
+
+    console.log('Browser Config:', {
+      fromConfig: config.browsers?.[0],
+      usingConfig: browserConfig,
+      headless: browserConfig.headless,
+      baseUrl
+    });
+
     try {
-      // Launch Chrome
-      this.chromeInstance = await launch({
-        port: this.debugPort,
-        chromeFlags: [
-          '--no-first-run',
-          '--no-default-browser-check',
-          '--new-window',
-          '--start-maximized',
-          '--disable-extensions',
-          `--user-data-dir=/tmp/shortest-chrome-profile-${Date.now()}`,
-        ],
-        startingUrl: startUrl,
-        logLevel: 'silent',
-        ignoreDefaultFlags: true,
+      const launchArgs = [
+        '--start-maximized',
+        '--disable-infobars',
+        '--no-sandbox',
+        `--window-size=1920,1080`,
+        `--window-position=0,0`
+      ];
+
+      if (!browserConfig.headless) {
+        launchArgs.push('--kiosk');
+      }
+
+      this.browser = await chromium.launch({
+        headless: browserConfig.headless,
+        args: launchArgs
       });
 
-      // Connect CDP
-      this.cdpClient = await CDP({
-        port: this.debugPort
+      this.context = await this.browser.newContext({
+        viewport: { width: 1920, height: 1080 },
+        screen: { width: 1920, height: 1080 },
+        acceptDownloads: true
       });
 
-      // Enable necessary domains
-      const { Page, DOM, Runtime, Network } = this.cdpClient;
-      await Promise.all([
-        Page.enable(),
-        DOM.enable(),
-        Runtime.enable(),
-        Network.enable()
-      ]);
+      const page = await this.context.newPage();
 
-      return this.cdpClient;
+      await page.setViewportSize({ width: 1920, height: 1080 });
+
+      await page.goto(baseUrl);
+
+      return this.context;
 
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -53,18 +57,18 @@ export class BrowserManager {
     }
   }
 
-  async close() {
-    if (this.cdpClient) {
-      await this.cdpClient.close();
-      this.cdpClient = null;
+  async close(): Promise<void> {
+    if (this.context) {
+      await this.context.close();
+      this.context = null;
     }
-    if (this.chromeInstance) {
-      await this.chromeInstance.kill();
-      this.chromeInstance = null;
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
     }
   }
 
-  getCdpClient(): CDP.Client | null {
-    return this.cdpClient;
+  getContext(): BrowserContext | null {
+    return this.context;
   }
 } 

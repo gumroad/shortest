@@ -11,6 +11,23 @@ async function testCoordinates() {
     await initialize();
     await browserManager.launch();
 
+    // Create a test page with a white background
+    await browserTool.execute({
+      action: 'new_tab',
+      url: 'about:blank'
+    });
+
+    // Get the current page and set background
+    const context = browserManager.getContext();
+    const page = context?.pages()[0];
+    if (page) {
+      await page.evaluate(() => {
+        document.body.style.background = 'white';
+        document.body.style.height = '100vh';
+        document.body.style.margin = '0';
+      });
+    }
+
     // Test different screen regions
     const testPoints = [
       [100, 100],   // Top left

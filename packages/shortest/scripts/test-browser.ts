@@ -24,43 +24,61 @@ async function testBrowser() {
     });
     console.log('Created first tab:', tab1.output);
 
+    // Wait for load
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     const tab2 = await browserTool.execute({ 
       action: 'new_tab',
-      url: 'https://google.com'
+      url: 'https://www.google.com'
     });
     console.log('Created second tab:', tab2.output);
 
-    // Wait for tabs to load
+    // Wait for load
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // List all tabs
     console.log('\n3. Listing all tabs...');
     const allTabs = await browserTool.execute({ action: 'list_tabs' });
-    
-    if (!allTabs.output) {
-      throw new Error('Failed to get tab list');
-    }
-    console.log(allTabs.output);
+    console.log(allTabs.output || 'No tabs found');
 
-    // Extract tab IDs from the output
-    const tabIds = allTabs.output.match(/[^\n]*google.com[^\n]*/)?.[0]?.split(' ')[0];
-    if (!tabIds) {
-      throw new Error('Could not find Google tab ID');
+    // Get Google tab URL from output
+    const googleTabUrl = allTabs.output?.match(/https:\/\/www\.google\.com/)?.[0];
+    if (!googleTabUrl) {
+      throw new Error('Could not find Google tab');
     }
 
     // Switch to Google tab
     console.log('\n4. Switching to Google tab...');
     await browserTool.execute({ 
       action: 'switch_tab',
-      tabId: tabIds
+      tabId: googleTabUrl
     });
 
-    // Test mouse movement in new tab
-    console.log('\n5. Testing mouse movement in Google tab...');
+    // Test mouse movement and typing in Google tab
+    console.log('\n5. Testing mouse and keyboard in Google tab...');
     await browserTool.execute({
       action: 'mouse_move',
       coordinates: [500, 300]
     });
+
+    await browserTool.execute({
+      action: 'type',
+      text: 'Playwright Test'
+    });
+
+    // Take screenshot to verify
+    await browserTool.execute({
+      action: 'screenshot'
+    });
+
+    // Hit enter after typing
+    await browserTool.execute({
+      action: 'key',
+      key: 'enter'
+    });
+
+    // Wait for search results
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Take screenshot to verify
     await browserTool.execute({
@@ -74,17 +92,13 @@ async function testBrowser() {
     console.log('\n6. Closing Google tab...');
     await browserTool.execute({
       action: 'close_tab',
-      tabId: tabIds
+      tabId: googleTabUrl
     });
 
     // Final tab list
     console.log('\n7. Final tab list...');
     const finalTabs = await browserTool.execute({ action: 'list_tabs' });
     console.log(finalTabs.output || 'No tabs found');
-
-    // Keep browser open for inspection
-    console.log('\n✨ Test complete! Keeping browser open for 10 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
 
   } catch (error) {
     console.error('\n❌ Test failed:', error);
@@ -94,7 +108,6 @@ async function testBrowser() {
   }
 }
 
-// Run the test
 console.log('🧪 Browser Tab Management Test');
 console.log('=============================');
 testBrowser().catch(console.error);
