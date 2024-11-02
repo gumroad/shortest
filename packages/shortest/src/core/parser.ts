@@ -8,16 +8,26 @@ export class TestParser {
     return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   }
 
+  private processedSuites = new Set<string>();
+
   async parseModule(compiledModule: any): Promise<ParsedTestSuite[]> {
     const suites: ParsedTestSuite[] = [];
     const testMap = TestRegistry.getAllTests();
     
     for (const [suiteName, builders] of testMap.entries()) {
+      if (this.processedSuites.has(suiteName)) {
+        continue;
+      }
+      
       const suite: ParsedTestSuite = {
         name: suiteName,
         tests: builders.map(builder => this.parseTestBuilder(builder))
       };
       
+      console.log(`Test Suite: ${suiteName}`);
+      suite.tests.forEach(test => this.generateTestPrompt(test, suiteName));
+      
+      this.processedSuites.add(suiteName);
       suites.push(suite);
     }
 
@@ -38,5 +48,29 @@ export class TestParser {
       testName: builder.testName,
       steps
     };
+  }
+
+  private generateTestPrompt(test: ParsedTest, defineDescription: string): void {
+    console.log(`\nDefine: ${defineDescription}`);
+    console.log(`Test Case: ${test.testName}`);
+    console.log(`URL: ${test.fullPath}`);
+    console.log(`Context: ${test.suiteName}`);
+    console.log('Steps:');
+    
+    test.steps.forEach((step, index) => {
+      console.log(`${index + 1}. ${step.type}: "${step.description}"`);
+      if (step.payload) {
+        console.log(`   ${JSON.stringify(step.payload)}`);
+      }
+    });
+    
+    console.log('Expected Results:');
+    const expectations = test.steps.filter(step => step.type === 'EXPECT');
+    expectations.forEach(exp => {
+      console.log(`- ${exp.description}`);
+      if (exp.payload) {
+        console.log(`  ${JSON.stringify(exp.payload)}`);
+      }
+    });
   }
 } 
