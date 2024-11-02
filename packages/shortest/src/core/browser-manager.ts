@@ -10,12 +10,12 @@ export class BrowserManager {
     const browserConfig = config.browsers?.[0] || { name: 'chrome', headless: false };
     const baseUrl = config.baseUrl || 'http://localhost:3000';
 
-    console.log('Browser Config:', {
-      fromConfig: config.browsers?.[0],
-      usingConfig: browserConfig,
-      headless: browserConfig.headless,
-      baseUrl
-    });
+    // console.log('Browser Config:', {
+    //   fromConfig: config.browsers?.[0],
+    //   usingConfig: browserConfig,
+    //   headless: browserConfig.headless,
+    //   baseUrl
+    // });
 
     try {
       const launchArgs = [

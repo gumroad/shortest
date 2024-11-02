@@ -33,8 +33,8 @@ export class TestExecutor {
       
       for (const suite of suites) {
         // Keep browser open for 2 minutes
-        this.reporter.reportStatus('Keeping browser open for 2 minutes...');
-        await new Promise(resolve => setTimeout(resolve, 60000)); // 1 minutes
+        this.reporter.reportStatus('Keeping browser open for 10 seconds...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 1 minutes
 
         this.reporter.startSuite(suite.name);
         
