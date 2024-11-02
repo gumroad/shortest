@@ -27,7 +27,8 @@
       "dev": "pnpm build:types --watch",
       "prepare": "pnpm build && chmod +x dist/cli/bin.js",
       "preinstall": "pnpm build",
-      "test:browser": "tsx scripts/test-ai.ts"
+      "test:ai": "tsx scripts/test-ai.ts",
+      "test:browser": "tsx scripts/test-browser.ts"
     },
     "dependencies": {
       "chokidar": "^3.5.3",

@@ -53,7 +53,7 @@ export const defaultConfig: ShortestConfig = {
     baseUrl: 'http://localhost:3000',
     testDir: '__tests__',
     ai: {
-      apiKey: process.env.ANTHROPIC_API_KEY || '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',
+      apiKey: process.env.ANTHROPIC_API_KEY || '',
       model: 'claude-3-sonnet-20240229'
     }
 };
