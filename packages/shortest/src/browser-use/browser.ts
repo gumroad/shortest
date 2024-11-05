@@ -96,9 +96,6 @@ export class BrowserTool extends BaseBrowserTool {
           availHeight: window.screen.availHeight
         }
       }));
-
-      console.log('Window dimensions:', dimensions);
-
       // Update dimensions
       this.width = dimensions.viewport.width;
       this.height = dimensions.viewport.height;
