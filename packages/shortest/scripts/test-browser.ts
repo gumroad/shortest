@@ -1,113 +1,78 @@
 import { BrowserManager } from '../src/core/browser-manager';
-import { BrowserActionTool } from '../src/browser-use/browser';
+import { BrowserTool } from '../src/browser-use/browser';
 import { initialize } from '../src/index';
 
 async function testBrowser() {
   const browserManager = new BrowserManager();
-  const browserTool = new BrowserActionTool(browserManager);
 
   try {
-    console.log('🚀 Starting browser test...');
     await initialize();
-    await browserManager.launch();
+    console.log('🚀 Launching browser...');
+    const context = await browserManager.launch();
+    const page = context.pages()[0];
 
-    // List initial tabs
-    console.log('\n1. Listing initial tabs...');
-    const initialTabs = await browserTool.execute({ action: 'list_tabs' });
-    console.log(initialTabs.output);
-
-    // Create new tabs
-    console.log('\n2. Creating new tabs...');
-    const tab1 = await browserTool.execute({ 
-      action: 'new_tab',
-      url: 'https://example.com'
+    const browserTool = new BrowserTool(page, {
+      width: 1920, 
+      height: 1080
     });
-    console.log('Created first tab:', tab1.output);
 
-    // Wait for load
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const tab2 = await browserTool.execute({ 
-      action: 'new_tab',
-      url: 'https://www.google.com'
-    });
-    console.log('Created second tab:', tab2.output);
-
-    // Wait for load
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // List all tabs
-    console.log('\n3. Listing all tabs...');
-    const allTabs = await browserTool.execute({ action: 'list_tabs' });
-    console.log(allTabs.output || 'No tabs found');
-
-    // Get Google tab URL from output
-    const googleTabUrl = allTabs.output?.match(/https:\/\/www\.google\.com/)?.[0];
-    if (!googleTabUrl) {
-      throw new Error('Could not find Google tab');
+    // Navigate to a page with a sign in button
+    await page.goto('http://localhost:3000');
+    
+    // Find the "Sign in" text/button and get its coordinates
+    const signInElement = await page.locator('text="Sign in"').first();
+    const boundingBox = await signInElement.boundingBox();
+    
+    if (!boundingBox) {
+      throw new Error('Could not find Sign in element');
     }
 
-    // Switch to Google tab
-    console.log('\n4. Switching to Google tab...');
+    // Calculate center coordinates of the element
+    const x = Math.round(boundingBox.x + boundingBox.width / 2);
+    const y = Math.round(boundingBox.y + boundingBox.height / 2);
+    
+    console.log(`📍 Sign in button coordinates: (${x}, ${y})`);
+
+    // Test sequence
+    console.log('\n📍 Testing Mouse Movements and Clicks:');
+    
+    // Move to sign in button
+    console.log(`\nTest 1: Move to Sign in button (${x}, ${y})`);
     await browserTool.execute({ 
-      action: 'switch_tab',
-      tabId: googleTabUrl
+      action: 'mouse_move', 
+      coordinates: [x, y] 
+    });
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Take screenshot to verify position
+    console.log('\nTest 2: Taking screenshot to verify cursor position');
+    await browserTool.execute({ 
+      action: 'screenshot' 
     });
 
-    // Test mouse movement and typing in Google tab
-    console.log('\n5. Testing mouse and keyboard in Google tab...');
-    await browserTool.execute({
-      action: 'mouse_move',
-      coordinates: [500, 300]
+    // Click the button
+    console.log('\nTest 3: Clicking at current position');
+    await browserTool.execute({ 
+      action: 'left_click'
     });
+    await new Promise(r => setTimeout(r, 1000));
 
-    await browserTool.execute({
-      action: 'type',
-      text: 'Playwright Test'
+    // Take final screenshot
+    console.log('\nTest 4: Taking screenshot after click');
+    const result = await browserTool.execute({ 
+      action: 'screenshot' 
     });
-
-    // Take screenshot to verify
-    await browserTool.execute({
-      action: 'screenshot'
-    });
-
-    // Hit enter after typing
-    await browserTool.execute({
-      action: 'key',
-      key: 'enter'
-    });
-
-    // Wait for search results
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Take screenshot to verify
-    await browserTool.execute({
-      action: 'screenshot'
-    });
-
-    // Wait to see the result
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Close the Google tab
-    console.log('\n6. Closing Google tab...');
-    await browserTool.execute({
-      action: 'close_tab',
-      tabId: googleTabUrl
-    });
-
-    // Final tab list
-    console.log('\n7. Final tab list...');
-    const finalTabs = await browserTool.execute({ action: 'list_tabs' });
-    console.log(finalTabs.output || 'No tabs found');
+    
+    console.log('\n✅ All coordinate tests completed');
 
   } catch (error) {
-    console.error('\n❌ Test failed:', error);
+    console.error('❌ Test failed:', error);
   } finally {
     console.log('\n🧹 Cleaning up...');
     await browserManager.close();
   }
 }
 
-console.log('🧪 Browser Tab Management Test');
-console.log('=============================');
+console.log('🧪 Mouse Coordinate Test');
+console.log('=======================');
 testBrowser().catch(console.error);

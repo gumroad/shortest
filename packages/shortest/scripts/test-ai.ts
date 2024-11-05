@@ -1,66 +1,67 @@
-import { AIClient } from '../src/ai/ai';
 import { BrowserManager } from '../src/core/browser-manager';
-import { BrowserActionTool } from '../src/browser-use/browser';
-import { initialize, getConfig } from '../src/index';
+import { BrowserTool } from '../src/browser-use/browser';
+import { defaultConfig, initialize } from '../src/index';
+import { AIClient } from '../src/ai/ai';
+import Anthropic from '@anthropic-ai/sdk';
 
-async function testAI() {
-  await initialize();
-  const config = getConfig();
+async function testBrowser() {
+  const browserManager = new BrowserManager();
   
-  // Check for API key in config or env
-  const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
+  const apiKey = defaultConfig.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.error('Error: Anthropic API key not found in config or environment');
     process.exit(1);
   }
 
-  const browserManager = new BrowserManager();
-  const browserTool = new BrowserActionTool(browserManager);
-  const client = new AIClient({
-    apiKey,
-    model: config.ai?.model
-  });
-
   try {
-    console.log('Launching browser...');
-    await browserManager.launch();
-
-    const testPrompt = 
-      `Define: Validate login feature
-      Test Case: Login with valid credentials
-      URL: http://localhost:3000/login
-      Steps:
-      1. GIVEN: "username and password"
-        {"username": "test", "password": "test"}
-      2. EXPECT: "should redirect to /dashboard"`;
-
-    console.log('Sending prompt to AI...');
-    const result = await client.processTest(testPrompt);
-    console.log('AI Response:', result);
-
-    console.log('Executing browser actions...');
-    await browserTool.execute({
-      action: 'mouse_move',
-      coordinates: [500, 300]
+    await initialize();
+    console.log('🚀 Launching browser...');
+    const context = await browserManager.launch();
+    const page = context.pages()[0];
+    
+    const browserTool = new BrowserTool(page, {
+      width: 1920, 
+      height: 940
     });
 
-    const screenshotResult = await browserTool.execute({
-      action: 'screenshot'
+    // Initialize AI client
+    const aiClient = new AIClient({
+      apiKey,
+      model: 'claude-3-5-sonnet-20241022',
+      maxMessages: 10
     });
 
-    console.log('Action Results:', {
-      screenshot: screenshotResult.screenshot ? 'Captured' : 'Failed',
-      output: screenshotResult.output
-    });
+    // Define callbacks
+    const outputCallback = (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
+      if (content.type === 'text') {
+        console.log('🤖 Assistant:', content.text);
+      }
+    };
 
+    const toolOutputCallback = (name: string, input: any) => {
+      console.log('🔧 Tool Use:', name, input);
+    };
+
+    // Run test
+    const testPrompt = `Validate the sign in functionality of the website you see`;
+    
+    const result = await aiClient.processAction(
+      testPrompt,
+      browserTool,
+      outputCallback,
+      toolOutputCallback
+    );
+
+    console.log('✅ Test complete');
+    
   } catch (error) {
-    console.error('Test failed:', error);
+    console.error('❌ Test failed:', error);
   } finally {
-    console.log('Cleaning up...');
+    console.log('\n🧹 Cleaning up...');
     await browserManager.close();
   }
 }
 
-console.log('🧪 AI Browser Integration Test');
-console.log('=============================');
-testAI().catch(console.error);
+console.log('🧪 Browser Integration Test');
+console.log('===========================');
+testBrowser().catch(console.error);
