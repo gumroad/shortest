@@ -31,14 +31,14 @@ export class BrowserManager {
       }
 
       this.browser = await chromium.launch({
-        headless: browserConfig.headless,
-        args: launchArgs
+        headless: browserConfig.headless
+        // args: launchArgs
       });
 
       this.context = await this.browser.newContext({
-        viewport: { width: 1920, height: 1080 },
-        screen: { width: 1920, height: 1080 },
-        acceptDownloads: true
+        viewport: { width: 1920, height: 1080 }
+        // screen: { width: 1920, height: 1080 },
+        // acceptDownloads: true
       });
 
       const page = await this.context.newPage();
