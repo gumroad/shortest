@@ -1,4 +1,3 @@
-// Test related types
 export interface TestContext {
     testName: string;
 }
@@ -18,7 +17,6 @@ export interface TestSuite {
     tests: TestContext[];
 }
 
-// Action types
 export type ActionType = string | Record<string, any>;
 export type ActionParams = void | ActionType;
 
@@ -34,18 +32,16 @@ export interface BrowserConfig {
     headless?: boolean;
 }
 
-// AI related types
 export interface AIConfig {
     apiKey: string;
     model?: string;
 }
 
-// Main config type
 export interface ShortestConfig {
     browsers?: BrowserConfig[];
     baseUrl?: string;
     testDir?: string | string[];
-    ai?: AIConfig;  // Add AI config here
+    ai?: AIConfig;
 }
 
 export const defaultConfig: ShortestConfig = {
@@ -54,11 +50,10 @@ export const defaultConfig: ShortestConfig = {
     testDir: '__tests__',
     ai: {
       apiKey: process.env.ANTHROPIC_API_KEY || '',
-      model: 'claude-3-sonnet-20240229'
+      model: 'claude-3-5-sonnet-20241022'
     }
 };
 
-// Test steps and actions
 export interface TestAction {
     type: string;
     payload?: any;
