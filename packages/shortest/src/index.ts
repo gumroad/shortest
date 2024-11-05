@@ -5,6 +5,8 @@ import { TestCompiler } from './core/compiler';
 import { UITestBuilder } from './ui-test-builder';
 import { UITestBuilderInterface } from './types/builder';
 import { BeforeAllFunction, AfterAllFunction, TestSuite } from './types';
+import dotenv from 'dotenv';
+import { join } from 'path';
 
 // Define global registry type
 declare global {
@@ -31,6 +33,10 @@ let config: ShortestConfig;
 const compiler = new TestCompiler();
 
 export async function initialize() {
+  // Load .env files in order
+  dotenv.config({ path: join(process.cwd(), '.env') });
+  dotenv.config({ path: join(process.cwd(), '.env.local') });
+  
   const configFiles = [
     'shortest.config.ts',
     'shortest.config.js',
