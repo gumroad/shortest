@@ -51,27 +51,24 @@ export class TestParser {
     };
   }
 
-  private generateTestPrompt(test: ParsedTest, defineDescription: string): void {
-    console.log(`\nDefine: ${defineDescription}`);
-    console.log(`Test Case: ${test.testName}`);
-    console.log(`URL: ${test.fullPath}`);
-    console.log(`Context: ${test.suiteName}`);
-    console.log('Steps:');
-    
-    test.steps.forEach((step, index) => {
-      console.log(`${index + 1}. ${step.type}: "${step.description}"`);
-      if (step.payload) {
-        console.log(`   ${JSON.stringify(step.payload)}`);
-      }
-    });
-    
-    console.log('Expected Results:');
-    const expectations = test.steps.filter(step => step.type === 'EXPECT');
-    expectations.forEach(exp => {
-      console.log(`- ${exp.description}`);
-      if (exp.payload) {
-        console.log(`  ${JSON.stringify(exp.payload)}`);
-      }
-    });
+  generateTestPrompt(test: ParsedTest, defineDescription: string): string {
+    return [
+      `Define: ${defineDescription}`,
+      `Test Case: ${test.testName}`,
+      `URL: ${test.fullPath}`,
+      `Context: ${test.suiteName}`,
+      'Steps:',
+      ...test.steps.map((step, index) => {
+        let stepStr = `${index + 1}. ${step.type}: "${step.description}"`;
+        if (step.payload) {
+          stepStr += `\n   ${JSON.stringify(step.payload)}`;
+        }
+        return stepStr;
+      }),
+      'Expected Results:',
+      ...test.steps
+        .filter(step => step.type === 'EXPECT')
+        .map(exp => `- ${exp.description}`)
+    ].join('\n');
   }
 } 
