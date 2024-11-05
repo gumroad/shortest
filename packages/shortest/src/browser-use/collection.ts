@@ -1,32 +1,44 @@
-import { BaseTool, ToolResult } from './base';
+import { BaseBrowserTool, ToolError } from './base';
+import { ToolResult } from './types';
+import { BetaToolParams } from './types';
 
 export class ToolCollection {
-  private tools: Map<string, BaseTool>;
+  private tools: Map<string, BaseBrowserTool>;
 
-  constructor(tools: BaseTool[]) {
-    this.tools = new Map(tools.map(tool => [tool.name, tool]));
+  constructor() {
+    this.tools = new Map();
   }
 
-  async execute(name: string, ...args: any[]): Promise<ToolResult> {
+  register(name: string, tool: BaseBrowserTool): void {
+    this.tools.set(name, tool);
+  }
+
+  toToolParameters(): BetaToolParams[] {
+    return Array.from(this.tools.values()).map(tool => tool.toToolParameters());
+  }
+
+  async execute(name: string, input: any): Promise<ToolResult> {
     const tool = this.tools.get(name);
     if (!tool) {
       return {
-        error: `Tool ${name} not found`,
-        system: 'Tool execution failed'
+        error: `Tool ${name} is invalid`,
+        output: 'Tool execution failed'
       };
     }
 
     try {
-      return await tool.execute(...args);
+      return await tool.execute(input);
     } catch (error) {
+      if (error instanceof ToolError) {
+        return {
+          error: error.message,
+          output: 'Tool execution failed'
+        };
+      }
       return {
-        error: error instanceof Error ? error.message : String(error),
-        system: 'Tool execution failed'
+        error: `Tool execution failed: ${error}`,
+        output: 'Tool execution failed'
       };
     }
   }
-
-  getTools(): string[] {
-    return Array.from(this.tools.keys());
-  }
-} 
+}

@@ -1,287 +1,362 @@
-import { BrowserTool, ToolError, ToolResult } from './base';
-import { ActionInput, BrowserAction, BrowserToolOptions, MouseButton } from './types';
-import { BrowserContext, Page } from 'playwright';
+// Add window interface extension
+declare global {
+  interface Window {
+    cursorPosition: { x: number; y: number };
+    showClick: () => void;
+  }
+}
+
+// browser-tool.ts
+import { Page } from 'playwright';
+import { BaseBrowserTool, ToolError } from './base';
+import { ActionInput, ToolResult } from './types';
+import { BetaToolType } from './types';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { BrowserManager } from '../core/browser-manager';
 
-// Add key mapping similar to computer.py
-const KEY_MAPPINGS: { [key: string]: string } = {
-  'enter': 'Enter',
-  'return': 'Enter',
-  'tab': 'Tab',
-  'space': ' ',
-  'backspace': 'Backspace',
-  'delete': 'Delete',
-  'escape': 'Escape',
-  'up': 'ArrowUp',
-  'down': 'ArrowDown',
-  'left': 'ArrowLeft',
-  'right': 'ArrowRight'
-};
+export class BrowserTool extends BaseBrowserTool {
+  private page: Page;
+  protected readonly toolType: BetaToolType = "computer_20241022";
+  protected readonly toolName: string = "computer";
+  private screenshotDir: string;
+  private cursorVisible: boolean = true;
+  private lastMousePosition: [number, number] = [0, 0];
+  
+  private readonly keyboardShortcuts: Record<string, string | string[]> = {
+    'ctrl+l': ['Control', 'l'],
+    'ctrl+a': ['Control', 'a'],
+    'ctrl+c': ['Control', 'c'],
+    'ctrl+v': ['Control', 'v'],
+    'alt+tab': ['Alt', 'Tab'],
+    'return': ['Enter'],
+    'enter': ['Enter'],
+    'esc': ['Escape'],
+    'tab': ['Tab'],
+    'delete': ['Delete'],
+    'backspace': ['Backspace'],
+    'space': [' '],
+    'arrowup': ['ArrowUp'],
+    'arrowdown': ['ArrowDown'],
+    'arrowleft': ['ArrowLeft'],
+    'arrowright': ['ArrowRight']
+  };
 
-export class BrowserActionTool extends BrowserTool {
-  name = 'browser';
-  private context: BrowserContext | null = null;
-  private currentPage: Page | null = null;
-  private screenshotDir = join(process.cwd(), 'test-screenshots');
-  private width: number;
-  private height: number;
-  private lastMousePosition: { x: number; y: number } | null = null;
+  // Add scaling ratios based on actual vs AI coordinates
+  private readonly scaleRatio = {
+    x: 1543 / 1170,  // ≈ 1.318
+    y: 32 / 24       // ≈ 1.333
+  };
 
-  constructor(browserManager: BrowserManager) {
-    super(browserManager);
+  constructor(page: Page, options: { width: number; height: number; displayNum?: number }) {
+    super(options);
+    this.page = page;
+    this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
-    this.width = parseInt(process.env.WIDTH || '1920', 10);
-    this.height = parseInt(process.env.HEIGHT || '1080', 10);
+    
+    // Initialize in sequence
+    this.initialize();
   }
 
-  async execute(input: ActionInput, options: BrowserToolOptions = {}): Promise<ToolResult> {
+  private async initialize(): Promise<void> {
     try {
-      await this.ensureConnection();
+      // Wait for page to be ready
+      await this.page.waitForLoadState('domcontentloaded');
+      
+      // Initialize window first
+      await this.initializeWindow();
+      
+      // Then initialize mouse tracking
+      await this.initializeMouseTracking();
+    } catch (error) {
+      console.warn('Initialization error:', error);
+    }
+  }
+
+  private async initializeWindow(): Promise<void> {
+    try {
+      // Set viewport size first
+      await this.page.setViewportSize({
+        width: 1920,
+        height: 1080
+      });
+
+      // Wait for page to be stable
+      await this.page.waitForLoadState('domcontentloaded');
+
+      // Then get dimensions
+      const dimensions = await this.page.evaluate(() => ({
+        viewport: {
+          width: document.documentElement.clientWidth,
+          height: document.documentElement.clientHeight
+        },
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height,
+          availWidth: window.screen.availWidth,
+          availHeight: window.screen.availHeight
+        }
+      }));
+
+      console.log('Window dimensions:', dimensions);
+
+      // Update dimensions
+      this.width = dimensions.viewport.width;
+      this.height = dimensions.viewport.height;
+
+    } catch (error) {
+      console.warn('Failed to initialize window:', error);
+    }
+  }
+
+  private async initializeMouseTracking(): Promise<void> {
+    // Wait for page load
+    await this.page.waitForLoadState('domcontentloaded');
+    
+    // Add cursor tracking script
+    await this.page.evaluate(() => {
+      if (!document.getElementById('ai-cursor')) {
+        const cursor = document.createElement('div');
+        cursor.id = 'ai-cursor';
+        cursor.style.cssText = `
+          width: 20px;
+          height: 20px;
+          border: 2px solid red;
+          border-radius: 50%;
+          position: fixed;
+          pointer-events: none;
+          z-index: 999999;
+          transition: all 0.1s ease;
+          transform: translate(-50%, -50%);
+          background-color: rgba(255, 0, 0, 0.2);
+        `;
+        document.body.appendChild(cursor);
+
+        // Add to window object
+        window.cursorPosition = { x: 0, y: 0 };
+        window.showClick = () => {
+          const cursor = document.getElementById('ai-cursor');
+          if (cursor) {
+            cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            setTimeout(() => {
+              cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 100);
+          }
+        };
+
+        // Update cursor position
+        document.addEventListener('mousemove', (e) => {
+          window.cursorPosition = { x: e.clientX, y: e.clientY };
+          cursor.style.left = e.clientX + 'px';
+          cursor.style.top = e.clientY + 'px';
+        });
+      }
+    });
+
+    // Re-initialize on navigation
+    this.page.on('load', async () => {
+      await this.initializeMouseTracking();
+    });
+  }
+
+  private async showClickAnimation(): Promise<void> {
+    await this.page.evaluate(() => {
+      (window as any).showClick();
+    });
+  }
+
+  async execute(input: ActionInput): Promise<ToolResult> {
+    try {
+      let output = '';
+      let metadata = {};
 
       switch (input.action) {
-        case 'new_tab':
-          const page = await this.createTab(input.url);
-          return { output: `Created new tab with ID: ${page.url()}` };
-
-        case 'close_tab':
-          if (!input.tabId) {
-            throw new ToolError('Tab ID required for close_tab action');
-          }
-          await this.closeTab(input.tabId);
-          return { output: `Closed tab: ${input.tabId}` };
-
-        case 'switch_tab':
-          if (!input.tabId) {
-            throw new ToolError('Tab ID required for switch_tab action');
-          }
-          await this.switchTab(input.tabId);
-          return { output: `Switched to tab: ${input.tabId}` };
-
-        case 'list_tabs':
-          const tabs = await this.getTabs();
-          return { 
-            output: `Current tabs:\n${tabs.map(tab => 
-              `${tab.id} - ${tab.title} (${tab.url})`
-            ).join('\n')}` 
-          };
-
         case 'mouse_move':
-          if (!input.coordinates) {
+          const coords = input.coordinates || (input as any).coordinate;
+          if (!coords) {
             throw new ToolError('Coordinates required for mouse_move');
           }
-          await this.mouseMove(input.coordinates[0], input.coordinates[1]);
-          if (input.button) {
-            await this.click(input.coordinates[0], input.coordinates[1], input.button);
-          }
-          return { output: `Mouse moved to (${input.coordinates[0]}, ${input.coordinates[1]})${input.button ? ' and clicked' : ''}` };
+          await this.mouseMove(coords[0], coords[1]);
+          this.lastMousePosition = [coords[0], coords[1]];
+          output = `Mouse moved to (${coords[0]}, ${coords[1]})`;
+          break;
 
-        case 'key':
-          if (!input.key) {
-            throw new ToolError('Key required for key action');
+        case 'left_click':
+        case 'right_click':
+        case 'middle_click':
+        case 'double_click':
+          const clickCoords = input.coordinates || this.lastMousePosition;
+          await this.click(input.action, clickCoords[0], clickCoords[1]);
+          output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
+          break;
+
+        case 'left_click_drag':
+          if (!input.coordinates) {
+            throw new ToolError('Coordinates required for left_click_drag');
           }
-          await this.sendKey(input.key);
-          return { output: `Pressed key: ${input.key}` };
+          await this.dragMouse(input.coordinates[0], input.coordinates[1]);
+          output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
+          break;
+
+        case 'cursor_position':
+          const position = await this.getCursorPosition();
+          output = `Cursor position: (${position[0]}, ${position[1]})`;
+          break;
+
+        case 'screenshot':
+          return await this.takeScreenshotWithMetadata();
 
         case 'type':
           if (!input.text) {
             throw new ToolError('Text required for type action');
           }
-          await this.type(input.text);
-          return { output: `Typed text: "${input.text}"` };
+          await this.page.waitForTimeout(100);
+          await this.page.keyboard.type(input.text);
+          await this.page.waitForTimeout(100);
+          output = `Typed: ${input.text}`;
+          break;
 
-        case 'screenshot':
-          const screenshot = await this.takeScreenshot();
-          return { output: 'Screenshot taken', screenshot };
+        case 'key': {
+          if (!input.text) {
+            throw new ToolError('Key required for key action');
+          }
+          
+          await this.page.waitForTimeout(100);
+          
+          const keyText = input.text.toLowerCase();
+          // Check if it's a key combination or a mapped key
+          const keys = Array.isArray(this.keyboardShortcuts[keyText]) ? 
+            this.keyboardShortcuts[keyText] : 
+            [this.keyboardShortcuts[keyText] || input.text];
+
+          if (Array.isArray(keys)) {
+            // Handle key combination
+            for (const key of keys) {
+              await this.page.keyboard.down(key);
+            }
+            for (const key of [...keys].reverse()) {
+              await this.page.keyboard.up(key);
+            }
+          } else {
+            // Handle single key
+            await this.page.keyboard.press(keys);
+          }
+          
+          await this.page.waitForTimeout(100);
+          output = `Pressed key: ${input.text}`;
+          break;
+        }
 
         default:
-          throw new ToolError(`Unsupported action: ${input.action}`);
+          throw new ToolError(`Unknown action: ${input.action}`);
       }
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new ToolError(error.message);
-      }
-      throw error;
-    }
-  }
 
-  private async ensureConnection(): Promise<void> {
-    if (!this.context) {
-      this.context = this.browserManager.getContext();
-      if (!this.context) {
-        throw new ToolError('Browser not connected');
+      try {
+        await this.page.waitForTimeout(200);
+        metadata = await this.getMetadata();
+      } catch (metadataError) {
+        console.warn('Failed to get metadata:', metadataError);
+        metadata = {};
       }
       
-      // Get current page or create one
-      const pages = this.context.pages();
-      this.currentPage = pages.length > 0 ? pages[0] : await this.context.newPage();
+      return {
+        output,
+        metadata
+      };
+
+    } catch (error) {
+      throw new ToolError(`Action failed: ${error}`);
     }
   }
 
   private async mouseMove(x: number, y: number): Promise<void> {
-    if (!this.currentPage) return;
-
-    // Add visual feedback using JavaScript
-    await this.currentPage.evaluate(`
-      (() => {
-        if (!window.__shortest_overlay__) {
-          const overlay = {
-            showCursor: (x, y) => {
-              const cursor = document.createElement('div');
-              cursor.id = 'shortest-cursor';
-              cursor.style.cssText = \`
-                position: fixed;
-                width: 20px;
-                height: 20px;
-                background: rgba(255, 0, 0, 0.5);
-                border: 2px solid red;
-                border-radius: 50%;
-                pointer-events: none;
-                z-index: 999999;
-                transform: translate(-50%, -50%);
-                left: \${x}px;
-                top: \${y}px;
-              \`;
-              document.body.appendChild(cursor);
-              return cursor;
-            },
-            updateCursor: (x, y) => {
-              let cursor = document.getElementById('shortest-cursor');
-              if (!cursor) {
-                cursor = overlay.showCursor(x, y);
-              }
-              cursor.style.left = x + 'px';
-              cursor.style.top = y + 'px';
-            }
-          };
-          window.__shortest_overlay__ = overlay;
-        }
-        window.__shortest_overlay__.updateCursor(${x}, ${y});
-      })()
-    `);
-
-    // Move the actual mouse
-    await this.currentPage.mouse.move(x, y);
-    this.lastMousePosition = { x, y };
+    // Simple coordinate validation
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0) {
+      throw new ToolError('Coordinates must be non-negative integers');
+    }
+    
+    // Scale coordinates
+    const scaledX = Math.round(x * this.scaleRatio.x);
+    const scaledY = Math.round(y * this.scaleRatio.y);
+    
+    // Direct mouse movement with scaled coordinates
+    await this.page.mouse.move(scaledX, scaledY);
+    this.lastMousePosition = [scaledX, scaledY];
+    await this.page.waitForTimeout(100);
   }
 
-  private async click(x: number, y: number, button: MouseButton = 'left'): Promise<void> {
-    if (!this.currentPage) return;
+  private async click(action: string, x: number, y: number): Promise<void> {
+    const scaledX = Math.round(x * this.scaleRatio.x);
+    const scaledY = Math.round(y * this.scaleRatio.y);
+    
+    await this.mouseMove(x, y);
+    await this.page.mouse.click(scaledX, scaledY);
+    await this.showClickAnimation();
+  }
 
-    // Show click effect
-    await this.currentPage.evaluate(`
-      (() => {
-        const effect = document.createElement('div');
-        effect.style.cssText = \`
-          position: fixed;
-          left: ${x}px;
-          top: ${y}px;
-          width: 30px;
-          height: 30px;
-          border: 3px solid red;
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 999998;
-          animation: clickRipple 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        \`;
-        document.body.appendChild(effect);
-        setTimeout(() => effect.remove(), 600);
-      })()
-    `);
+  private async dragMouse(x: number, y: number): Promise<void> {
+    const scaledX = Math.round(x * this.scaleRatio.x);
+    const scaledY = Math.round(y * this.scaleRatio.y);
+    
+    await this.page.mouse.down();
+    await this.page.mouse.move(scaledX, scaledY);
+    await this.page.mouse.up();
+  }
 
-    // Perform click
-    await this.currentPage.mouse.click(x, y, {
-      button: button === 'left' ? 'left' : button === 'right' ? 'right' : 'middle'
+  private async getCursorPosition(): Promise<[number, number]> {
+    const position = await this.page.evaluate(() => {
+      return window.cursorPosition || { x: 0, y: 0 };
     });
+    return [position.x, position.y];
   }
 
-  private async sendKey(key: string): Promise<void> {
-    if (!this.currentPage) return;
-    
-    // Map common key names to Playwright key codes
-    const mappedKey = KEY_MAPPINGS[key.toLowerCase()] || key;
-    await this.currentPage.keyboard.press(mappedKey);
-  }
+  private async getMetadata() {
+    const position = await this.getCursorPosition();
+    const viewport = this.page.viewportSize() || { width: this.width, height: this.height };
 
-  private async type(text: string): Promise<void> {
-    if (!this.currentPage) return;
-    await this.currentPage.keyboard.type(text);
-  }
-
-  protected async takeScreenshot(): Promise<string | undefined> {
-    if (!this.currentPage) return;
-
-    try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filePath = join(this.screenshotDir, `screenshot-${timestamp}.png`);
-      const buffer = await this.currentPage.screenshot();
-      writeFileSync(filePath, buffer);
-      return buffer.toString('base64');
-    } catch (error) {
-      throw new ToolError(`Screenshot failed: ${error}`);
-    }
-  }
-
-  private async getTabs(): Promise<Array<{ id: string; url: string; title: string }>> {
-    if (!this.context) return [];
-    
-    const pages = this.context.pages();
-    return Promise.all(pages.map(async page => ({
-      id: page.url(), // Using URL as ID since Playwright doesn't have handle IDs
-      url: page.url(),
-      title: await page.title()
-    })));
-  }
-
-  private async switchTab(tabId: string): Promise<void> {
-    if (!this.context) return;
-    
-    const pages = this.context.pages();
-    const targetPage = pages.find(page => page.url() === tabId);
-    if (targetPage) {
-      this.currentPage = targetPage;
-      await targetPage.bringToFront();
-    }
-  }
-
-  private async createTab(url?: string): Promise<Page> {
-    if (!this.context) throw new ToolError('Browser not connected');
-    
-    const page = await this.context.newPage();
-    if (url) {
-      await page.goto(url);
-    }
-    this.currentPage = page;
-    return page;
-  }
-
-  private async closeTab(tabId: string): Promise<void> {
-    if (!this.context) return;
-    
-    const pages = this.context.pages();
-    const targetPage = pages.find(page => page.url() === tabId);
-    if (targetPage) {
-      await targetPage.close();
-      
-      // Switch to another tab if available
-      const remainingPages = this.context.pages();
-      if (remainingPages.length > 0) {
-        this.currentPage = remainingPages[0];
-      }
-    }
-  }
-
-  async cleanup(): Promise<void> {
-    if (this.context) {
-      const pages = this.context.pages();
-      for (const page of pages) {
-        try {
-          await page.close();
-        } catch (error) {
-          // Ignore errors during cleanup
+    return {
+      window_info: {
+        url: await this.page.url(),
+        title: await this.page.title(),
+        size: {
+          width: viewport.width,
+          height: viewport.height
         }
+      },
+      cursor_info: {
+        position,
+        visible: this.cursorVisible
       }
-    }
+    };
   }
-} 
+
+  private async takeScreenshotWithMetadata(): Promise<ToolResult> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filePath = join(this.screenshotDir, `screenshot-${timestamp}.png`);
+    
+    const buffer = await this.page.screenshot({
+      type: 'jpeg',
+      quality: 50,
+      scale: 'device',
+      fullPage: false
+    });
+
+    writeFileSync(filePath, buffer);
+    console.log(`Screenshot saved to: ${filePath}`);
+    
+    return {
+      output: 'Screenshot taken',
+      base64_image: buffer.toString('base64'),
+      metadata: await this.getMetadata()
+    };
+  }
+
+  toToolParameters() {
+    return {
+      type: this.toolType,
+      name: this.toolName,
+      display_width_px: this.width,
+      display_height_px: this.height,
+      display_number: this.displayNum
+    };
+  }
+}

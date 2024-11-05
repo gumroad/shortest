@@ -1,36 +1,55 @@
-import { BrowserManager } from '../core/browser-manager';
-
-export interface ToolResult {
-  output?: string;
-  error?: string;
-  screenshot?: string;  // base64 encoded screenshot
-  system?: string;     // system messages
-}
-
-export interface BaseTool {
-  name: string;
-  execute(...args: any[]): Promise<ToolResult>;
-}
-
-export abstract class BrowserTool implements BaseTool {
-  protected browserManager: BrowserManager;
-  abstract name: string;
-
-  constructor(browserManager: BrowserManager) {
-    this.browserManager = browserManager;
-  }
-
-  abstract execute(...args: any[]): Promise<ToolResult>;
-
-  protected async takeScreenshot(): Promise<string | undefined> {
-    // Will implement with CDP
-    return undefined;
-  }
-}
+import { BrowserToolOptions, ActionInput, ToolResult } from './types';
+import { BetaToolType } from './types';
 
 export class ToolError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ToolError';
+  }
+}
+
+export abstract class BaseBrowserTool {
+  protected width: number;
+  protected height: number;
+  protected displayNum: number;
+  protected screenshotDelay: number;
+  protected readonly toolType: BetaToolType = "computer_20241022";
+  protected readonly toolName: string = "computer";
+
+  constructor(options: BrowserToolOptions) {
+    this.width = options.width;
+    this.height = options.height;
+    this.displayNum = options.displayNum || 1;
+    this.screenshotDelay = options.screenshotDelay || 2000;
+  }
+
+  abstract execute(input: ActionInput): Promise<ToolResult>;
+
+  abstract toToolParameters(): {
+    type: BetaToolType;
+    name: string;
+    display_width_px: number;
+    display_height_px: number;
+    display_number: number;
+  };
+
+  protected validateCoordinates(x: number, y: number): void {
+    if (x < 0 || x > this.width || y < 0 || y > this.height) {
+      throw new ToolError(`Coordinates (${x}, ${y}) out of bounds`);
+    }
+  }
+
+  protected formatToolResult(
+    output?: string,
+    error?: string,
+    base64_image?: string,
+    metadata?: ToolResult['metadata']
+  ): ToolResult {
+    return {
+      output,
+      error,
+      base64_image,
+      metadata
+    };
   }
 }
