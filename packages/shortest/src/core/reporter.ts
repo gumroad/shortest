@@ -26,7 +26,7 @@ export class Reporter {
   }
 
   startSuite(name: string) {
-    console.log(pc.cyan(`\n  Suite: ${name}`));
+    // console.log(pc.cyan(`\n  Suite: ${name}`));
     this.suiteResults.push({ name, tests: [] });
   }
 
