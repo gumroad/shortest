@@ -204,15 +204,9 @@ importers:
 
   packages/shortest:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^0.0.54
-        version: 0.0.54(zod@3.23.8)
       '@anthropic-ai/sdk':
         specifier: 0.32.0
         version: 0.32.0
-      '@playwright/test':
-        specifier: ^1.42.1
-        version: 1.48.2
       ai:
         specifier: ^3.4.31
         version: 3.4.31(react@19.0.0-rc-7771d3a7-20240827)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.8(typescript@5.6.2))(zod@3.23.8)
@@ -252,12 +246,6 @@ packages:
 
   '@ai-sdk/anthropic@0.0.50':
     resolution: {integrity: sha512-++mqmFcUoQgjoCchAU6eVG3QfKdwkeJVNdMZ+jUiNdawn8diA6BlARlu7xFT4F7W3bcStfYv4hK1jwRyzAQtCg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.0.0
-
-  '@ai-sdk/anthropic@0.0.54':
-    resolution: {integrity: sha512-N2Ol6Tp1VvUOSDcEOmlW6qwaPDffm7kocn5KoDUaTGtIj4XQyQ9uBkw0l9DkZBq6/jvmgIkK6zxL++t5+i80Ow==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -4300,12 +4288,6 @@ snapshots:
       '@ai-sdk/provider-utils': 1.0.19(zod@3.23.8)
       zod: 3.23.8
 
-  '@ai-sdk/anthropic@0.0.54(zod@3.23.8)':
-    dependencies:
-      '@ai-sdk/provider': 0.0.26
-      '@ai-sdk/provider-utils': 1.0.22(zod@3.23.8)
-      zod: 3.23.8
-
   '@ai-sdk/openai@0.0.61(zod@3.23.8)':
     dependencies:
       '@ai-sdk/provider': 0.0.23
@@ -5259,6 +5241,7 @@ snapshots:
   '@playwright/test@1.48.2':
     dependencies:
       playwright: 1.48.2
+    optional: true
 
   '@radix-ui/number@1.1.0': {}
 
