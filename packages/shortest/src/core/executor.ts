@@ -29,7 +29,7 @@ export class TestExecutor {
     try {
       await initialize();
       const config = getConfig();
-      const apiKey = config.ai?.apiKey || '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';
+      const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
       
       if (!apiKey) {
         throw new Error('Anthropic API key not found');
