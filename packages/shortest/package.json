@@ -32,9 +32,7 @@
     "test:coordinates": "tsx scripts/test-coordinates.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^0.0.54",
     "@anthropic-ai/sdk": "0.32.0",
-    "@playwright/test": "^1.42.1",
     "ai": "^3.4.31",
     "chokidar": "^3.5.3",
     "chromium-bidi": "^0.5.2",
