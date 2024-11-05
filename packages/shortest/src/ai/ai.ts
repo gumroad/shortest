@@ -1,49 +1,120 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { AIConfig, AIResponse } from './types';
+import { AIConfig } from './types';
 import { SYSTEM_PROMPT } from './prompts';
+import { BrowserTool } from '../browser-use/browser';
 
 export class AIClient {
   private client: Anthropic;
   private model: string;
+  private maxMessages: number;
 
   constructor(config: AIConfig) {
     this.client = new Anthropic({
       apiKey: config.apiKey
     });
-    this.model = config.model || 'claude-3-sonnet-20240229';
+    this.model = config.model || 'claude-3-5-sonnet-20241022';
+    this.maxMessages = config.maxMessages || 10;
   }
 
-  async processTest(testPrompt: string): Promise<AIResponse> {
-    try {
-      const response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: 1024,
-        messages: [{
-          role: 'user',
-          content: testPrompt
-        }],
-        system: SYSTEM_PROMPT,
-        temperature: 0
-      });
+  async processAction(
+    prompt: string,
+    browserTool: BrowserTool,
+    outputCallback?: (content: Anthropic.Beta.Messages.BetaContentBlockParam) => void,
+    toolOutputCallback?: (name: string, input: any) => void
+  ) {
+    const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
-      // Extract JSON from markdown response
-      const text = response.content[0].text;
-      const jsonMatch = text.match(/```(?:json)?\s*({[\s\S]*?})\s*```/);
-      
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+    // Add initial message
+    messages.push({
+      role: 'user',
+      content: prompt
+    });
+
+    while (true) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const response = await this.client.beta.messages.create({
+          model: this.model,
+          max_tokens: 1024,
+          messages,
+          system: SYSTEM_PROMPT,
+          tools: [{
+            type: "computer_20241022",
+            name: "computer",
+            display_width_px: 1920,
+            display_height_px: 1080,
+            display_number: 1
+          }],
+          betas: ["computer-use-2024-10-22"]
+        });
+
+        // Log and callback for assistant's response
+        if (outputCallback) {
+          response.content.forEach(block => outputCallback(block as Anthropic.Beta.Messages.BetaContentBlockParam));
+        }
+
+        // Add assistant's response to history
+        messages.push({
+          role: 'assistant',
+          content: response.content
+        });
+
+        // Check for tool use
+        if (response.stop_reason === 'tool_use') {
+          const toolResults = response.content
+            .filter(block => block.type === 'tool_use')
+            .map(block => {
+              const toolBlock = block as Anthropic.Beta.Messages.BetaToolUseBlock;
+              if (toolOutputCallback) {
+                toolOutputCallback(toolBlock.name as string, toolBlock.input);
+              }
+              
+              return {
+                toolBlock,
+                result: browserTool.execute(toolBlock.input as any)
+              };
+            });
+
+          const results = await Promise.all(toolResults.map(t => t.result));
+          
+          // Add tool results to message history
+          messages.push({
+            role: 'user',
+            content: results.map((result, index) => ({
+              type: 'tool_result' as const,
+              tool_use_id: toolResults[index].toolBlock.id,
+              content: result.base64_image ? 
+                [{
+                  type: 'image' as const,
+                  source: {
+                    type: 'base64' as const,
+                    media_type: 'image/jpeg' as const,
+                    data: result.base64_image
+                  }
+                }] : 
+                [{
+                  type: 'text' as const,
+                  text: result.output || ''
+                }]
+            } as Anthropic.Beta.Messages.BetaToolResultBlockParam))
+          });
+
+        } else {
+          return {
+            messages,
+            finalResponse: response
+          };
+        }
+
+      } catch (error: any) {
+        if (error.message?.includes('rate_limit')) {
+          console.log("⏳ Rate limited, waiting 60s...");
+          await new Promise(resolve => setTimeout(resolve, 60000));
+          continue;
+        }
+        throw error;
       }
-
-      // Clean up the JSON string before parsing
-      const jsonStr = jsonMatch[1]
-        .replace(/\n/g, '')  // Remove newlines
-        .replace(/\r/g, '')  // Remove carriage returns
-        .trim();             // Remove extra whitespace
-
-      return JSON.parse(jsonStr) as AIResponse;
-
-    } catch (error) {
-      throw new Error(`AI Processing failed: ${error}`);
     }
   }
 }
