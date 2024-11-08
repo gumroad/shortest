@@ -1,7 +1,7 @@
 {
   "name": "shortest",
   "version": "0.0.1",
-  "description": "AI-powered testing framework",
+  "description": "AI-powered natural language end-to-end testing framework",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
