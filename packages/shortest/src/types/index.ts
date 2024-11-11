@@ -34,7 +34,6 @@ export interface BrowserConfig {
 
 export interface AIConfig {
     apiKey: string;
-    model?: string;
 }
 
 export interface ShortestConfig {
@@ -49,8 +48,7 @@ export const defaultConfig: ShortestConfig = {
     baseUrl: 'http://localhost:3000',
     testDir: '__tests__',
     ai: {
-      apiKey: process.env.ANTHROPIC_API_KEY || '',
-      model: 'claude-3-5-sonnet-20241022'
+      apiKey: process.env.ANTHROPIC_API_KEY || ''
     }
 };
 
