@@ -216,6 +216,9 @@ importers:
       chromium-bidi:
         specifier: ^0.5.2
         version: 0.5.24(devtools-protocol@0.0.1377232)
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
       esbuild:
         specifier: ^0.20.1
         version: 0.20.2
