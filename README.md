@@ -132,18 +132,7 @@ pnpm vitest
 
 ## Setup Guide for Running and Building Shortest Package Locally
    
-When running `pnpm install` in the root, the `shortest` package will built and added in the `node_modules` folder. However, in order to run the tests locally using `pnpm test` or `shortest cli`, you need to do the following: 
-
-### Prerequisites
-
-- Playwright 
-- Chromium
-
-### Install Playwright and build package
-
-```bash
-pnpm add playwright
-pnpm exec playwright install 
+When running `pnpm install` in the root, the `shortest` package will be built and added in the `node_modules` folder. However, in order to use the cli, you need to setup the cli locally as follows:
 
 # to install shortest package
 pnpm install
