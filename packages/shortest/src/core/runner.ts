@@ -1,4 +1,3 @@
-import { watch } from 'chokidar';
 import { glob } from 'glob';
 import { resolve } from 'path';
 import type { ShortestConfig } from '../types';
@@ -116,9 +115,9 @@ export class TestRunner {
 
     if (this.exitOnSuccess && reporter.allTestsPassed()) {
       process.exit(0);
+    } else {
+      process.exit(1);
     }
-
-    this.watchMode(files);
   }
 
   async runAll() {
@@ -134,23 +133,8 @@ export class TestRunner {
 
     if (this.exitOnSuccess && reporter.allTestsPassed()) {
       process.exit(0);
+    } else {
+      process.exit(1);
     }
-
-    this.watchMode(files);
-  }
-
-  private watchMode(files: string[]) {
-    const reporter = this.executor.getReporter();
-    reporter.watchMode();
-    
-    const watcher = watch(files, {
-      ignoreInitial: true
-    });
-
-    watcher.on('change', async (file) => {
-      reporter.fileChanged(file);
-      await this.executor.executeTest(file);
-      reporter.summary();
-    });
   }
 }
