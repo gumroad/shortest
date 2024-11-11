@@ -160,3 +160,17 @@ or use the `pnpm` command:
 ```bash
 pnpm test
 ```
+
+## To run tests in Github workflows
+
+prerequisites:
+
+- Add ANTHROPIC_API_KEY to your repo secrets
+- Connect your repo to Vercel
+
+### To add ANTHROPIC_API_KEY to your repo secrets:
+
+- Go to your repo settings
+- Navigate to `Security`
+- Click `Add secret`
+- Add the ANTHROPIC_API_KEY environment variable
