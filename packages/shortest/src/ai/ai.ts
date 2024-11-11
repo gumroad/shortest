@@ -12,8 +12,8 @@ export class AIClient {
     this.client = new Anthropic({
       apiKey: config.apiKey
     });
-    this.model = config.model || 'claude-3-5-sonnet-20241022';
-    this.maxMessages = config.maxMessages || 10;
+    this.model = 'claude-3-5-sonnet-20241022';
+    this.maxMessages = 10;
   }
 
   async processAction(
