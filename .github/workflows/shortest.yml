@@ -21,4 +21,4 @@ jobs:
       - name: Run Shortest tests
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: pnpm shortest 
+        run: pnpm shortest --headless
