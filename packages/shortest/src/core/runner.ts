@@ -10,12 +10,14 @@ export class TestRunner {
   private config!: ShortestConfig;
   private cwd: string;
   private exitOnSuccess: boolean;
+  private forceHeadless: boolean;
   private compiler: TestCompiler;
   private executor: TestExecutor;
 
-  constructor(cwd: string, exitOnSuccess = true) {
+  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
+    this.forceHeadless = forceHeadless;
     this.compiler = new TestCompiler();
     this.executor = new TestExecutor();
   }
@@ -27,11 +29,20 @@ export class TestRunner {
       'shortest.config.mjs'
     ];
 
+    // Try to load config file
     for (const file of configFiles) {
       try {
         const module = await this.compiler.loadModule(file, this.cwd);
         if (module.default) {
-          this.config = { ...defaultConfig, ...module.default };
+          this.config = module.default;
+          
+          // Force headless if flag is present
+          if (this.forceHeadless && this.config.browsers) {
+            this.config.browsers = this.config.browsers.map(browser => ({
+              ...browser,
+              headless: true
+            }));
+          }
           return;
         }
       } catch (error) {
@@ -39,6 +50,7 @@ export class TestRunner {
       }
     }
 
+    // Use default config if no config file found
     this.config = defaultConfig;
   }
 

@@ -3,9 +3,11 @@
 import { TestRunner } from '../core/runner.js';
 
 async function main() {
-  const runner = new TestRunner(process.cwd());
+  const args = process.argv.slice(2);
+  const headless = args.includes('--headless');
+  const testPattern = args.find(arg => !arg.startsWith('--'));
   
-  const testPattern = process.argv[2];
+  const runner = new TestRunner(process.cwd(), true, headless);
   
   if (testPattern) {
     await runner.runFile(testPattern);
