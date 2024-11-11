@@ -4,7 +4,17 @@ import { TestRunner } from '../core/runner.js';
 
 async function main() {
   const runner = new TestRunner(process.cwd());
-  await runner.runAll();
+  
+  const testPattern = process.argv[2];
+  
+  if (testPattern) {
+    await runner.runFile(testPattern);
+  } else {
+    await runner.runAll();
+  }
 }
 
-main().catch(console.error); 
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+}); 
