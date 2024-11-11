@@ -69,16 +69,12 @@ export class TestRunner {
           .pop();
         
         const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-        
-        console.log('Clean pattern:', cleanPattern);
-        console.log('Full glob pattern:', globPattern);
-        
+                
         const matches = await glob(globPattern, { 
           cwd: this.cwd,
           absolute: true
         });
         
-        console.log('Found matches:', matches);
         files.push(...matches);
       } else {
         const globPattern = `${dir}/**/*.test.ts`;
@@ -89,6 +85,7 @@ export class TestRunner {
 
     if (files.length === 0) {
       console.log(`No test files found in directories: ${testDirs.join(', ')}`);
+      process.exit(1);
     }
 
     return files;
