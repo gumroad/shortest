@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
+.pnpm-store/
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -15,6 +16,10 @@
 
 # production
 /build
+
+# Build outputs
+dist/
+*.tsbuildinfo
 
 # misc
 .DS_Store
@@ -41,3 +46,6 @@ next-env.d.ts
 .docker
 docker-compose.override.yml
 docker-compose.yml
+
+# screenshots
+screenshots/

@@ -4,7 +4,7 @@
 
 ## Local Development Setup Guide
 
-This guide will help you set up the Shortest project for local development.
+This guide will help you set up the Shortest web app for local development.
 
 ### Prerequisites
 
@@ -123,8 +123,51 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 
 ### Running Tests
 
-To run specs:
+To run unit tests:
 
 ```bash
 pnpm vitest
+```
+
+
+## Setup Guide for Running and Building Shortest Package Locally
+   
+When running `pnpm install` in the root, the `shortest` package will built and added in the `node_modules` folder. However, in order to run the tests locally using `pnpm test` or `shortest cli`, you need to do the following: 
+
+### Prerequisites
+
+- Playwright 
+- Chromium
+
+### Install Playwright and build package
+
+```bash
+pnpm add playwright
+pnpm exec playwright install 
+
+# to install shortest package
+pnpm install
+```
+
+### Setup Shortest CLI
+```bash
+# packages/shortest
+cd packages/shortest
+pnpm link --global
+
+# root
+cd ../..
+pnpm link --global shortest
+```
+
+## Run Tests
+You can either run tests using the `shortest` cli:
+```bash
+shortest
+```
+
+or use the `pnpm` command:
+
+```bash
+pnpm test
 ```
