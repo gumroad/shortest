@@ -1,0 +1,50 @@
+{
+  "name": "shortest",
+  "version": "0.0.1",
+  "description": "AI-powered natural language end-to-end testing framework",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "shortest": "./dist/cli/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && pnpm build:types && pnpm build:js && pnpm build:cli",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents --external:chokidar --external:glob --external:esbuild --external:playwright --external:playwright-core --external:chromium-bidi",
+    "build:cli": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outfile=dist/cli/bin.js --external:fsevents --external:chokidar --external:glob --external:esbuild --banner:js='import { createRequire } from \"module\"; const require = createRequire(import.meta.url); import { fileURLToPath } from \"url\"; const __filename = fileURLToPath(import.meta.url); import { dirname } from \"path\"; const __dirname = dirname(__filename);' --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url",
+    "dev": "pnpm build:types --watch",
+    "prepare": "pnpm exec playwright install && pnpm build && chmod +x dist/cli/bin.js",
+    "preinstall": "pnpm build",
+    "postinstall": "pnpm exec playwright install",
+    "test:ai": "tsx scripts/test-ai.ts",
+    "test:browser": "tsx scripts/test-browser.ts",
+    "test:coordinates": "tsx scripts/test-coordinates.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.32.0",
+    "ai": "^3.4.31",
+    "chokidar": "^3.5.3",
+    "chromium-bidi": "^0.5.2",
+    "esbuild": "^0.20.1",
+    "glob": "^10.3.10",
+    "picocolors": "^1.0.0",
+    "playwright": "^1.42.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "tsx": "^4.7.1",
+    "typescript": "~5.6.2"
+  }
+}
