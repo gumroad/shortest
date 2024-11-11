@@ -12,7 +12,7 @@
     "db:migrate": "npx tsx lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
-    "test": "vitest"
+    "test": "shortest"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",
