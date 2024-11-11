@@ -3,20 +3,37 @@
 import { TestRunner } from '../core/runner.js';
 
 const VALID_FLAGS = ['--headless'];
+const VALID_PARAMS = ['--target'];
 
 async function main() {
   const args = process.argv.slice(2);
-  const runner = new TestRunner(process.cwd(), true, args.includes('--headless'));
   
-  // Validate all args first
-  const invalidFlags = args.filter(arg => arg.startsWith('--') && !VALID_FLAGS.includes(arg));
+  // Parse args with values
+  const params = new Map<string, string>();
+  const otherArgs = args.filter(arg => {
+    if (arg.includes('=')) {
+      const [key, value] = arg.split('=');
+      if (VALID_PARAMS.includes(key)) {
+        params.set(key, value);
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Validate remaining flags
+  const invalidFlags = otherArgs.filter(arg => arg.startsWith('--') && !VALID_FLAGS.includes(arg));
   
   if (invalidFlags.length > 0) {
     console.error(`Error: Invalid argument(s): ${invalidFlags.join(', ')}`);
     process.exit(1);
   }
 
-  const testPattern = args.find(arg => !arg.startsWith('--'));
+  const headless = otherArgs.includes('--headless');
+  const targetUrl = params.get('--target');
+  const testPattern = otherArgs.find(arg => !arg.startsWith('--'));
+  
+  const runner = new TestRunner(process.cwd(), true, headless, targetUrl);
   
   try {
     if (testPattern) {

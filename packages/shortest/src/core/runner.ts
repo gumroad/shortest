@@ -11,13 +11,15 @@ export class TestRunner {
   private cwd: string;
   private exitOnSuccess: boolean;
   private forceHeadless: boolean;
+  private targetUrl: string | undefined;
   private compiler: TestCompiler;
   private executor: TestExecutor;
 
-  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false) {
+  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false, targetUrl?: string) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
+    this.targetUrl = targetUrl;
     this.compiler = new TestCompiler();
     this.executor = new TestExecutor();
   }
@@ -36,13 +38,18 @@ export class TestRunner {
         if (module.default) {
           this.config = module.default;
           
-          // Force headless if flag is present
+          // Override config with CLI flags
           if (this.forceHeadless && this.config.browsers) {
             this.config.browsers = this.config.browsers.map(browser => ({
               ...browser,
               headless: true
             }));
           }
+
+          if (this.targetUrl) {
+            this.config.baseUrl = this.targetUrl;
+          }
+          
           return;
         }
       } catch (error) {
