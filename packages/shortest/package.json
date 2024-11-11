@@ -39,6 +39,7 @@
     "chromium-bidi": "^0.5.2",
     "esbuild": "^0.20.1",
     "glob": "^10.3.10",
+    "dotenv": "^16.4.5",
     "picocolors": "^1.0.0",
     "playwright": "^1.42.1"
   },
