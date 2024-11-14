@@ -1,8 +1,19 @@
 import { authenticator } from 'otplib';
 import dotenv from 'dotenv';
+import { BrowserTool } from '../browser-use/browser';
 
 export class GitHubTool {
   private totpSecret: string;
+  private readonly selectors = {
+    loginForm: '#login form',
+    usernameInput: '#login_field',
+    passwordInput: '#password',
+    submitButton: '[type="submit"]',
+    useAuthenticatorButton: 'button:has-text("Use authenticator")',
+    useAuthenticatorLink: '[data-test-selector="totp-app-link"]',
+    otpInput: '#app_totp',
+    errorMessage: '.flash-error'
+  };
 
   constructor(secret?: string) {
     dotenv.config({ path: '.env.local' });
@@ -24,4 +35,55 @@ export class GitHubTool {
       throw new Error(`Failed to generate TOTP code: ${error}`);
     }
   }
+
+  async GithubLogin(browserTool: BrowserTool, credentials: { username: string; password: string }): Promise<void> {
+    try {
+      // Wait for login form
+      await browserTool.waitForSelector(this.selectors.loginForm, { timeout: 10000 });
+      
+      // Fill credentials
+      await browserTool.fill(this.selectors.usernameInput, credentials.username);
+      await browserTool.fill(this.selectors.passwordInput, credentials.password);
+      
+      // Submit form
+      await browserTool.click(this.selectors.submitButton);
+      
+      // Handle both 2FA paths
+      try {
+        // First try the button
+        await browserTool.waitForSelector(this.selectors.useAuthenticatorButton, { timeout: 5000 });
+        await browserTool.click(this.selectors.useAuthenticatorButton);
+      } catch {
+        // If button not found, try the link
+        await browserTool.waitForSelector(this.selectors.useAuthenticatorLink, { timeout: 5000 });
+        await browserTool.click(this.selectors.useAuthenticatorLink);
+      }
+      
+      // Wait for OTP input to be visible
+      await browserTool.waitForSelector(this.selectors.otpInput, { timeout: 10000 });
+      
+      // Generate and enter TOTP code
+      const { code } = this.generateTOTPCode();
+      await browserTool.fill(this.selectors.otpInput, code);
+      await browserTool.press(this.selectors.otpInput, 'Enter');
+      
+      // Check for errors
+      const errorElement = await browserTool.findElement(this.selectors.errorMessage);
+      if (errorElement) {
+        const errorText = await errorElement.textContent();
+        throw new Error(`GitHub login failed: ${errorText}`);
+      }
+      
+      // Wait for navigation after successful login
+      await browserTool.waitForNavigation({ timeout: 10000 });
+      
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`GitHub login failed: ${error.message}`);
+      }
+      throw error;
+    }
+  }
 }
+
+export const githubTool = new GitHubTool();
