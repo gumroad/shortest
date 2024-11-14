@@ -35,8 +35,8 @@ async function testGithubLogin() {
     // Now handle GitHub login
     console.log(pc.cyan('\n🔐 Starting GitHub login flow...'));
     await githubTool.GithubLogin(browserTool, {
-      username: 'argo.mohrad@gmail.com',
-      password: 'M2@rad99308475'
+      username: process.env.GITHUB_USERNAME || '',
+      password: process.env.GITHUB_PASSWORD || ''
     });
 
     console.log(pc.green('\n✅ Login Test Complete'));
