@@ -281,13 +281,19 @@ export class BrowserTool extends BaseBrowserTool {
     await this.page.waitForTimeout(100);
   }
 
-  private async click(action: string, x: number, y: number): Promise<void> {
-    const scaledX = Math.round(x * this.scaleRatio.x);
-    const scaledY = Math.round(y * this.scaleRatio.y);
-    
-    await this.mouseMove(x, y);
-    await this.page.mouse.click(scaledX, scaledY);
-    await this.showClickAnimation();
+  public async click(selector: string): Promise<void>;
+  public async click(action: string, x: number, y: number): Promise<void>;
+  public async click(actionOrSelector: string, x?: number, y?: number): Promise<void> {
+    if (x !== undefined && y !== undefined) {
+      const scaledX = Math.round(x * this.scaleRatio.x);
+      const scaledY = Math.round(y * this.scaleRatio.y);
+      
+      await this.mouseMove(x, y);
+      await this.page.mouse.click(scaledX, scaledY);
+      await this.showClickAnimation();
+    } else {
+      await this.page.click(actionOrSelector);
+    }
   }
 
   private async dragMouse(x: number, y: number): Promise<void> {
@@ -355,5 +361,26 @@ export class BrowserTool extends BaseBrowserTool {
       display_height_px: this.height,
       display_number: this.displayNum
     };
+  }
+
+  // New selector-based methods
+  public async waitForSelector(selector: string, options?: { timeout: number }): Promise<void> {
+    await this.page.waitForSelector(selector, options);
+  }
+
+  public async fill(selector: string, value: string): Promise<void> {
+    await this.page.fill(selector, value);
+  }
+
+  public async press(selector: string, key: string): Promise<void> {
+    await this.page.press(selector, key);
+  }
+
+  public async findElement(selector: string) {
+    return this.page.$(selector);
+  }
+
+  public async waitForNavigation(options?: { timeout: number }): Promise<void> {
+    await this.page.waitForNavigation(options);
   }
 }
