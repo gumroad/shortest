@@ -156,9 +156,19 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async showClickAnimation(): Promise<void> {
-    await this.page.evaluate(() => {
-      (window as any).showClick();
-    });
+    try {
+      await this.page.evaluate(() => {
+        const cursor = document.getElementById('ai-cursor');
+        if (cursor) {
+          cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
+          setTimeout(() => {
+            cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+          }, 100);
+        }
+      });
+    } catch (error) {
+      // fail silently
+    }
   }
 
   async execute(input: ActionInput): Promise<ToolResult> {
