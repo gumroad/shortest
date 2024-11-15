@@ -43,7 +43,10 @@ async function testBrowser() {
     };
 
     // Run test
-    const testPrompt = `Validate the sign in functionality of the website you see`;
+    const testPrompt = `Validate the login functionality of the website you see
+    using github login button
+    for username argo.mohrad@gmail.com and password: M2@rad99308475
+    `;
     
     const result = await aiClient.processAction(
       testPrompt,
