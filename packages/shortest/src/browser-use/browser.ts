@@ -13,6 +13,7 @@ import { ActionInput, ToolResult } from './types';
 import { BetaToolType } from './types';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { GitHubTool } from '../tools/github';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -21,6 +22,7 @@ export class BrowserTool extends BaseBrowserTool {
   private screenshotDir: string;
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
+  private githubTool: GitHubTool;
   
   private readonly keyboardShortcuts: Record<string, string | string[]> = {
     'ctrl+l': ['Control', 'l'],
@@ -52,106 +54,52 @@ export class BrowserTool extends BaseBrowserTool {
     this.page = page;
     this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
+    this.githubTool = new GitHubTool();
     
     // Initialize in sequence
     this.initialize();
   }
 
   private async initialize(): Promise<void> {
-    try {
-      // Wait for page to be ready
-      await this.page.waitForLoadState('domcontentloaded');
-      
-      // Initialize window first
-      await this.initializeWindow();
-      
-      // Then initialize mouse tracking
-      await this.initializeMouseTracking();
-    } catch (error) {
-      console.warn('Initialization error:', error);
-    }
-  }
-
-  private async initializeWindow(): Promise<void> {
-    try {
-      // Set viewport size first
-      await this.page.setViewportSize({
-        width: 1920,
-        height: 1080
-      });
-
-      // Wait for page to be stable
-      await this.page.waitForLoadState('domcontentloaded');
-
-      // Then get dimensions
-      const dimensions = await this.page.evaluate(() => ({
-        viewport: {
-          width: document.documentElement.clientWidth,
-          height: document.documentElement.clientHeight
-        },
-        screen: {
-          width: window.screen.width,
-          height: window.screen.height,
-          availWidth: window.screen.availWidth,
-          availHeight: window.screen.availHeight
-        }
-      }));
-      // Update dimensions
-      this.width = dimensions.viewport.width;
-      this.height = dimensions.viewport.height;
-
-    } catch (error) {
-      console.warn('Failed to initialize window:', error);
-    }
-  }
-
-  private async initializeMouseTracking(): Promise<void> {
-    // Wait for page load
-    await this.page.waitForLoadState('domcontentloaded');
-    
-    // Add cursor tracking script
-    await this.page.evaluate(() => {
-      if (!document.getElementById('ai-cursor')) {
-        const cursor = document.createElement('div');
-        cursor.id = 'ai-cursor';
-        cursor.style.cssText = `
-          width: 20px;
-          height: 20px;
-          border: 2px solid red;
-          border-radius: 50%;
-          position: fixed;
-          pointer-events: none;
-          z-index: 999999;
-          transition: all 0.1s ease;
-          transform: translate(-50%, -50%);
-          background-color: rgba(255, 0, 0, 0.2);
-        `;
-        document.body.appendChild(cursor);
-
-        // Add to window object
-        window.cursorPosition = { x: 0, y: 0 };
-        window.showClick = () => {
-          const cursor = document.getElementById('ai-cursor');
-          if (cursor) {
-            cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            setTimeout(() => {
-              cursor.style.transform = 'translate(-50%, -50%) scale(1)';
-            }, 100);
-          }
-        };
-
-        // Update cursor position
-        document.addEventListener('mousemove', (e) => {
-          window.cursorPosition = { x: e.clientX, y: e.clientY };
-          cursor.style.left = e.clientX + 'px';
-          cursor.style.top = e.clientY + 'px';
-        });
-      }
-    });
-
-    // Re-initialize on navigation
+    // Set up navigation listener with error handling
     this.page.on('load', async () => {
-      await this.initializeMouseTracking();
+      try {
+        // Wait for page to stabilize
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Try to initialize cursor
+        await this.page.evaluate(() => {
+          if (!document.getElementById('ai-cursor')) {
+            const cursor = document.createElement('div');
+            cursor.id = 'ai-cursor';
+            cursor.style.cssText = `
+              width: 20px;
+              height: 20px;
+              border: 2px solid red;
+              border-radius: 50%;
+              position: fixed;
+              pointer-events: none;
+              z-index: 999999;
+              transition: all 0.1s ease;
+              transform: translate(-50%, -50%);
+              background-color: rgba(255, 0, 0, 0.2);
+            `;
+            document.body.appendChild(cursor);
+
+            window.cursorPosition = { x: 0, y: 0 };
+            
+            document.addEventListener('mousemove', (e) => {
+              window.cursorPosition = { x: e.clientX, y: e.clientY };
+              cursor.style.left = e.clientX + 'px';
+              cursor.style.top = e.clientY + 'px';
+            });
+          }
+        }).catch(() => {
+          // Silently fail cursor initialization during navigation
+        });
+      } catch (error) {
+        // Silently fail initialization during navigation
+      }
     });
   }
 
@@ -252,6 +200,19 @@ export class BrowserTool extends BaseBrowserTool {
           output = `Pressed key: ${input.text}`;
           break;
         }
+
+        case 'github_login':
+          const loginResult = await this.githubTool.GithubLogin(this, {
+            username: input.username as string,
+            password: input.password as string
+          });
+
+          return {
+            output: loginResult.success ? 
+              'GitHub login successful' : 
+              `GitHub login failed: ${loginResult.error}`,
+            metadata: {} 
+          };
 
         default:
           throw new ToolError(`Unknown action: ${input.action}`);
@@ -391,6 +352,6 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   public async waitForNavigation(options?: { timeout: number }): Promise<void> {
-    await this.page.waitForNavigation(options);
+    await this.page.waitForLoadState('networkidle', { timeout: options?.timeout });
   }
 }
