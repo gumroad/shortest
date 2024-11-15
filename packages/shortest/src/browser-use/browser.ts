@@ -12,6 +12,7 @@ import { BaseBrowserTool, ToolError } from './base';
 import { ActionInput, ToolResult } from './types';
 import { BetaToolType } from './types';
 import { writeFileSync, mkdirSync } from 'fs';
+import { rm } from 'fs/promises';
 import { join } from 'path';
 import { GitHubTool } from '../tools/github';
 
@@ -212,6 +213,18 @@ export class BrowserTool extends BaseBrowserTool {
               'GitHub login successful' : 
               `GitHub login failed: ${loginResult.error}`,
             metadata: {} 
+          };
+
+        case 'clear_session':
+          const browserDataPath = join(process.cwd(), '.browser-data');
+          await this.page.evaluate(() => {
+            localStorage.clear();
+            sessionStorage.clear();
+          });
+          await rm(browserDataPath, { recursive: true });
+          return {
+            output: 'Successfully cleared browser data and storage',
+            metadata: {}
           };
 
         default:
