@@ -69,6 +69,21 @@ export class AIClient {
                 },
                 required: ["action", "username", "password"]
               }
+            },
+            {
+              name: "clear_session",
+              description: "Clear user session and browser storage to test login flow",
+              input_schema: {
+                type: "object",
+                properties: {
+                  action: {
+                    type: "string",
+                    enum: ["logout"],
+                    description: "Clear browser storage and log out current user"
+                  }
+                },
+                required: ["action"]
+              }
             }
           ],
           betas: ["computer-use-2024-10-22"]
