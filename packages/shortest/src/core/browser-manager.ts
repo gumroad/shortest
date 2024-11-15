@@ -1,50 +1,31 @@
 import { chromium, Browser, BrowserContext } from 'playwright';
 import { getConfig } from '../index';
+import path from 'path';
+import { mkdirSync, existsSync } from 'fs';
 
 export class BrowserManager {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
+  private userDataDir = path.join(process.cwd(), '.browser-data');
 
   async launch(): Promise<BrowserContext> {
     const config = getConfig();
     const browserConfig = config.browsers?.[0] || { name: 'chrome', headless: false };
     const baseUrl = config.baseUrl || 'http://localhost:3000';
 
-    // console.log('Browser Config:', {
-    //   fromConfig: config.browsers?.[0],
-    //   usingConfig: browserConfig,
-    //   headless: browserConfig.headless,
-    //   baseUrl
-    // });
-
     try {
-      const launchArgs = [
-        '--start-maximized',
-        '--disable-infobars',
-        '--no-sandbox',
-        `--window-size=1920,1080`,
-        `--window-position=0,0`
-      ];
-
-      if (!browserConfig.headless) {
-        launchArgs.push('--kiosk');
+      // Ensure user data directory exists
+      if (!existsSync(this.userDataDir)) {
+        mkdirSync(this.userDataDir, { recursive: true });
       }
 
-      this.browser = await chromium.launch({
-        headless: browserConfig.headless
-        // args: launchArgs
-      });
-
-      this.context = await this.browser.newContext({
+      // Launch persistent context
+      this.context = await chromium.launchPersistentContext(this.userDataDir, {
+        headless: browserConfig.headless,
         viewport: { width: 1920, height: 1080 }
-        // screen: { width: 1920, height: 1080 },
-        // acceptDownloads: true
       });
 
-      const page = await this.context.newPage();
-
-      await page.setViewportSize({ width: 1920, height: 1080 });
-
+      const page = this.context.pages()[0] || await this.context.newPage();
       await page.goto(baseUrl);
 
       return this.context;
