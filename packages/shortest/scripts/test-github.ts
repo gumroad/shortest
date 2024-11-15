@@ -9,46 +9,66 @@ async function testGithubLogin() {
 
   try {
     await initialize();
-    console.log(pc.cyan('\n🚀 Launching browser...'));
+    console.log(pc.cyan('\n🚀 First browser launch...'));
     const context = await browserManager.launch();
     const page = context.pages()[0];
 
-    const browserTool = new BrowserTool(page, {
+    let browserTool = new BrowserTool(page, {
       width: 1920,
       height: 1080
     });
 
     const githubTool = new GitHubTool();
 
-    // Navigate to app
-    console.log(pc.cyan('\n🌐 Navigating to app...'));
-    await page.goto('http://localhost:3000');
+    // console.log(pc.cyan('\n🧹 Clearing initial session...'));
+    // await browserTool.execute({ action: 'clear_session' });
+    
+    // Wait for network to be idle and page to stabilize
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(300);
 
-    // Click Sign in button
-    console.log(pc.cyan('\n🔑 Clicking Sign in...'));
+    // Wait for button to be visible and stable
+    await page.waitForSelector('button:has-text("Sign in")', { state: 'visible' });
     await page.click('button:has-text("Sign in")');
     
-    // Click GitHub button
-    console.log(pc.cyan('\n🔑 Clicking GitHub login...'));
+    // Wait for GitHub button to be ready
+    await page.waitForSelector('.cl-socialButtonsBlockButton__github', { state: 'visible' });
     await page.click('.cl-socialButtonsBlockButton__github');
-
-    // Now handle GitHub login
+    
     console.log(pc.cyan('\n🔐 Starting GitHub login flow...'));
     await githubTool.GithubLogin(browserTool, {
       username: process.env.GITHUB_USERNAME || '',
       password: process.env.GITHUB_PASSWORD || ''
     });
 
-    console.log(pc.green('\n✅ Login Test Complete'));
+    console.log(pc.cyan('\n🔒 Closing first browser...'));
+    await browserManager.close();
+
+    // Launch fresh browser
+    console.log(pc.cyan('\n🚀 Launching fresh browser to verify clean state...'));
+    const newContext = await browserManager.launch();
+    const newPage = newContext.pages()[0];
+
+    // Create new browser tool instance
+    browserTool = new BrowserTool(newPage, {
+      width: 1920,
+      height: 1080
+    });
+
+    console.log(pc.cyan('\n🔍 Checking login state...'));
+    await newPage.goto('http://localhost:3000');
+    await newPage.waitForLoadState('networkidle');
+    await newPage.waitForTimeout(2000);
+
+    console.log(pc.green('\n✅ Clean Session Test Complete'));
 
   } catch (error) {
     console.error(pc.red('\n❌ Test failed:'), error);
   } finally {
-    console.log(pc.cyan('\n🧹 Cleaning up...'));
     await browserManager.close();
   }
 }
 
-console.log(pc.cyan('🧪 Login Integration Test'));
-console.log(pc.cyan('======================='));
+console.log(pc.cyan('🧪 Session Cleanup Test'));
+console.log(pc.cyan('===================='));
 testGithubLogin().catch(console.error); 
