@@ -36,7 +36,7 @@ export class GitHubTool {
     }
   }
 
-  async GithubLogin(browserTool: BrowserTool, credentials: { username: string; password: string }): Promise<void> {
+  async GithubLogin(browserTool: BrowserTool, credentials: { username: string; password: string }): Promise<{ success: boolean; error?: string }> {
     try {
       // Wait for login form
       await browserTool.waitForSelector(this.selectors.loginForm, { timeout: 10000 });
@@ -71,17 +71,18 @@ export class GitHubTool {
       const errorElement = await browserTool.findElement(this.selectors.errorMessage);
       if (errorElement) {
         const errorText = await errorElement.textContent();
-        throw new Error(`GitHub login failed: ${errorText}`);
+        return { success: false, error: errorText || 'Unknown error' };
       }
       
       // Wait for navigation after successful login
       await browserTool.waitForNavigation({ timeout: 10000 });
+      return { success: true };
       
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`GitHub login failed: ${error.message}`);
-      }
-      throw error;
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error during GitHub login'
+      };
     }
   }
 }
