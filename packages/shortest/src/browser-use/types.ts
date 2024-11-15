@@ -7,7 +7,8 @@ export type BrowserAction =
   | "double_click"
   | "screenshot"
   | "cursor_position"
-  | "github_login";
+  | "github_login"
+  | "clear_session";
 
 export interface ToolResult {
   output?: string;
@@ -37,7 +38,7 @@ export interface BrowserToolOptions {
 export type ActionInput = {
   action: 'mouse_move' | 'left_click' | 'right_click' | 'middle_click' | 
           'double_click' | 'left_click_drag' | 'cursor_position' | 
-          'screenshot' | 'type' | 'key' | 'github_login';
+          'screenshot' | 'type' | 'key' | 'github_login' | 'clear_session';
   coordinates?: number[];
   text?: string;
   username?: string;
