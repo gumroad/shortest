@@ -49,10 +49,14 @@ export class TestExecutor {
           const context = await this.browserManager.launch();
           const page = context.pages()[0];
           
-          const browserTool = new BrowserTool(page, {
-            width: 1920,
-            height: 1080
-          });
+          const browserTool = new BrowserTool(
+            page,
+            this.browserManager,
+            {
+              width: 1920,
+              height: 1080
+            }
+          );
 
           // New AI client for each test (fresh message history)
           const aiClient = new AIClient({
