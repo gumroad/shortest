@@ -15,9 +15,11 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { rm } from 'fs/promises';
 import { join } from 'path';
 import { GitHubTool } from '../tools/github';
+import { BrowserManager } from '../core/browser-manager';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
+  private browserManager: BrowserManager;
   protected readonly toolType: BetaToolType = "computer_20241022";
   protected readonly toolName: string = "computer";
   private screenshotDir: string;
@@ -50,14 +52,18 @@ export class BrowserTool extends BaseBrowserTool {
     y: 32 / 24       // ≈ 1.333
   };
 
-  constructor(page: Page, options: { width: number; height: number; displayNum?: number }) {
+  constructor(
+    page: Page, 
+    browserManager: BrowserManager,
+    options: { width: number; height: number; displayNum?: number }
+  ) {
     super(options);
     this.page = page;
+    this.browserManager = browserManager;
     this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
     this.githubTool = new GitHubTool();
     
-    // Initialize in sequence
     this.initialize();
   }
 
@@ -208,22 +214,26 @@ export class BrowserTool extends BaseBrowserTool {
             password: input.password as string
           });
 
-          return {
-            output: loginResult.success ? 
-              'GitHub login successful' : 
-              `GitHub login failed: ${loginResult.error}`,
-            metadata: {} 
-          };
+          output = loginResult.success ? 
+              'GitHub login was successfully completed' : 
+              `GitHub login failed: ${loginResult.error}`;
+          break;
 
         case 'clear_session':
-          const browserDataPath = join(process.cwd(), '.browser-data');
+          // Get new context from browser manager
+          const newContext = await this.browserManager.recreateContext();
+          
+          // Get the first page from new context
+          this.page = newContext.pages()[0] || await newContext.newPage();
+          
+          // Clear browser storage
           await this.page.evaluate(() => {
             localStorage.clear();
             sessionStorage.clear();
           });
-          await rm(browserDataPath, { recursive: true });
+
           return {
-            output: 'Successfully cleared browser data and storage',
+            output: 'Successfully cleared browser data and created new context',
             metadata: {}
           };
 
@@ -296,7 +306,26 @@ export class BrowserTool extends BaseBrowserTool {
     return [position.x, position.y];
   }
 
-  private async getMetadata() {
+  private async isPageReady(): Promise<boolean> {
+    try {
+      return await this.page.evaluate(() => {
+        return document.readyState === 'complete' && 
+               !document.querySelector('.loading') && 
+               !document.querySelector('.cl-loading') && // Check for Clerk loading
+               Boolean(document.body);
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  private async getMetadata(): Promise<any> {
+    // Check page readiness first
+    if (!await this.isPageReady()) {
+      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForTimeout(500); // Small buffer for any JS initialization
+    }
+
     const position = await this.getCursorPosition();
     const viewport = this.page.viewportSize() || { width: this.width, height: this.height };
 
