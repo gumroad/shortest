@@ -78,7 +78,7 @@ export class AIClient {
                 properties: {
                   action: {
                     type: "string",
-                    enum: ["logout"],
+                    enum: ["clear_session"],
                     description: "Clear browser storage and log out current user"
                   }
                 },
