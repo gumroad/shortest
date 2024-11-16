@@ -75,7 +75,7 @@ export class GitHubTool {
       }
       
       // Wait for navigation after successful login
-      await browserTool.waitForNavigation({ timeout: 10000 });
+      await browserTool.waitForNavigation({ timeout: 100 }); 
       return { success: true };
       
     } catch (error) {
