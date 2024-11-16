@@ -3,26 +3,31 @@ import { BrowserTool } from '../src/browser-use/browser';
 import { defaultConfig, initialize } from '../src/index';
 import { AIClient } from '../src/ai/ai';
 import Anthropic from '@anthropic-ai/sdk';
+import pc from 'picocolors';
 
 async function testBrowser() {
   const browserManager = new BrowserManager();
   
   const apiKey = defaultConfig.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.error('Error: Anthropic API key not found in config or environment');
+    console.error(pc.red('Error: Anthropic API key not found in config or environment'));
     process.exit(1);
   }
 
   try {
     await initialize();
-    console.log('🚀 Launching browser...');
+    console.log(pc.cyan('🚀 Launching browser...'));
     const context = await browserManager.launch();
     const page = context.pages()[0];
     
-    const browserTool = new BrowserTool(page, {
-      width: 1920, 
-      height: 940
-    });
+    const browserTool = new BrowserTool(
+      page,
+      browserManager,
+      {
+        width: 1920, 
+        height: 940
+      }
+    );
 
     // Initialize AI client
     const aiClient = new AIClient({
@@ -31,15 +36,18 @@ async function testBrowser() {
       maxMessages: 10
     });
 
-    // Define callbacks
+    // Define callbacks with metadata logging
     const outputCallback = (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
       if (content.type === 'text') {
-        console.log('🤖 Assistant:', content.text);
+        console.log(pc.yellow('🤖 Assistant:'), content.text);
       }
     };
 
     const toolOutputCallback = (name: string, input: any) => {
-      console.log('🔧 Tool Use:', name, input);
+      console.log(pc.yellow('🔧 Tool Use:'), name, input);
+      if (input.metadata) {
+        console.log(pc.yellow('Tool Metadata:'), input.metadata);
+      }
     };
 
     // Run test
@@ -55,16 +63,16 @@ async function testBrowser() {
       toolOutputCallback
     );
 
-    console.log('✅ Test complete');
+    console.log(pc.green('✅ Test complete'));
     
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error(pc.red('❌ Test failed:'), error);
   } finally {
-    console.log('\n🧹 Cleaning up...');
+    console.log(pc.cyan('\n🧹 Cleaning up...'));
     await browserManager.close();
   }
 }
 
-console.log('🧪 Browser Integration Test');
-console.log('===========================');
+console.log(pc.cyan('🧪 Browser Integration Test'));
+console.log(pc.cyan('==========================='));
 testBrowser().catch(console.error);

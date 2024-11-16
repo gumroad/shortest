@@ -6,28 +6,43 @@ import pc from 'picocolors';
 
 async function testGithubLogin() {
   const browserManager = new BrowserManager();
+  const githubTool = new GitHubTool();
 
   try {
     await initialize();
     console.log(pc.cyan('\n🚀 First browser launch...'));
-    const context = await browserManager.launch();
-    const page = context.pages()[0];
+    let context = await browserManager.launch();
+    let page = context.pages()[0];
 
-    let browserTool = new BrowserTool(page, {
-      width: 1920,
-      height: 1080
-    });
+    let browserTool = new BrowserTool(
+      page, 
+      browserManager,
+      {
+        width: 1920,
+        height: 1080
+      }
+    );
 
-    const githubTool = new GitHubTool();
-
-    // console.log(pc.cyan('\n🧹 Clearing initial session...'));
-    // await browserTool.execute({ action: 'clear_session' });
+    console.log(pc.cyan('\n🧹 Clearing initial session...'));
+    const result = await browserTool.execute({ action: 'clear_session' });
+    console.log(pc.yellow('\nBrowser Tool Result:'), result);
+    console.log(pc.yellow('\nMetadata:'), result.metadata);
     
-    // Wait for network to be idle and page to stabilize
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(300);
+    // Get fresh page reference after clear_session
+    context = browserManager.getContext()!;
+    page = context.pages()[0];
+    
+    // Update browserTool with new page
+    browserTool = new BrowserTool(
+      page,
+      browserManager,
+      {
+        width: 1920,
+        height: 1080
+      }
+    );
 
-    // Wait for button to be visible and stable
+    // Continue with fresh page reference
     await page.waitForSelector('button:has-text("Sign in")', { state: 'visible' });
     await page.click('button:has-text("Sign in")');
     
@@ -50,14 +65,20 @@ async function testGithubLogin() {
     const newPage = newContext.pages()[0];
 
     // Create new browser tool instance
-    browserTool = new BrowserTool(newPage, {
-      width: 1920,
-      height: 1080
-    });
+    browserTool = new BrowserTool(
+      newPage, 
+      browserManager,
+      {
+        width: 1920,
+        height: 1080
+      }
+    );
 
     console.log(pc.cyan('\n🔍 Checking login state...'));
     await newPage.goto('http://localhost:3000');
     await newPage.waitForLoadState('networkidle');
+    console.log(pc.cyan('\n🧹 Clearing initial session...'));
+    await browserTool.execute({ action: 'clear_session' });
     await newPage.waitForTimeout(2000);
 
     console.log(pc.green('\n✅ Clean Session Test Complete'));
