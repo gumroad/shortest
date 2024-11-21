@@ -84,6 +84,10 @@ export class TestExecutor {
               }
             );
 
+            if (!result) {
+              throw new Error('AI processing failed: no result returned');
+            }
+
             // Parse final response for JSON result
             const finalMessage = result.finalResponse.content.find(block => 
               block.type === 'text' && 
