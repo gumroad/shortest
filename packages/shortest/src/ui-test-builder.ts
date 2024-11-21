@@ -82,13 +82,25 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this;
   }
 
-  private addStep(
+  private async addStep(
     type: TestStep['type'], 
     action: string, 
     payload?: any,
     assert?: () => Promise<void>
-  ): void {
+  ): Promise<void> {
+    // Store step
     this.steps.push({ type, action, payload, assert });
+
+    // Execute assertion immediately if present
+    if (assert) {
+      try {
+        // Just execute the function, don't wrap or modify it
+        await assert();
+      } catch (error: any) {
+        // Just rethrow the original error
+        throw error;
+      }
+    }
   }
 }
 
