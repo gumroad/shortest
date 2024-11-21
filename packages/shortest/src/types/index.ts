@@ -24,6 +24,7 @@ export interface TestStep {
     type: 'GIVEN' | 'WHEN' | 'EXPECT' | 'BEFORE' | 'AFTER';
     action: string;
     payload?: any;
+    assert?: () => Promise<void>;
 }
 
 // Browser related types
