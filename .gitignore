@@ -49,3 +49,6 @@ docker-compose.yml
 
 # screenshots
 screenshots/
+
+# browser data
+.browser-data/

@@ -30,7 +30,8 @@
     "postinstall": "pnpm exec playwright install",
     "test:ai": "tsx scripts/test-ai.ts",
     "test:browser": "tsx scripts/test-browser.ts",
-    "test:coordinates": "tsx scripts/test-coordinates.ts"
+    "test:coordinates": "tsx scripts/test-coordinates.ts",
+    "test:github": "tsx scripts/test-github.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.32.0",
@@ -40,6 +41,7 @@
     "esbuild": "^0.20.1",
     "glob": "^10.3.10",
     "dotenv": "^16.4.5",
+    "otplib": "^12.0.1",
     "picocolors": "^1.0.0",
     "playwright": "^1.42.1"
   },

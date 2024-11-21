@@ -44,7 +44,7 @@ export interface ShortestConfig {
 }
 
 export const defaultConfig: ShortestConfig = {
-    browsers: [{ name: 'chrome', headless: true }],
+    browsers: [{ name: 'chrome', headless: false }],
     baseUrl: 'http://localhost:3000',
     testDir: '__tests__',
     ai: {

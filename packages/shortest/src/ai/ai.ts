@@ -39,13 +39,53 @@ export class AIClient {
           max_tokens: 1024,
           messages,
           system: SYSTEM_PROMPT,
-          tools: [{
-            type: "computer_20241022",
-            name: "computer",
-            display_width_px: 1920,
-            display_height_px: 1080,
-            display_number: 1
-          }],
+          tools: [
+            {
+              type: "computer_20241022",
+              name: "computer",
+              display_width_px: 1920,
+              display_height_px: 1080,
+              display_number: 1
+            },
+            {
+              name: "github_login",
+              description: "Handle GitHub OAuth login with 2FA",
+              input_schema: {
+                type: "object",
+                properties: {
+                  action: {
+                    type: "string",
+                    enum: ["github_login"],
+                    description: "The action to perform. It's always equal to 'github_login'"
+                  },
+                  username: {
+                    type: "string",
+                    description: "GitHub username or email"
+                  },
+                  password: {
+                    type: "string",
+                    description: "GitHub password"
+                  }
+                },
+                required: ["action", "username", "password"]
+              }
+            },
+            {
+              name: "clear_session",
+              description: "Clear user session and browser storage to test login flow",
+              input_schema: {
+                type: "object",
+                properties: {
+                  action: {
+                    type: "string",
+                    enum: ["clear_session"],
+                    description: "Clear browser storage and log out current user"
+                  }
+                },
+                required: ["action"]
+              }
+            }
+          ],
           betas: ["computer-use-2024-10-22"]
         });
 
