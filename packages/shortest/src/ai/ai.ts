@@ -22,6 +22,28 @@ export class AIClient {
     outputCallback?: (content: Anthropic.Beta.Messages.BetaContentBlockParam) => void,
     toolOutputCallback?: (name: string, input: any) => void
   ) {
+    const maxRetries = 3;
+    let attempts = 0;
+
+    while (attempts < maxRetries) {
+      try {
+        return await this.makeRequest(prompt, browserTool, outputCallback, toolOutputCallback);
+      } catch (error: any) {
+        attempts++;
+        if (attempts === maxRetries) throw error;
+        
+        console.log(`Retry attempt ${attempts}/${maxRetries}`);
+        await new Promise(r => setTimeout(r, 5000 * attempts));
+      }
+    }
+  }
+
+  async makeRequest(
+    prompt: string,
+    browserTool: BrowserTool,
+    outputCallback?: (content: Anthropic.Beta.Messages.BetaContentBlockParam) => void,
+    toolOutputCallback?: (name: string, input: any) => void
+  ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
     // Add initial message
