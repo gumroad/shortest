@@ -24,7 +24,7 @@ async function testBrowser() {
     const context = await browserManager.launch();
     const page = context.pages()[0];
     
-    const browserTool = new BrowserTool(page, {
+    const browserTool = new BrowserTool(page, browserManager, {
       width: 1920, 
       height: 940
     });
