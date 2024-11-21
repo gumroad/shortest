@@ -12,15 +12,20 @@ import { BaseBrowserTool, ToolError } from './base';
 import { ActionInput, ToolResult } from './types';
 import { BetaToolType } from './types';
 import { writeFileSync, mkdirSync } from 'fs';
+import { rm } from 'fs/promises';
 import { join } from 'path';
+import { GitHubTool } from '../tools/github';
+import { BrowserManager } from '../core/browser-manager';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
+  private browserManager: BrowserManager;
   protected readonly toolType: BetaToolType = "computer_20241022";
   protected readonly toolName: string = "computer";
   private screenshotDir: string;
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
+  private githubTool: GitHubTool;
   
   private readonly keyboardShortcuts: Record<string, string | string[]> = {
     'ctrl+l': ['Control', 'l'],
@@ -47,118 +52,78 @@ export class BrowserTool extends BaseBrowserTool {
     y: 32 / 24       // ≈ 1.333
   };
 
-  constructor(page: Page, options: { width: number; height: number; displayNum?: number }) {
+  constructor(
+    page: Page, 
+    browserManager: BrowserManager,
+    options: { width: number; height: number; displayNum?: number }
+  ) {
     super(options);
     this.page = page;
+    this.browserManager = browserManager;
     this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
+    this.githubTool = new GitHubTool();
     
-    // Initialize in sequence
     this.initialize();
   }
 
   private async initialize(): Promise<void> {
-    try {
-      // Wait for page to be ready
-      await this.page.waitForLoadState('domcontentloaded');
-      
-      // Initialize window first
-      await this.initializeWindow();
-      
-      // Then initialize mouse tracking
-      await this.initializeMouseTracking();
-    } catch (error) {
-      console.warn('Initialization error:', error);
-    }
-  }
-
-  private async initializeWindow(): Promise<void> {
-    try {
-      // Set viewport size first
-      await this.page.setViewportSize({
-        width: 1920,
-        height: 1080
-      });
-
-      // Wait for page to be stable
-      await this.page.waitForLoadState('domcontentloaded');
-
-      // Then get dimensions
-      const dimensions = await this.page.evaluate(() => ({
-        viewport: {
-          width: document.documentElement.clientWidth,
-          height: document.documentElement.clientHeight
-        },
-        screen: {
-          width: window.screen.width,
-          height: window.screen.height,
-          availWidth: window.screen.availWidth,
-          availHeight: window.screen.availHeight
-        }
-      }));
-      // Update dimensions
-      this.width = dimensions.viewport.width;
-      this.height = dimensions.viewport.height;
-
-    } catch (error) {
-      console.warn('Failed to initialize window:', error);
-    }
-  }
-
-  private async initializeMouseTracking(): Promise<void> {
-    // Wait for page load
-    await this.page.waitForLoadState('domcontentloaded');
-    
-    // Add cursor tracking script
-    await this.page.evaluate(() => {
-      if (!document.getElementById('ai-cursor')) {
-        const cursor = document.createElement('div');
-        cursor.id = 'ai-cursor';
-        cursor.style.cssText = `
-          width: 20px;
-          height: 20px;
-          border: 2px solid red;
-          border-radius: 50%;
-          position: fixed;
-          pointer-events: none;
-          z-index: 999999;
-          transition: all 0.1s ease;
-          transform: translate(-50%, -50%);
-          background-color: rgba(255, 0, 0, 0.2);
-        `;
-        document.body.appendChild(cursor);
-
-        // Add to window object
-        window.cursorPosition = { x: 0, y: 0 };
-        window.showClick = () => {
-          const cursor = document.getElementById('ai-cursor');
-          if (cursor) {
-            cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
-            setTimeout(() => {
-              cursor.style.transform = 'translate(-50%, -50%) scale(1)';
-            }, 100);
-          }
-        };
-
-        // Update cursor position
-        document.addEventListener('mousemove', (e) => {
-          window.cursorPosition = { x: e.clientX, y: e.clientY };
-          cursor.style.left = e.clientX + 'px';
-          cursor.style.top = e.clientY + 'px';
-        });
-      }
-    });
-
-    // Re-initialize on navigation
+    // Set up navigation listener with error handling
     this.page.on('load', async () => {
-      await this.initializeMouseTracking();
+      try {
+        // Wait for page to stabilize
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Try to initialize cursor
+        await this.page.evaluate(() => {
+          if (!document.getElementById('ai-cursor')) {
+            const cursor = document.createElement('div');
+            cursor.id = 'ai-cursor';
+            cursor.style.cssText = `
+              width: 20px;
+              height: 20px;
+              border: 2px solid red;
+              border-radius: 50%;
+              position: fixed;
+              pointer-events: none;
+              z-index: 999999;
+              transition: all 0.1s ease;
+              transform: translate(-50%, -50%);
+              background-color: rgba(255, 0, 0, 0.2);
+            `;
+            document.body.appendChild(cursor);
+
+            window.cursorPosition = { x: 0, y: 0 };
+            
+            document.addEventListener('mousemove', (e) => {
+              window.cursorPosition = { x: e.clientX, y: e.clientY };
+              cursor.style.left = e.clientX + 'px';
+              cursor.style.top = e.clientY + 'px';
+            });
+          }
+        }).catch(() => {
+          // Silently fail cursor initialization during navigation
+        });
+      } catch (error) {
+        // Silently fail initialization during navigation
+      }
     });
   }
 
   private async showClickAnimation(): Promise<void> {
-    await this.page.evaluate(() => {
-      (window as any).showClick();
-    });
+    try {
+      await this.page.evaluate(() => {
+        const cursor = document.getElementById('ai-cursor');
+        if (cursor) {
+          cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
+          setTimeout(() => {
+            cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+          }, 100);
+        }
+      });
+    } catch (error) {
+      // fail silently
+    }
   }
 
   async execute(input: ActionInput): Promise<ToolResult> {
@@ -243,6 +208,35 @@ export class BrowserTool extends BaseBrowserTool {
           break;
         }
 
+        case 'github_login':
+          const loginResult = await this.githubTool.GithubLogin(this, {
+            username: input.username as string,
+            password: input.password as string
+          });
+
+          output = loginResult.success ? 
+              'GitHub login was successfully completed' : 
+              `GitHub login failed: ${loginResult.error}`;
+          break;
+
+        case 'clear_session':
+          // Get new context from browser manager
+          const newContext = await this.browserManager.recreateContext();
+          
+          // Get the first page from new context
+          this.page = newContext.pages()[0] || await newContext.newPage();
+          
+          // Clear browser storage
+          await this.page.evaluate(() => {
+            localStorage.clear();
+            sessionStorage.clear();
+          });
+
+          return {
+            output: 'Successfully cleared browser data and created new context',
+            metadata: {}
+          };
+
         default:
           throw new ToolError(`Unknown action: ${input.action}`);
       }
@@ -281,13 +275,19 @@ export class BrowserTool extends BaseBrowserTool {
     await this.page.waitForTimeout(100);
   }
 
-  private async click(action: string, x: number, y: number): Promise<void> {
-    const scaledX = Math.round(x * this.scaleRatio.x);
-    const scaledY = Math.round(y * this.scaleRatio.y);
-    
-    await this.mouseMove(x, y);
-    await this.page.mouse.click(scaledX, scaledY);
-    await this.showClickAnimation();
+  public async click(selector: string): Promise<void>;
+  public async click(action: string, x: number, y: number): Promise<void>;
+  public async click(actionOrSelector: string, x?: number, y?: number): Promise<void> {
+    if (x !== undefined && y !== undefined) {
+      const scaledX = Math.round(x * this.scaleRatio.x);
+      const scaledY = Math.round(y * this.scaleRatio.y);
+      
+      await this.mouseMove(x, y);
+      await this.page.mouse.click(scaledX, scaledY);
+      await this.showClickAnimation();
+    } else {
+      await this.page.click(actionOrSelector);
+    }
   }
 
   private async dragMouse(x: number, y: number): Promise<void> {
@@ -306,7 +306,26 @@ export class BrowserTool extends BaseBrowserTool {
     return [position.x, position.y];
   }
 
-  private async getMetadata() {
+  private async isPageReady(): Promise<boolean> {
+    try {
+      return await this.page.evaluate(() => {
+        return document.readyState === 'complete' && 
+               !document.querySelector('.loading') && 
+               !document.querySelector('.cl-loading') && // Check for Clerk loading
+               Boolean(document.body);
+      });
+    } catch {
+      return false;
+    }
+  }
+
+  private async getMetadata(): Promise<any> {
+    // Check page readiness first
+    if (!await this.isPageReady()) {
+      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForTimeout(500); // Small buffer for any JS initialization
+    }
+
     const position = await this.getCursorPosition();
     const viewport = this.page.viewportSize() || { width: this.width, height: this.height };
 
@@ -355,5 +374,26 @@ export class BrowserTool extends BaseBrowserTool {
       display_height_px: this.height,
       display_number: this.displayNum
     };
+  }
+
+  // New selector-based methods
+  public async waitForSelector(selector: string, options?: { timeout: number }): Promise<void> {
+    await this.page.waitForSelector(selector, options);
+  }
+
+  public async fill(selector: string, value: string): Promise<void> {
+    await this.page.fill(selector, value);
+  }
+
+  public async press(selector: string, key: string): Promise<void> {
+    await this.page.press(selector, key);
+  }
+
+  public async findElement(selector: string) {
+    return this.page.$(selector);
+  }
+
+  public async waitForNavigation(options?: { timeout: number }): Promise<void> {
+    await this.page.waitForLoadState('networkidle', { timeout: options?.timeout });
   }
 }

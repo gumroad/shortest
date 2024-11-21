@@ -161,6 +161,22 @@ or use the `pnpm` command:
 pnpm test
 ```
 
+## Test Github MFA Login Flow with Shortest
+In order to test Github MFA login in browser you need to add register shortest as OTP provider and add the OTP secret to your `.env.local` file:
+
+1. Go to your repo settings
+2. Navigate to `Password and Authentication`
+3. Click on `Authenticator App`
+4. Choose `Use your authenticator app`
+5. Click on `Setup key` to grab the OTP secret
+6. Add the OTP secret to your `.env.local` file or use the `shortest` cli to add it:
+
+```bash
+shortest --github-code --secret=<OTP_SECRET>
+```
+7. Laslty enter the 2FA code generated in terminal in your Github Authenticator editor
+
+
 ## To run tests in Github workflows
 
 prerequisites:
@@ -174,3 +190,4 @@ prerequisites:
 - Navigate to `Security`
 - Click `Add secret`
 - Add the ANTHROPIC_API_KEY environment variable
+

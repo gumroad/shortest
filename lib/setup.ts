@@ -253,6 +253,18 @@ async function promptForGitHubOAuth(): Promise<void> {
   }
 }
 
+async function promptForGitHubTOTP(): Promise<string | undefined> {
+  console.log('\nStep 8: GitHub 2FA TOTP Setup (Optional)');
+  console.log('If you want to test GitHub 2FA login, you\'ll need to add a TOTP secret.');
+  
+  const setupNow = await question('Would you like to set up GitHub 2FA TOTP now? (y/n): ');
+  
+  if (setupNow.toLowerCase() === 'y') {
+    return await question('Enter your GitHub TOTP secret (from repo settings > Password and Authentication): ');
+  }
+  return undefined;
+}
+
 async function writeEnvFile(envVars: Record<string, string>) {
   console.log('Step 8: Writing environment variables to .env.local');
   const envContent = Object.entries(envVars)
@@ -290,6 +302,7 @@ async function main() {
   const { publishableKey: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, secretKey: CLERK_SECRET_KEY } = await promptForClerkKeys();
   const ANTHROPIC_API_KEY = await promptForAnthropicApiKey();
   await promptForGitHubOAuth();
+  const GITHUB_TOTP_SECRET = await promptForGitHubTOTP() || '';
   const CLERK_SIGN_IN_FALLBACK_REDIRECT_URL = '/dashboard';
   const CLERK_SIGN_UP_FALLBACK_REDIRECT_URL = '/dashboard';
   const NEXT_PUBLIC_CLERK_SIGN_IN_URL = '/signin';
@@ -314,6 +327,7 @@ async function main() {
     POSTGRES_PASSWORD,
     POSTGRES_DATABASE,
     ANTHROPIC_API_KEY,
+    GITHUB_TOTP_SECRET,
   });
 
   console.log('🎉 Setup completed successfully!');
