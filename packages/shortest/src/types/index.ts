@@ -76,3 +76,12 @@ export interface ParsedTestSuite {
     name: string;
     tests: ParsedTest[];
 }
+
+export interface AssertionError extends Error {
+  matcherResult?: {
+    message: string;
+    pass: boolean;
+    actual: any;
+    expected: any;
+  };
+}
