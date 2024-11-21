@@ -8,7 +8,8 @@
       "declaration": true,
       "esModuleInterop": true,
       "skipLibCheck": true,
-      "rootDir": "./src"
+      "rootDir": "./src",
+      "types": ["node", "jest"]
     },
     "include": ["src"],
     "exclude": ["node_modules", "dist"]
