@@ -1,5 +1,7 @@
 import { define, UITestBuilder, expect } from 'shortest';
-import { db } from "@/lib/db/drizzle";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 interface LoginState {
   username: string;
@@ -14,24 +16,11 @@ define('Validate login feature implemented with Clerk', async () => {
       password: process.env.GITHUB_PASSWORD || ''
     }, async () => {
       expect(process.env.GITHUB_USERNAME).toBeDefined();
+      expect(1).toBe(2);
     })
     .when('Logged in', async () => {
-      try {
-        const user = await db.query.users.findFirst({
-          where: (users, { eq }) => eq(users.clerkId, process.env.GITHUB_USERNAME || '')
-        });
-        
-        if (user) {
-          expect(user).toBeDefined();
-          console.log("Found user:", user);
-        } else {
-          console.log("No user found in database - this is expected for first login");
-        }
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.log("Database error", error.message);
-        }
-      }
+      // Just wait for redirect
+      console.log('Waiting for redirect...');
     })
     .expect('should redirect to /dashboard');
 });
