@@ -68,7 +68,7 @@ export class TestExecutor {
           try {
             // Generate test prompt
             const prompt = this.parser.generateTestPrompt(test, suite.name);
-            // console.log("prompt", prompt);
+            console.log("prompt", prompt);
 
             // Run test with AI in verbose mode
             const result = await aiClient.processAction(
