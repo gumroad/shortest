@@ -16,6 +16,7 @@ import { rm } from 'fs/promises';
 import { join } from 'path';
 import { GitHubTool } from '../tools/github';
 import { BrowserManager } from '../core/browser-manager';
+import { TestContext, BrowserToolConfig } from '../types/index';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -26,6 +27,8 @@ export class BrowserTool extends BaseBrowserTool {
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
   private githubTool: GitHubTool;
+  private viewport: { width: number; height: number };
+  private testContext?: TestContext;
   
   private readonly keyboardShortcuts: Record<string, string | string[]> = {
     'ctrl+l': ['Control', 'l'],
@@ -55,14 +58,16 @@ export class BrowserTool extends BaseBrowserTool {
   constructor(
     page: Page, 
     browserManager: BrowserManager,
-    options: { width: number; height: number; displayNum?: number }
+    config: BrowserToolConfig
   ) {
-    super(options);
+    super(config);
     this.page = page;
     this.browserManager = browserManager;
     this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
     this.githubTool = new GitHubTool();
+    this.viewport = { width: config.width, height: config.height };
+    this.testContext = config.testContext;
     
     this.initialize();
   }
@@ -237,6 +242,17 @@ export class BrowserTool extends BaseBrowserTool {
             metadata: {}
           };
 
+        case 'run_callback':
+          if (!this.testContext) {
+            throw new Error('No test context available for callback execution');
+          }
+
+          const currentStep = this.testContext.currentTest.steps[this.testContext.currentStepIndex];
+          if (currentStep?.assert) {
+            await currentStep.assert();
+          }
+          return { output: 'Callback executed successfully' };
+
         default:
           throw new ToolError(`Unknown action: ${input.action}`);
       }
@@ -395,5 +411,9 @@ export class BrowserTool extends BaseBrowserTool {
 
   public async waitForNavigation(options?: { timeout: number }): Promise<void> {
     await this.page.waitForLoadState('networkidle', { timeout: options?.timeout });
+  }
+
+  updateTestContext(newContext: TestContext) {
+    this.testContext = newContext;
   }
 }
