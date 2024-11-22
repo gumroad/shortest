@@ -62,6 +62,7 @@ export interface ParsedTestStep {
     type: 'BEFORE' | 'GIVEN' | 'WHEN' | 'EXPECT' | 'AFTER';
     description: string;
     payload?: any;
+    hasCallback?: boolean;
 }
 
 export interface ParsedTest {
