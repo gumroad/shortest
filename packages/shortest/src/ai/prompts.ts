@@ -9,12 +9,12 @@ tool has finished its execution before you continue with the next action. Once t
 has finished its execution, you will recieve the result of the tool execution wether it failed or not. You can decide 
 to continue based on the result.
 
-2. Do not ask for screenshot until the tool has finished its execution. Once the tool has finished its execution, 
-has finished its execution, you will recieve the result of the tool execution wether it failed or not.
-Then you can ask for screenshot to determine for your next action if anything else is needed.
+2. Do not ask for screenshot until the tool has finished its execution. Once the tool has finished its execution,
+you will recieve the result of the tool execution wether it failed or not.
+Then you can ask for a screenshot to determine for your next action if anything else is needed.
 
 3. If you need to test a scenario that requires you to test the login flow, 
-you will need to clear the browser data. For that you can use the "logout" tool that is provided to you via tools api.
+you will need to clear the browser data. For that you can use the "logout" tool that is provided to you via the tools api.
 
 Your task is to:
 1. Execute browser actions to validate test cases
