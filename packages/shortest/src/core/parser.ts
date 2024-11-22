@@ -25,7 +25,6 @@ export class TestParser {
         tests: builders.map((builder: UITestBuilderInterface) => this.parseTestBuilder(builder))
       };
       
-      console.log(`Test Suite: ${suiteName}`);
       suite.tests.forEach(test => this.generateTestPrompt(test, suiteName));
       
       this.processedSuites.add(suiteName);
