@@ -16,8 +16,9 @@ define('Validate login feature implemented with Clerk', async () => {
     .given('Github username and password', { 
       username: process.env.GITHUB_USERNAME || '',
       password: process.env.GITHUB_PASSWORD || ''
-    }, async () => {
-      // Check if user exists in customers table
+    })
+    .when('Logged in', async () => {
+      console.log('Waiting for db validatoin');
       const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
         SELECT * FROM customers WHERE email = 'delba@oliveira.com'
       `);
@@ -32,9 +33,6 @@ define('Validate login feature implemented with Clerk', async () => {
       } else {
         console.log('Customer delba@oliveira.com not found in database');
       }
-    })
-    .when('Logged in', async () => {
-      console.log('Waiting for redirect...');
     })
     .expect('should redirect to /dashboard');
 });
