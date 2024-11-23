@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
+    "db:cleanup": "tsx lib/db/cleanup.ts",
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "test": "shortest"
   },
@@ -78,8 +79,9 @@
     "happy-dom": "^15.7.4",
     "js-yaml": "^4.1.0",
     "jsdom": "^25.0.1",
+    "shortest": "workspace:*",
     "smee-client": "^2.0.3",
-    "vitest": "^2.1.1",
-    "shortest": "workspace:*"
+    "tsx": "^4.7.1",
+    "vitest": "^2.1.1"
   }
 }
