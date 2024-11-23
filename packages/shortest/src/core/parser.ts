@@ -25,7 +25,7 @@ export class TestParser {
         tests: builders.map((builder: UITestBuilderInterface) => this.parseTestBuilder(builder))
       };
       
-      console.log(`Test Suite: ${suiteName}`);
+      // console.log(`Test Suite: ${suiteName}`);
       suite.tests.forEach(test => this.generateTestPrompt(test, suiteName));
       
       this.processedSuites.add(suiteName);
@@ -44,15 +44,15 @@ export class TestParser {
       assert: step.assert
     }));
 
-    console.log('\n🔍 Parsed Steps:');
-    steps.forEach((step, index) => {
-      console.log(`Step ${index + 1}:`, {
-        type: step.type,
-        description: step.description,
-        payload: step.payload,
-        hasCallback: step.hasCallback
-      });
-    });
+    // console.log('\n🔍 Parsed Steps:');
+    // steps.forEach((step, index) => {
+    //   console.log(`Step ${index + 1}:`, {
+    //     type: step.type,
+    //     description: step.description,
+    //     payload: step.payload,
+    //     hasCallback: step.hasCallback
+    //   });
+    // });
 
     return {
       suiteName: builder.getSuiteName(),
