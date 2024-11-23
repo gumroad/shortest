@@ -250,6 +250,7 @@ export class BrowserTool extends BaseBrowserTool {
           const currentStep = this.testContext.currentTest.steps[this.testContext.currentStepIndex];
           if (currentStep?.assert) {
             await currentStep.assert();
+            this.testContext.currentStepIndex++;
           }
           return { output: 'Callback executed successfully' };
 
