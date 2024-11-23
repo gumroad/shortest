@@ -40,7 +40,8 @@ export class TestParser {
       type: step.type,
       description: typeof step.action === 'string' ? step.action : 'SET_STATE',
       payload: step.payload,
-      hasCallback: !!step.assert
+      hasCallback: !!step.assert,
+      assert: step.assert
     }));
 
     console.log('\n🔍 Parsed Steps:');
@@ -48,6 +49,7 @@ export class TestParser {
       console.log(`Step ${index + 1}:`, {
         type: step.type,
         description: step.description,
+        payload: step.payload,
         hasCallback: step.hasCallback
       });
     });
@@ -64,8 +66,9 @@ export class TestParser {
   generateTestPrompt(test: ParsedTest, suiteName: string): string {
     const steps = test.steps.map(step => {
       const stepStr = `${step.type}: "${step.description}"`;
+      const payloadInfo = step.payload ? ` with payload ${JSON.stringify(step.payload)}` : '';
       const callbackInfo = step.hasCallback ? ' [HAS_CALLBACK]' : '';
-      return `${stepStr}${callbackInfo}`;
+      return `${stepStr}${payloadInfo}${callbackInfo}`;
     }).join('\n');
 
     return [
