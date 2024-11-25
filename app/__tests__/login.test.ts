@@ -34,5 +34,6 @@ define('Validate login feature implemented with Clerk', async () => {
         console.log('Customer delba@oliveira.com not found in database');
       }
     })
+    .when('Logged in')
     .expect('should redirect to /dashboard');
 });
