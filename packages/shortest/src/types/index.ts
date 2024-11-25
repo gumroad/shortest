@@ -24,6 +24,7 @@ export interface TestStep {
     type: 'GIVEN' | 'WHEN' | 'EXPECT' | 'BEFORE' | 'AFTER';
     action: string;
     payload?: any;
+    assert?: () => Promise<void>;
 }
 
 // Browser related types
@@ -74,4 +75,13 @@ export interface ParsedTest {
 export interface ParsedTestSuite {
     name: string;
     tests: ParsedTest[];
+}
+
+export interface AssertionError extends Error {
+  matcherResult?: {
+    message: string;
+    pass: boolean;
+    actual: any;
+    expected: any;
+  };
 }

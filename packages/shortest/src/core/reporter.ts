@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { ParsedTestSuite } from '../types';
+import { ParsedTestSuite, AssertionError } from '../types';
 
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed';
 
@@ -102,5 +102,22 @@ export class Reporter {
 
   reportError(context: string, message: string) {
     console.error(pc.red(`\n${context} Error: ${message}`));
+  }
+
+  reportAssertion(
+    step: string, 
+    status: 'passed' | 'failed', 
+    error?: AssertionError
+  ): void {
+    const icon = status === 'passed' ? '✓' : '✗';
+    const color = status === 'passed' ? 'green' : 'red';
+    
+    console.log(pc[color](`${icon} ${step}`));
+    
+    if (error && status === 'failed') {
+      console.log(pc.red(`  Expected: ${error.matcherResult?.expected}`));
+      console.log(pc.red(`  Received: ${error.matcherResult?.actual}`));
+      console.log(pc.red(`  Message: ${error.message}`));
+    }
   }
 }

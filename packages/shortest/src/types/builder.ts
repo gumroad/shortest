@@ -7,9 +7,9 @@ export interface UITestBuilderInterface<T = any> {
   setSuiteName(name: string): this;
   getSuiteName(): string;
   test(name: string): this;
-  given(actionOrState: ActionType, payload?: T): this;
-  when(action: ActionType, payload?: T): this;
-  expect(assertion: ActionType, payload?: T): this;
+  given(action: string, payload?: T | (() => Promise<void>) | undefined, assert?: () => Promise<void>): this;
+  when(action: string, payload?: T | (() => Promise<void>) | undefined, assert?: () => Promise<void>): this;
+  expect(assertion: string, payload?: T | (() => Promise<void>) | undefined, assert?: () => Promise<void>): this;
   before(actionOrFn: ActionType | BeforeAllFunction, payload?: T): this;
   after(actionOrFn: ActionType | AfterAllFunction, payload?: T): this;
 } 

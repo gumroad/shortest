@@ -11,7 +11,7 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   constructor(path: string) {
     this.path = path;
     this.testName = '';
-    TestRegistry.registerTest(this as UITestBuilderInterface);
+    TestRegistry.registerTest(this as unknown as UITestBuilderInterface);
   }
 
   test(name: string): this {
@@ -28,50 +28,79 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this.suiteName;
   }
 
-  given(actionOrState: ActionType, payload?: T): this {
-    if (typeof actionOrState === 'string') {
-      return this.addStep('GIVEN', actionOrState, payload);
+  given(action?: string, payload?: T | (() => Promise<void>), assert?: () => Promise<void>): this {
+    if (action) {
+      if (payload && typeof payload === 'function') {
+        const assertFn = payload as () => Promise<void>;
+        this.addStep('GIVEN', action, undefined, assertFn);
+      } else {
+        this.addStep('GIVEN', action, payload as T, assert);
+      }
     }
-    return this.addStep('GIVEN', 'SET_STATE', actionOrState);
+    return this;
   }
 
-  when(action: ActionType, payload?: T): this {
-    if (typeof action === 'string') {
-      return this.addStep('WHEN', action, payload);
+  when(action?: string, payload?: T | (() => Promise<void>), assert?: () => Promise<void>): this {
+    if (action) {
+      if (payload && typeof payload === 'function') {
+        const assertFn = payload as () => Promise<void>;
+        this.addStep('WHEN', action, undefined, assertFn);
+      } else {
+        this.addStep('WHEN', action, payload as T, assert);
+      }
     }
-    return this.addStep('WHEN', 'SET_STATE', action);
+    return this;
   }
 
-  expect(assertion: ActionType, payload?: T): this {
-    if (typeof assertion === 'string') {
-      return this.addStep('EXPECT', assertion, payload);
+  expect(assertion?: string, payload?: T | (() => Promise<void>), assert?: () => Promise<void>): this {
+    if (assertion) {
+      if (payload && typeof payload === 'function') {
+        const assertFn = payload as () => Promise<void>;
+        this.addStep('EXPECT', assertion, undefined, assertFn);
+      } else {
+        this.addStep('EXPECT', assertion, payload as T, assert);
+      }
     }
-    return this.addStep('EXPECT', 'ASSERT_STATE', assertion);
+    return this;
   }
 
   before(actionOrFn: ActionType | BeforeAllFunction, payload?: T): this {
     if (typeof actionOrFn === 'function') {
-      return this.addStep('BEFORE', 'EXECUTE_FUNCTION', actionOrFn);
+      this.addStep('BEFORE', 'EXECUTE_FUNCTION', actionOrFn);
+    } else {
+      this.addStep('BEFORE', typeof actionOrFn === 'string' ? actionOrFn : 'SET_STATE', payload);
     }
-    if (typeof actionOrFn === 'string') {
-      return this.addStep('BEFORE', actionOrFn, payload);
-    }
-    return this.addStep('BEFORE', 'SET_STATE', actionOrFn);
+    return this;
   }
 
   after(actionOrFn: ActionType | AfterAllFunction, payload?: T): this {
     if (typeof actionOrFn === 'function') {
-      return this.addStep('AFTER', 'EXECUTE_FUNCTION', actionOrFn);
+      this.addStep('AFTER', 'EXECUTE_FUNCTION', actionOrFn);
+    } else {
+      this.addStep('AFTER', typeof actionOrFn === 'string' ? actionOrFn : 'SET_STATE', payload);
     }
-    if (typeof actionOrFn === 'string') {
-      return this.addStep('AFTER', actionOrFn, payload);
-    }
-    return this.addStep('AFTER', 'SET_STATE', actionOrFn);
+    return this;
   }
 
-  private addStep(type: TestStep['type'], action: string, payload?: any): this {
-    this.steps.push({ type, action, payload });
-    return this;
+  private async addStep(
+    type: TestStep['type'], 
+    action: string, 
+    payload?: any,
+    assert?: () => Promise<void>
+  ): Promise<void> {
+    // Store step
+    this.steps.push({ type, action, payload, assert });
+
+    // Execute assertion immediately if present
+    if (assert) {
+      try {
+        // Just execute the function, don't wrap or modify it
+        await assert();
+      } catch (error: any) {
+        // Just rethrow the original error
+        throw error;
+      }
+    }
   }
 }
 
