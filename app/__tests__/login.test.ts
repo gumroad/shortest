@@ -16,24 +16,28 @@ define('Validate login feature implemented with Clerk', async () => {
     .given('Github username and password', { 
       username: process.env.GITHUB_USERNAME || '',
       password: process.env.GITHUB_PASSWORD || ''
+    }, async () => {
+      expect(process.env.GITHUB_USERNAME).toBeDefined();
     })
-    .when('Logged in', async () => {
-      console.log('Waiting for db validatoin');
-      const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
-        SELECT * FROM customers WHERE email = 'delba@oliveira.com'
-      `);
+    .when('user is logged in', async () => {
+      try {
+        console.log('Starting DB validation...');
+        const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
+          SELECT * FROM customers WHERE email = 'delba@oliveira.com'
+        `);
 
-      console.log('Checking for customer delba@oliveira.com:', customer);
-      
-      if (customer) {
-        expect(customer).toBeDefined();
+        if (!customer) {
+          throw new Error('Customer delba@oliveira.com not found in database');
+        }
+
+        console.log('Found customer in DB:', customer);
         expect(customer.email).toBe('delba@oliveira.com');
         expect(customer.name).toBe('Delba de Oliveira');
-        console.log('Found customer:', customer);
-      } else {
-        console.log('Customer delba@oliveira.com not found in database');
+
+      } catch (error) {
+        console.error('DB Validation Error:', error);
+        throw error; // Re-throw to fail the test
       }
     })
-    .when('Logged in')
-    .expect('should redirect to /dashboard');
+    .expect('user should be redirected to /dashboard');
 });
