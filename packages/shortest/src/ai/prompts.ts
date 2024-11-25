@@ -16,10 +16,9 @@ Then you can ask for a screenshot to determine for your next action if anything 
 3. If you need to test a scenario that requires you to test the login flow, 
 you will need to clear the browser data. For that you can use the "logout" tool that is provided to you via the tools api.
 
-4. There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a given step.
-If that's the case, you will need to complete the browser actions for that step first 
-before you can run the callback function. If the flag is present you will see [HAS_CALLBACK] 
-after the step description.
+4.IMPORTANT! There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a given step.
+Whenever you see [HAS_CALLBACK] after the step description, you must call run_callback tool with 
+the payload provided after you have completed the browser actions for that step.
 
 Your task is to:
 1. Execute browser actions to validate test cases
