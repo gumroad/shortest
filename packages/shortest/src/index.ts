@@ -7,6 +7,7 @@ import { UITestBuilderInterface } from './types/builder';
 import { BeforeAllFunction, AfterAllFunction, TestSuite } from './types';
 import dotenv from 'dotenv';
 import { join } from 'path';
+import { expect as jestExpect } from 'expect';
 
 // Define global registry type
 declare global {
@@ -100,10 +101,11 @@ export class TestRegistry {
 }
 
 // Export test functions
-export function define(name: string, fn: () => void): void {
+export function define(name: string, fn: () => void | Promise<void>): void {
   TestRegistry.startSuite(name);
-  fn();
-  TestRegistry.endSuite();
+  Promise.resolve(fn()).then(() => {
+    TestRegistry.endSuite();
+  });
 }
 
 export function beforeAll(fn: BeforeAllFunction): void {
@@ -121,3 +123,4 @@ export { UITestBuilder };
 export type { UITestBuilderInterface };
 export type { ShortestConfig };
 export * from './types';
+export { jestExpect as expect };
