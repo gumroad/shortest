@@ -1,6 +1,6 @@
 import { BaseBrowserTool, ToolError } from './base';
-import { ToolResult } from './types';
-import { BetaToolParams } from './types';
+import { ToolResult } from '../types/browser';
+import { BetaToolParams } from '../types/browser';
 
 export class ToolCollection {
   private tools: Map<string, BaseBrowserTool>;

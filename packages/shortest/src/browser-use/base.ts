@@ -1,5 +1,5 @@
-import { BrowserToolOptions, ActionInput, ToolResult } from './types';
-import { BetaToolType } from './types';
+import { BrowserToolOptions, ActionInput, ToolResult } from '../types/browser';
+import { BetaToolType } from '../types/browser';
 
 export class ToolError extends Error {
   constructor(message: string) {

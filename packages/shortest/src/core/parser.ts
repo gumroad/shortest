@@ -1,4 +1,4 @@
-import { ParsedTest, ParsedTestSuite, ParsedTestStep } from '../types';
+import { TestCase, TestSuite, TestStep } from '../types';
 import { getConfig, TestRegistry } from '../index';
 import { UITestBuilderInterface } from '../types/builder';
 
@@ -11,8 +11,8 @@ export class TestParser {
     return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   }
 
-  async parseModule(compiledModule: any): Promise<ParsedTestSuite[]> {
-    const suites: ParsedTestSuite[] = [];
+  async parseModule(compiledModule: any): Promise<TestSuite[]> {
+    const suites: TestSuite[] = [];
     const testMap = TestRegistry.getAllTests();
     
     for (const [suiteName, builders] of testMap.entries()) {
@@ -20,7 +20,7 @@ export class TestParser {
         continue;
       }
       
-      const suite: ParsedTestSuite = {
+      const suite: TestSuite = {
         name: suiteName,
         tests: builders.map((builder: UITestBuilderInterface) => this.parseTestBuilder(builder))
       };
@@ -35,8 +35,8 @@ export class TestParser {
     return suites;
   }
 
-  private parseTestBuilder(builder: any): ParsedTest {
-    const steps: ParsedTestStep[] = builder.steps.map((step: any) => ({
+  private parseTestBuilder(builder: any): TestCase {
+    const steps: TestStep[] = builder.steps.map((step: any) => ({
       type: step.type,
       description: typeof step.action === 'string' ? step.action : 'SET_STATE',
       payload: step.payload,
@@ -63,7 +63,7 @@ export class TestParser {
     };
   }
 
-  generateTestPrompt(test: ParsedTest, suiteName: string): string {
+  generateTestPrompt(test: TestCase, suiteName: string): string {
     const steps = test.steps.map(step => {
       const stepStr = `${step.type}: "${step.description}"`;
       const payloadInfo = step.payload ? ` with payload ${JSON.stringify(step.payload)}` : '';
