@@ -1,8 +1,8 @@
 import { Reporter } from './reporter';
 import { TestCompiler } from './compiler';
 import { TestParser } from './parser';
-import { BrowserManager } from './browser-manager';
-import { BrowserTool } from '../browser-use/browser';
+import { BrowserManager } from '../browser/browser-manager';
+import { BrowserTool } from '../browser/browser';
 import { AIClient } from '../ai/ai';
 import { initialize, getConfig } from '../index';
 import { TestContext } from '../types';

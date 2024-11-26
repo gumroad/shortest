@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { TestRunner } from '../core/runner.js';
-import { GitHubTool } from '../tools/github.js';
+import { GitHubTool } from '../browser/integrations/github.js';
 import pc from 'picocolors';
 
 const VALID_FLAGS = ['--headless', '--github-code'];

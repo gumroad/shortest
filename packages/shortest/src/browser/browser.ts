@@ -14,8 +14,8 @@ import { BetaToolType } from '../types/browser';
 import { writeFileSync, mkdirSync } from 'fs';
 import { rm } from 'fs/promises';
 import { join } from 'path';
-import { GitHubTool } from '../tools/github';
-import { BrowserManager } from '../core/browser-manager';
+import { GitHubTool } from './integrations/github';
+import { BrowserManager } from './browser-manager';
 import { TestContext, BrowserToolConfig } from '../types/index';
 
 export class BrowserTool extends BaseBrowserTool {

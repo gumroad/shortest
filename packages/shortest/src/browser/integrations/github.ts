@@ -1,6 +1,6 @@
 import { authenticator } from 'otplib';
 import dotenv from 'dotenv';
-import { BrowserTool } from '../browser-use/browser';
+import { BrowserTool } from '../browser';
 
 export class GitHubTool {
   private totpSecret: string;
