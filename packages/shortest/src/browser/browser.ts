@@ -8,7 +8,7 @@ declare global {
 
 // browser-tool.ts
 import { Page } from 'playwright';
-import { BaseBrowserTool, ToolError } from './base';
+import { BaseBrowserTool, ToolError } from './core';
 import { ActionInput, ToolResult } from '../types/browser';
 import { BetaToolType } from '../types/browser';
 import { writeFileSync, mkdirSync } from 'fs';
