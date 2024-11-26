@@ -106,6 +106,21 @@ export class AIClient {
                 },
                 required: ["action"]
               }
+            },
+            {
+              name: "run_callback",
+              description: "Run callback function for current test step",
+              input_schema: {
+                type: "object",
+                properties: {
+                  action: {
+                    type: "string",
+                    enum: ["run_callback"],
+                    description: "Execute callback for current step"
+                  }
+                },
+                required: ["action"]
+              }
             }
           ],
           betas: ["computer-use-2024-10-22"]

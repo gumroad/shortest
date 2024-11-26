@@ -5,6 +5,7 @@ import { BrowserManager } from './browser-manager';
 import { BrowserTool } from '../browser-use/browser';
 import { AIClient } from '../ai/ai';
 import { initialize, getConfig } from '../index';
+import { ParsedTest, TestContext } from '../types';
 import Anthropic from '@anthropic-ai/sdk';
 
 interface TestResult {
@@ -44,6 +45,13 @@ export class TestExecutor {
         this.reporter.startSuite(suite.name);
         
         for (const test of suite.tests) {
+          // Create test context for each test
+          const testContext: TestContext = {
+            currentTest: test,
+            currentStepIndex: 0,
+            testName: test.testName
+          };
+
           // Launch new browser for each test
           this.reporter.reportStatus('🚀 Launching browser...');
           const context = await this.browserManager.launch();
@@ -54,7 +62,8 @@ export class TestExecutor {
             this.browserManager,
             {
               width: 1920,
-              height: 1080
+              height: 1080,
+              testContext
             }
           );
 

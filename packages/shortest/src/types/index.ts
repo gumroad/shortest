@@ -1,5 +1,7 @@
 export interface TestContext {
-    testName: string;
+    currentTest: ParsedTest;
+    currentStepIndex: number;
+    testName?: string;
 }
 
 export interface BeforeAllFunction {
@@ -62,6 +64,8 @@ export interface ParsedTestStep {
     type: 'BEFORE' | 'GIVEN' | 'WHEN' | 'EXPECT' | 'AFTER';
     description: string;
     payload?: any;
+    hasCallback?: boolean;
+    assert?: () => Promise<void>;
 }
 
 export interface ParsedTest {
@@ -84,4 +88,10 @@ export interface AssertionError extends Error {
     actual: any;
     expected: any;
   };
+}
+
+export interface BrowserToolConfig {
+    width: number;
+    height: number;
+    testContext?: TestContext;
 }
