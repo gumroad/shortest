@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { ParsedTestSuite, AssertionError } from '../types';
+import { AssertionError } from '../types';
 
 export type TestStatus = 'pending' | 'running' | 'passed' | 'failed';
 

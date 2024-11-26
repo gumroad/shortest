@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, define, UITestBuilder } from 'shortest';
+import { UITestBuilder } from 'shortest';
 
 interface loginButton {
   url: string;

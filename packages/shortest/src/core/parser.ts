@@ -1,6 +1,6 @@
 import { TestCase, TestSuite, TestStep } from '../types';
 import { getConfig, TestRegistry } from '../index';
-import { UITestBuilderInterface } from '../types/builder';
+import { UITestBuilderInterface } from '../types/ui-test-builder';
 
 export class TestParser {
   private processedSuites = new Set<string>();

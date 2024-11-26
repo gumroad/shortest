@@ -1,4 +1,4 @@
-import { define, UITestBuilder, expect } from 'shortest';
+import { UITestBuilder } from 'shortest';
 import { db } from "@/lib/db/drizzle";
 
 interface User {
