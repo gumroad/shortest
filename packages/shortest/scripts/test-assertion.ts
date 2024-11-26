@@ -50,7 +50,7 @@ async function testAssertions() {
         expect(true).toBe(true);
       });
     
-    if (builder.steps.length === 1 && builder.steps[0].assert) {
+    if (builder.steps.length === 1 && builder.steps[0].callback) {
       console.log(pc.green('✅ Passed: Assertion step recorded'));
       passedTests++;
     } else {
