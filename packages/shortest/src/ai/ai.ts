@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { AIConfig } from './types';
+import { AIConfig } from '../types/ai';
 import { SYSTEM_PROMPT } from './prompts';
 import { BrowserTool } from '../browser-use/browser';
 

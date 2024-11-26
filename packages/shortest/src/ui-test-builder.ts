@@ -1,8 +1,8 @@
-import { getConfig, TestRegistry } from './index';
-import { BeforeAllFunction, AfterAllFunction, ActionType, TestStep } from './types';
+import { TestRegistry } from './index';
+import { TestStep, BeforeAllFunction, AfterAllFunction, ActionType } from './types/test';
 import { UITestBuilderInterface } from './types/builder';
 
-export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
+export class UITestBuilder<T = any> implements UITestBuilderInterface {
   path: string;
   testName: string;
   steps: TestStep[] = [];
@@ -11,7 +11,7 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   constructor(path: string) {
     this.path = path;
     this.testName = '';
-    TestRegistry.registerTest(this as unknown as UITestBuilderInterface);
+    TestRegistry.registerTest(this);
   }
 
   test(name: string): this {
@@ -28,9 +28,10 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this.suiteName;
   }
 
-  given(description: string, payload?: any, assert?: () => Promise<void>): this {
+  given(description: string, payload?: T, assert?: () => Promise<void>): this {
     this.steps.push({
       type: 'GIVEN',
+      description,
       action: description,
       payload,
       assert
@@ -41,6 +42,7 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   when(description: string, assert?: () => Promise<void>): this {
     this.steps.push({
       type: 'WHEN',
+      description,
       action: description,
       assert
     });
@@ -50,6 +52,7 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   expect(description: string, assert?: () => Promise<void>): this {
     this.steps.push({
       type: 'EXPECT',
+      description,
       action: description,
       assert
     });
@@ -80,7 +83,14 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     payload?: any,
     assert?: () => Promise<void>
   ): Promise<void> {
-    this.steps.push({ type, action, payload, assert });
+    this.steps.push({ 
+      type, 
+      description: action,
+      action,
+      payload, 
+      assert 
+    });
+    
     if (assert) {
       try {
         await assert();
@@ -90,6 +100,4 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     }
   }
 }
-
-export type { UITestBuilderInterface };
   

@@ -9,8 +9,8 @@ declare global {
 // browser-tool.ts
 import { Page } from 'playwright';
 import { BaseBrowserTool, ToolError } from './base';
-import { ActionInput, ToolResult } from './types';
-import { BetaToolType } from './types';
+import { ActionInput, ToolResult } from '../types/browser';
+import { BetaToolType } from '../types/browser';
 import { writeFileSync, mkdirSync } from 'fs';
 import { rm } from 'fs/promises';
 import { join } from 'path';

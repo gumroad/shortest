@@ -1,15 +1,17 @@
-// Import types
-import { ShortestConfig } from './types';
-import { defaultConfig } from './types';
-import { TestCompiler } from './core/compiler';
-import { UITestBuilder } from './ui-test-builder';
-import { UITestBuilderInterface } from './types/builder';
-import { BeforeAllFunction, AfterAllFunction, TestSuite } from './types';
 import dotenv from 'dotenv';
 import { join } from 'path';
 import { expect as jestExpect } from 'expect';
+import { TestCompiler } from './core/compiler';
+import { UITestBuilder } from './ui-test-builder';
+import { 
+  UITestBuilderInterface,
+  BeforeAllFunction, 
+  AfterAllFunction,
+  ShortestConfig,
+  defaultConfig
+} from './types';
 
-// Define global registry type
+// Initialize global registry
 declare global {
   var __shortest_registry__: {
     suites: Map<string, UITestBuilderInterface[]>;
@@ -19,7 +21,6 @@ declare global {
   };
 }
 
-// Initialize global registry
 if (!global.__shortest_registry__) {
   global.__shortest_registry__ = {
     suites: new Map<string, UITestBuilderInterface[]>(),
@@ -34,7 +35,6 @@ let config: ShortestConfig;
 const compiler = new TestCompiler();
 
 export async function initialize() {
-  // Load .env files in order
   dotenv.config({ path: join(process.cwd(), '.env') });
   dotenv.config({ path: join(process.cwd(), '.env.local') });
   
@@ -68,6 +68,14 @@ export class TestRegistry {
     return global.__shortest_registry__.suites;
   }
 
+  static get beforeAllFns() {
+    return global.__shortest_registry__.beforeAllFns;
+  }
+
+  static get afterAllFns() {
+    return global.__shortest_registry__.afterAllFns;
+  }
+
   static getAllTests(): Map<string, UITestBuilderInterface[]> {
     return this.suites;
   }
@@ -87,9 +95,6 @@ export class TestRegistry {
     global.__shortest_registry__.currentSuite = null;
   }
 
-  static beforeAllFns: BeforeAllFunction[] = [];
-  static afterAllFns: AfterAllFunction[] = [];
-
   static registerTest(builder: UITestBuilderInterface): void {
     const currentSuite = this.getCurrentSuite();
     if (currentSuite) {
@@ -100,7 +105,6 @@ export class TestRegistry {
   }
 }
 
-// Export test functions
 export function define(name: string, fn: () => void | Promise<void>): void {
   TestRegistry.startSuite(name);
   Promise.resolve(fn()).then(() => {
@@ -109,18 +113,13 @@ export function define(name: string, fn: () => void | Promise<void>): void {
 }
 
 export function beforeAll(fn: BeforeAllFunction): void {
-  const currentSuite = TestRegistry.getCurrentSuite();
   TestRegistry.beforeAllFns.push(fn);
 }
 
 export function afterAll(fn: AfterAllFunction): void {
-  const currentSuite = TestRegistry.getCurrentSuite();
   TestRegistry.afterAllFns.push(fn);
 }
 
-// Export other classes/functions
 export { UITestBuilder };
-export type { UITestBuilderInterface };
-export type { ShortestConfig };
-export * from './types';
 export { jestExpect as expect };
+export * from './types';
