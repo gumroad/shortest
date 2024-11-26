@@ -10,7 +10,7 @@ export interface TestStep {
   action: string;
   payload?: any;
   hasCallback?: boolean;
-  assert?: () => Promise<void>;
+  callback?: () => Promise<void>;
 }
 
 export interface TestCase {
