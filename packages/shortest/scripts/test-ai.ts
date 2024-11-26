@@ -29,7 +29,7 @@ async function testAI() {
           description: 'test setup',
           action: 'test setup',
           hasCallback: true,
-          assert: async () => {
+          callback: async () => {
             console.log('Callback executed: GIVEN step');
           }
         },
@@ -38,7 +38,7 @@ async function testAI() {
           description: 'action performed',
           action: 'action performed',
           hasCallback: true,
-          assert: async () => {
+          callback: async () => {
             console.log('Callback executed: WHEN step');
           }
         }
