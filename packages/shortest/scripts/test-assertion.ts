@@ -1,4 +1,4 @@
-import { UITestBuilder, expect } from '../src/index';
+import { UITestBuilder } from '../src/index';
 import pc from 'picocolors';
 
 async function testAssertions() {

@@ -5,7 +5,7 @@ import { BrowserManager } from './browser-manager';
 import { BrowserTool } from '../browser-use/browser';
 import { AIClient } from '../ai/ai';
 import { initialize, getConfig } from '../index';
-import { ParsedTest, TestContext } from '../types';
+import { TestContext } from '../types';
 import Anthropic from '@anthropic-ai/sdk';
 
 interface TestResult {

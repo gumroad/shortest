@@ -1,8 +1,8 @@
 import { TestRegistry } from './index';
 import { TestStep, BeforeAllFunction, AfterAllFunction, ActionType } from './types/test';
-import { UITestBuilderInterface } from './types/builder';
+import { UITestBuilderInterface } from './types/ui-test-builder';
 
-export class UITestBuilder<T = any> implements UITestBuilderInterface {
+export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   path: string;
   testName: string;
   steps: TestStep[] = [];
@@ -28,34 +28,86 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface {
     return this.suiteName;
   }
 
-  given(description: string, payload?: T, assert?: () => Promise<void>): this {
-    this.steps.push({
-      type: 'GIVEN',
-      description,
-      action: description,
-      payload,
-      assert
-    });
+  // Type guard to check if a value is a Promise-returning function
+  private isAssertFunction(value: any): value is () => Promise<void> {
+    return typeof value === 'function';
+  }
+
+  given(description: string, assertOrPayload?: (() => Promise<void>) | T, assert?: () => Promise<void>): this {
+    if (!assertOrPayload) {
+      this.steps.push({
+        type: 'GIVEN',
+        description,
+        action: description
+      });
+    } else if (this.isAssertFunction(assertOrPayload)) {
+      this.steps.push({
+        type: 'GIVEN',
+        description,
+        action: description,
+        assert: assertOrPayload
+      });
+    } else {
+      this.steps.push({
+        type: 'GIVEN',
+        description,
+        action: description,
+        payload: assertOrPayload,
+        assert
+      });
+    }
     return this;
   }
 
-  when(description: string, assert?: () => Promise<void>): this {
-    this.steps.push({
-      type: 'WHEN',
-      description,
-      action: description,
-      assert
-    });
+  when(description: string, assertOrPayload?: (() => Promise<void>) | T, assert?: () => Promise<void>): this {
+    if (!assertOrPayload) {
+      this.steps.push({
+        type: 'WHEN',
+        description,
+        action: description
+      });
+    } else if (this.isAssertFunction(assertOrPayload)) {
+      this.steps.push({
+        type: 'WHEN',
+        description,
+        action: description,
+        assert: assertOrPayload
+      });
+    } else {
+      this.steps.push({
+        type: 'WHEN',
+        description,
+        action: description,
+        payload: assertOrPayload,
+        assert
+      });
+    }
     return this;
   }
 
-  expect(description: string, assert?: () => Promise<void>): this {
-    this.steps.push({
-      type: 'EXPECT',
-      description,
-      action: description,
-      assert
-    });
+  expect(description: string, assertOrPayload?: (() => Promise<void>) | T, assert?: () => Promise<void>): this {
+    if (!assertOrPayload) {
+      this.steps.push({
+        type: 'EXPECT',
+        description,
+        action: description
+      });
+    } else if (this.isAssertFunction(assertOrPayload)) {
+      this.steps.push({
+        type: 'EXPECT',
+        description,
+        action: description,
+        assert: assertOrPayload
+      });
+    } else {
+      this.steps.push({
+        type: 'EXPECT',
+        description,
+        action: description,
+        payload: assertOrPayload,
+        assert
+      });
+    }
     return this;
   }
 

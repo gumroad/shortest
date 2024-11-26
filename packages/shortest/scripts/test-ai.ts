@@ -2,7 +2,7 @@ import { AIClient } from '../src/ai/ai';
 import { BrowserTool } from '../src/browser-use/browser';
 import { BrowserManager } from '../src/core/browser-manager';
 import { defaultConfig, initialize } from '../src/index';
-import { ParsedTest } from '../src/types';
+import { TestCase } from '../src/types';
 import pc from 'picocolors';
 
 async function testAI() {
@@ -18,7 +18,7 @@ async function testAI() {
     const page = context.pages()[0];
 
     // Mock test data with callback
-    const mockTest: ParsedTest = {
+    const mockTest: TestCase = {
       suiteName: 'Test Suite',
       path: '/',
       fullPath: 'http://localhost:3000',
@@ -27,6 +27,7 @@ async function testAI() {
         {
           type: 'GIVEN',
           description: 'test setup',
+          action: 'test setup',
           hasCallback: true,
           assert: async () => {
             console.log('Callback executed: GIVEN step');
@@ -35,6 +36,7 @@ async function testAI() {
         {
           type: 'WHEN',
           description: 'action performed',
+          action: 'action performed',
           hasCallback: true,
           assert: async () => {
             console.log('Callback executed: WHEN step');

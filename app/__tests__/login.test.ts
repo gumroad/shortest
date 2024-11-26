@@ -1,4 +1,4 @@
-import { define, UITestBuilder, expect } from 'shortest';
+import { UITestBuilder } from 'shortest';
 import { db } from "@/lib/db/drizzle";
 import { sql } from "drizzle-orm";
 import dotenv from "dotenv";
