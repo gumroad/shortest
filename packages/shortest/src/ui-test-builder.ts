@@ -28,15 +28,15 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this.suiteName;
   }
 
-  private isAssertFunction(value: any): value is () => Promise<void> {
+  private isCallbackFunction(value: any): value is () => Promise<void> {
     return typeof value === 'function';
   }
 
   private createStep(
     type: TestStep['type'],
     description: string,
-    assertOrPayload?: (() => Promise<void>) | T,
-    assert?: () => Promise<void>
+    callbackOrPayload?: (() => Promise<void>) | T,
+    callback?: () => Promise<void>
   ): TestStep {
     const baseStep = {
       type,
@@ -44,36 +44,38 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
       action: description
     };
 
-    if (!assertOrPayload) {
+    if (!callbackOrPayload) {
       return baseStep;
     }
 
-    if (this.isAssertFunction(assertOrPayload)) {
+    if (this.isCallbackFunction(callbackOrPayload)) {
       return {
         ...baseStep,
-        assert: assertOrPayload
+        callback: callbackOrPayload,
+        hasCallback: true
       };
     }
 
     return {
       ...baseStep,
-      payload: assertOrPayload,
-      assert
+      payload: callbackOrPayload,
+      callback,
+      hasCallback: !!callback
     };
   }
 
-  given(description: string, assertOrPayload?: (() => Promise<void>) | T, assert?: () => Promise<void>): this {
-    this.steps.push(this.createStep('GIVEN', description, assertOrPayload, assert));
+  given(description: string, callbackOrPayload?: (() => Promise<void>) | T, callback?: () => Promise<void>): this {
+    this.steps.push(this.createStep('GIVEN', description, callbackOrPayload, callback));
     return this;
   }
 
-  when(description: string, assertOrPayload?: (() => Promise<void>) | T, assert?: () => Promise<void>): this {
-    this.steps.push(this.createStep('WHEN', description, assertOrPayload, assert));
+  when(description: string, callbackOrPayload?: (() => Promise<void>) | T, callback?: () => Promise<void>): this {
+    this.steps.push(this.createStep('WHEN', description, callbackOrPayload, callback));
     return this;
   }
 
-  expect(description: string, assertOrPayload?: (() => Promise<void>) | T, assert?: () => Promise<void>): this {
-    this.steps.push(this.createStep('EXPECT', description, assertOrPayload, assert));
+  expect(description: string, callbackOrPayload?: (() => Promise<void>) | T, callback?: () => Promise<void>): this {
+    this.steps.push(this.createStep('EXPECT', description, callbackOrPayload, callback));
     return this;
   }
 
@@ -99,19 +101,20 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     type: TestStep['type'], 
     action: string, 
     payload?: any,
-    assert?: () => Promise<void>
+    callback?: () => Promise<void>
   ): Promise<void> {
     this.steps.push({ 
       type, 
       description: action,
       action,
       payload, 
-      assert 
+      callback,
+      hasCallback: !!callback
     });
     
-    if (assert) {
+    if (callback) {
       try {
-        await assert();
+        await callback();
       } catch (error: any) {
         throw error;
       }
