@@ -1,4 +1,4 @@
-import { BrowserManager } from '../src/browser/browser-manager';
+import { BrowserManager } from '../src/browser/manager';
 import { BrowserTool } from '../src/browser/browser';
 import { initialize } from '../src/index';
 import pc from 'picocolors';
