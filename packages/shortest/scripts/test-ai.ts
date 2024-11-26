@@ -1,78 +1,87 @@
-import { BrowserManager } from '../src/core/browser-manager';
-import { BrowserTool } from '../src/browser-use/browser';
-import { defaultConfig, initialize } from '../src/index';
 import { AIClient } from '../src/ai/ai';
-import Anthropic from '@anthropic-ai/sdk';
+import { BrowserTool } from '../src/browser-use/browser';
+import { BrowserManager } from '../src/core/browser-manager';
+import { defaultConfig, initialize } from '../src/index';
+import { ParsedTest } from '../src/types';
 import pc from 'picocolors';
 
-async function testBrowser() {
+async function testAI() {
+  console.log(pc.cyan('\n🧪 Testing AI Integration'));
+  console.log(pc.cyan('======================='));
+
   const browserManager = new BrowserManager();
-  
-  const apiKey = defaultConfig.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error(pc.red('Error: Anthropic API key not found in config or environment'));
-    process.exit(1);
-  }
 
   try {
     await initialize();
-    console.log(pc.cyan('🚀 Launching browser...'));
+    console.log('🚀 Launching browser...');
     const context = await browserManager.launch();
     const page = context.pages()[0];
-    
-    const browserTool = new BrowserTool(
-      page,
-      browserManager,
-      {
-        width: 1920, 
-        height: 940
-      }
-    );
 
-    // Initialize AI client
-    const aiClient = new AIClient({
-      apiKey,
-      model: 'claude-3-5-sonnet-20241022',
-      maxMessages: 10
+    // Mock test data with callback
+    const mockTest: ParsedTest = {
+      suiteName: 'Test Suite',
+      path: '/',
+      fullPath: 'http://localhost:3000',
+      testName: 'Test with callback',
+      steps: [
+        {
+          type: 'GIVEN',
+          description: 'test setup',
+          hasCallback: true,
+          assert: async () => {
+            console.log('Callback executed: GIVEN step');
+          }
+        },
+        {
+          type: 'WHEN',
+          description: 'action performed',
+          hasCallback: true,
+          assert: async () => {
+            console.log('Callback executed: WHEN step');
+          }
+        }
+      ]
+    };
+
+    const browserTool = new BrowserTool(page, browserManager, {
+      width: 1920,
+      height: 1080,
+      testContext: {
+        currentTest: mockTest,
+        currentStepIndex: 0,
+        testName: mockTest.testName
+      }
     });
 
-    // Define callbacks with metadata logging
-    const outputCallback = (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
-      if (content.type === 'text') {
-        console.log(pc.yellow('🤖 Assistant:'), content.text);
-      }
-    };
+    // Test first callback
+    console.log('\n🔍 Testing first callback:');
+    const result = await browserTool.execute({ 
+      action: 'run_callback' 
+    });
+    console.log('Result:', result);
 
-    const toolOutputCallback = (name: string, input: any) => {
-      console.log(pc.yellow('🔧 Tool Use:'), name, input);
-      if (input.metadata) {
-        console.log(pc.yellow('Tool Metadata:'), input.metadata);
-      }
-    };
+    // Update test context for second callback
+    browserTool.updateTestContext({
+      currentTest: mockTest,
+      currentStepIndex: 1,
+      testName: mockTest.testName
+    });
 
-    // Run test
-    const testPrompt = `Validate the login functionality of the website you see
-    using github login button
-    for username argo.mohrad@gmail.com and password: M2@rad99308475
-    `;
-    
-    const result = await aiClient.processAction(
-      testPrompt,
-      browserTool,
-      outputCallback,
-      toolOutputCallback
-    );
+    // Test second callback
+    console.log('\n🔍 Testing second callback:');
+    const result2 = await browserTool.execute({ 
+      action: 'run_callback' 
+    });
+    console.log('Result:', result2);
 
-    console.log(pc.green('✅ Test complete'));
-    
   } catch (error) {
     console.error(pc.red('❌ Test failed:'), error);
   } finally {
-    console.log(pc.cyan('\n🧹 Cleaning up...'));
+    console.log('\n🧹 Cleaning up...');
     await browserManager.close();
   }
 }
 
-console.log(pc.cyan('🧪 Browser Integration Test'));
-console.log(pc.cyan('==========================='));
-testBrowser().catch(console.error);
+console.log('🤖 AI Integration Test');
+console.log('=====================');
+testAI().catch(console.error);

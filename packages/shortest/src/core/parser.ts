@@ -25,6 +25,7 @@ export class TestParser {
         tests: builders.map((builder: UITestBuilderInterface) => this.parseTestBuilder(builder))
       };
       
+      // console.log(`Test Suite: ${suiteName}`);
       suite.tests.forEach(test => this.generateTestPrompt(test, suiteName));
       
       this.processedSuites.add(suiteName);
@@ -38,8 +39,20 @@ export class TestParser {
     const steps: ParsedTestStep[] = builder.steps.map((step: any) => ({
       type: step.type,
       description: typeof step.action === 'string' ? step.action : 'SET_STATE',
-      payload: step.payload
+      payload: step.payload,
+      hasCallback: !!step.assert,
+      assert: step.assert
     }));
+
+    // console.log('\n🔍 Parsed Steps:');
+    // steps.forEach((step, index) => {
+    //   console.log(`Step ${index + 1}:`, {
+    //     type: step.type,
+    //     description: step.description,
+    //     payload: step.payload,
+    //     hasCallback: step.hasCallback
+    //   });
+    // });
 
     return {
       suiteName: builder.getSuiteName(),
@@ -50,24 +63,23 @@ export class TestParser {
     };
   }
 
-  generateTestPrompt(test: ParsedTest, defineDescription: string): string {
+  generateTestPrompt(test: ParsedTest, suiteName: string): string {
+    const steps = test.steps.map(step => {
+      const stepStr = `${step.type}: "${step.description}"`;
+      const payloadInfo = step.payload ? ` with payload ${JSON.stringify(step.payload)}` : '';
+      const callbackInfo = step.hasCallback ? ' [HAS_CALLBACK]' : '';
+      return `${stepStr}${payloadInfo}${callbackInfo}`;
+    }).join('\n');
+
     return [
-      `Define: ${defineDescription}`,
-      `Test Case: ${test.testName}`,
-      `URL: ${test.fullPath}`,
-      `Context: ${test.suiteName}`,
+      `Context: ${suiteName}`,
       'Steps:',
-      ...test.steps.map((step, index) => {
-        let stepStr = `${index + 1}. ${step.type}: "${step.description}"`;
-        if (step.payload) {
-          stepStr += `\n   ${JSON.stringify(step.payload)}`;
-        }
-        return stepStr;
-      }),
+      steps,
       'Expected Results:',
-      ...test.steps
+      test.steps
         .filter(step => step.type === 'EXPECT')
         .map(exp => `- ${exp.description}`)
+        .join('\n')
     ].join('\n');
   }
 } 

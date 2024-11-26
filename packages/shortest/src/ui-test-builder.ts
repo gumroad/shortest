@@ -28,39 +28,31 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this.suiteName;
   }
 
-  given(action?: string, payload?: T | (() => Promise<void>), assert?: () => Promise<void>): this {
-    if (action) {
-      if (payload && typeof payload === 'function') {
-        const assertFn = payload as () => Promise<void>;
-        this.addStep('GIVEN', action, undefined, assertFn);
-      } else {
-        this.addStep('GIVEN', action, payload as T, assert);
-      }
-    }
+  given(description: string, payload?: any, assert?: () => Promise<void>): this {
+    this.steps.push({
+      type: 'GIVEN',
+      action: description,
+      payload,
+      assert
+    });
     return this;
   }
 
-  when(action?: string, payload?: T | (() => Promise<void>), assert?: () => Promise<void>): this {
-    if (action) {
-      if (payload && typeof payload === 'function') {
-        const assertFn = payload as () => Promise<void>;
-        this.addStep('WHEN', action, undefined, assertFn);
-      } else {
-        this.addStep('WHEN', action, payload as T, assert);
-      }
-    }
+  when(description: string, assert?: () => Promise<void>): this {
+    this.steps.push({
+      type: 'WHEN',
+      action: description,
+      assert
+    });
     return this;
   }
 
-  expect(assertion?: string, payload?: T | (() => Promise<void>), assert?: () => Promise<void>): this {
-    if (assertion) {
-      if (payload && typeof payload === 'function') {
-        const assertFn = payload as () => Promise<void>;
-        this.addStep('EXPECT', assertion, undefined, assertFn);
-      } else {
-        this.addStep('EXPECT', assertion, payload as T, assert);
-      }
-    }
+  expect(description: string, assert?: () => Promise<void>): this {
+    this.steps.push({
+      type: 'EXPECT',
+      action: description,
+      assert
+    });
     return this;
   }
 
@@ -88,16 +80,11 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     payload?: any,
     assert?: () => Promise<void>
   ): Promise<void> {
-    // Store step
     this.steps.push({ type, action, payload, assert });
-
-    // Execute assertion immediately if present
     if (assert) {
       try {
-        // Just execute the function, don't wrap or modify it
         await assert();
       } catch (error: any) {
-        // Just rethrow the original error
         throw error;
       }
     }
