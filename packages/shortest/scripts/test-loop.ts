@@ -1,4 +1,4 @@
-import { BrowserManager } from '../src/browser/browser-manager';
+import { BrowserManager } from '../src/browser/manager';
 import { BrowserTool } from '../src/browser/browser';
 import { defaultConfig, initialize } from '../src/index';
 import Anthropic from '@anthropic-ai/sdk';

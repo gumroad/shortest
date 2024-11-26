@@ -1,4 +1,4 @@
-import { BrowserManager } from '../src/browser/browser-manager';
+import { BrowserManager } from '../src/browser/manager';
 import { BrowserTool } from '../src/browser/browser';
 import { GitHubTool } from '../src/browser/integrations/github';
 import { initialize } from '../src/index';
