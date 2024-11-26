@@ -1,6 +1,6 @@
 import { AIClient } from '../src/ai/ai';
-import { BrowserTool } from '../src/browser-use/browser';
-import { BrowserManager } from '../src/core/browser-manager';
+import { BrowserTool } from '../src/browser/browser';
+import { BrowserManager } from '../src/browser/browser-manager';
 import { defaultConfig, initialize } from '../src/index';
 import { TestCase } from '../src/types';
 import pc from 'picocolors';
