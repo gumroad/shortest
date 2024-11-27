@@ -158,7 +158,7 @@ export class TestRunner {
             model: 'claude-3-5-sonnet-20241022',
             maxMessages: 10,
             debug: this.debugAI
-          });
+          }, this.debugAI);
 
           try {
             const prompt = UITestBuilder.generateTestPrompt(test, suite.name);

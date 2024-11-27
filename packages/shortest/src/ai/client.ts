@@ -9,13 +9,15 @@ export class AIClient {
   private client: Anthropic;
   private model: string;
   private maxMessages: number;
+  private debugMode: boolean;
 
-  constructor(config: AIConfig) {
+  constructor(config: AIConfig, debugMode: boolean = false) {
     this.client = new Anthropic({
       apiKey: config.apiKey
     });
     this.model = 'claude-3-5-sonnet-20241022';
     this.maxMessages = 10;
+    this.debugMode = debugMode;
   }
 
   async processAction(
@@ -49,7 +51,9 @@ export class AIClient {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
     // Log the conversation
-    console.log(pc.cyan('\n🤖 Prompt:'), pc.dim(prompt));
+    if (this.debugMode) {
+      console.log(pc.cyan('\n🤖 Prompt:'), pc.dim(prompt));
+    }
 
     messages.push({
       role: 'user',
@@ -70,11 +74,13 @@ export class AIClient {
         });
 
         // Log AI response
-        response.content.forEach(block => {
-          if (block.type === 'text') {
-            console.log(pc.green('\n🤖 AI:'), pc.dim((block as any).text));
-          }
-        });
+        if (this.debugMode) {
+          response.content.forEach(block => {
+            if (block.type === 'text') {
+              console.log(pc.green('\n🤖 AI:'), pc.dim((block as any).text));
+            }
+          });
+        }
 
         // Log and callback for assistant's response
         if (outputCallback) {
