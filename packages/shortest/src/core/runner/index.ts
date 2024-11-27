@@ -3,7 +3,7 @@ import { resolve } from 'path';
 import { TestCompiler } from '../compiler';
 import { BrowserManager } from '../../browser/manager';
 import { BrowserTool } from '../../browser/core/browser-tool';
-import { AIClient } from '../../ai/ai';
+import { AIClient } from '../../ai/client';
 import { initialize, getConfig } from '../../index';
 import { ShortestConfig, TestContext } from '../../types';
 import { Logger } from '../../utils/logger';

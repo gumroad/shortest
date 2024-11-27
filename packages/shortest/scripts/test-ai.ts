@@ -1,4 +1,4 @@
-import { AIClient } from '../src/ai/ai';
+import { AIClient } from '../src/ai/client';
 import { BrowserTool } from '../src/browser/core/browser-tool';
 import { BrowserManager } from '../src/browser/manager';
 import { defaultConfig, initialize } from '../src/index';
