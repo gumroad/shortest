@@ -28,11 +28,11 @@
     "prepare": "pnpm exec playwright install && pnpm build && chmod +x dist/cli/bin.js",
     "preinstall": "pnpm build",
     "postinstall": "pnpm exec playwright install",
-    "test:ai": "tsx scripts/test-ai.ts",
-    "test:browser": "tsx scripts/test-browser.ts",
-    "test:coordinates": "tsx scripts/test-coordinates.ts",
-    "test:github": "tsx scripts/test-github.ts",
-    "test:assertion": "tsx scripts/test-assertion.ts"
+    "test:ai": "tsx tests/test-ai.ts",
+    "test:browser": "tsx tests/test-browser.ts",
+    "test:coordinates": "tsx tests/test-coordinates.ts",
+    "test:github": "tsx tests/test-github.ts",
+    "test:assertion": "tsx tests/test-assertion.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.32.0",
