@@ -1,5 +1,5 @@
 import { AIClient } from '../src/ai/ai';
-import { BrowserTool } from '../src/browser/browser';
+import { BrowserTool } from '../src/browser/core/browser-tool';
 import { BrowserManager } from '../src/browser/manager';
 import { defaultConfig, initialize } from '../src/index';
 import { TestCase } from '../src/types';

@@ -1,5 +1,5 @@
 import { BrowserManager } from '../src/browser/manager';
-import { BrowserTool } from '../src/browser/browser';
+import { BrowserTool } from '../src/browser/core/browser-tool';
 import { GitHubTool } from '../src/browser/integrations/github';
 import { initialize } from '../src/index';
 import pc from 'picocolors';

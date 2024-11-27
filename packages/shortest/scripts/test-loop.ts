@@ -1,5 +1,5 @@
 import { BrowserManager } from '../src/browser/manager';
-import { BrowserTool } from '../src/browser/browser';
+import { BrowserTool } from '../src/browser/core/browser-tool';
 import { defaultConfig, initialize } from '../src/index';
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from '../src/ai/system-prompt';

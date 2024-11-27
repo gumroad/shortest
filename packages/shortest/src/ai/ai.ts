@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { AIConfig } from '../types/ai';
 import { SYSTEM_PROMPT } from './system-prompt';
-import { BrowserTool } from '../browser/browser';
+import { BrowserTool } from '../browser/core/browser-tool';
 
 export class AIClient {
   private client: Anthropic;
