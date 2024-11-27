@@ -20,21 +20,22 @@
     "dist"
   ],
   "scripts": {
+    "setup": "node ./dist/cli/setup.js",
     "build": "rm -rf dist && pnpm build:types && pnpm build:js && pnpm build:cli",
-    "postinstall": "node ./dist/cli/setup.js",
+    "prepublishOnly": "pnpm build && chmod +x dist/cli/bin.js",
     "build:types": "tsc --emitDeclarationOnly",
     "build:js": "pnpm build:main && pnpm build:cjs",
     "build:main": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
     "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
     "build:cli": "esbuild src/cli/bin.ts src/cli/setup.ts --bundle --platform=node --format=esm --outdir=dist/cli --metafile=dist/meta-cli.json --external:fsevents --external:chokidar --external:glob --external:esbuild --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:otplib --external:picocolors --external:punycode",
     "dev": "pnpm build:types --watch",
-    "prepublishOnly": "pnpm build && chmod +x dist/cli/bin.js",
     "test:ai": "tsx tests/test-ai.ts",
     "test:browser": "tsx tests/test-browser.ts",
     "test:coordinates": "tsx tests/test-coordinates.ts",
     "test:github": "tsx tests/test-github.ts",
     "test:assertion": "tsx tests/test-assertion.ts",
-    "analyze": "esbuild-visualizer --metadata dist/meta-cli.json --open"
+    "analyze": "esbuild-visualizer --metadata dist/meta-cli.json --open",
+    "postinstall": "node ./dist/cli/setup.js"
   },
   "dependencies": {
     "glob": "^10.3.10",
