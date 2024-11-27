@@ -4,7 +4,7 @@ import { TestRunner } from '../core/runner';
 import { GitHubTool } from '../browser/integrations/github';
 import pc from 'picocolors';
 
-const VALID_FLAGS = ['--headless', '--github-code'];
+const VALID_FLAGS = ['--headless', '--github-code', '--debug-ai'];
 const VALID_PARAMS = ['--target', '--secret'];
 
 async function main() {
@@ -54,7 +54,9 @@ async function main() {
   const targetUrl = params.get('--target');
   const testPattern = otherArgs.find(arg => !arg.startsWith('--'));
   
-  const runner = new TestRunner(process.cwd(), true, headless, targetUrl);
+  const debugAI = otherArgs.includes('--debug-ai');
+
+  const runner = new TestRunner(process.cwd(), true, headless, targetUrl, debugAI);
   
   try {
     if (testPattern) {

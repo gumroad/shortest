@@ -3,6 +3,7 @@ import { AIConfig } from '../types/ai';
 import { SYSTEM_PROMPT } from './prompts';
 import { BrowserTool } from '../browser/core/browser-tool';
 import { AITools } from './tools';
+import pc from 'picocolors';
 
 export class AIClient {
   private client: Anthropic;
@@ -47,7 +48,9 @@ export class AIClient {
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
-    // Add initial message
+    // Log the conversation
+    console.log(pc.cyan('\n🤖 Prompt:'), pc.dim(prompt));
+
     messages.push({
       role: 'user',
       content: prompt
@@ -64,6 +67,13 @@ export class AIClient {
           system: SYSTEM_PROMPT,
           tools: [...AITools],
           betas: ["computer-use-2024-10-22"]
+        });
+
+        // Log AI response
+        response.content.forEach(block => {
+          if (block.type === 'text') {
+            console.log(pc.green('\n🤖 AI:'), pc.dim((block as any).text));
+          }
         });
 
         // Log and callback for assistant's response
