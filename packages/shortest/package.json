@@ -56,5 +56,23 @@
     "@anthropic-ai/sdk": "0.32.0",
     "expect": "^29.7.0",
     "dotenv": "^16.4.5"
-  }
+  },
+  "author": "Antiwork",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anti-work/shortest"
+  },
+  "keywords": [
+    "testing",
+    "e2e",
+    "ai",
+    "automation",
+    "browser",
+    "playwright"
+  ],
+  "bugs": {
+    "url": "https://github.com/anti-work/shortest/issues"
+  },
+  "homepage": "https://github.com/anti-work/shortest#readme"
 }
