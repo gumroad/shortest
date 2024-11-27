@@ -1,6 +1,6 @@
-import { build, transformSync, BuildOptions } from 'esbuild';
+import { build, BuildOptions } from 'esbuild';
 import { join, resolve } from 'path';
-import { mkdirSync, existsSync, readFileSync, writeFileSync } from 'fs';
+import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { defaultConfig } from '../../types';
 
