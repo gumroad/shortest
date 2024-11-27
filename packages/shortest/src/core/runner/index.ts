@@ -9,6 +9,7 @@ import { ShortestConfig, TestContext } from '../../types';
 import { Logger } from '../../utils/logger';
 import Anthropic from '@anthropic-ai/sdk';
 import { UITestBuilder } from '../builder';
+import { TestRegistry } from '../../index';
 
 interface TestResult {
   result: 'pass' | 'fail';
@@ -110,6 +111,9 @@ export class TestRunner {
 
   private async executeTest(file: string) {
     try {
+      // Clear registry before each test file
+      TestRegistry.clear();
+
       await initialize();
       const config = getConfig();
       const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
