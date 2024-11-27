@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { join } from 'path';
 import { expect as jestExpect } from 'expect';
 import { TestCompiler } from './core/compiler';
-import { UITestBuilder } from './ui-test-builder';
+import { UITestBuilder } from './core/builder';
 import { 
   UITestBuilderInterface,
   ShortestConfig,
