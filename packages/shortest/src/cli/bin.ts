@@ -4,11 +4,59 @@ import { TestRunner } from '../core/runner';
 import { GitHubTool } from '../browser/integrations/github';
 import pc from 'picocolors';
 
-const VALID_FLAGS = ['--headless', '--github-code', '--debug-ai'];
+const VALID_FLAGS = ['--headless', '--github-code', '--debug-ai', '--help', '-h'];
 const VALID_PARAMS = ['--target', '--secret'];
+
+function showHelp() {
+  console.log(`
+${pc.bold('Shortest')} - AI-powered end-to-end testing framework
+${pc.dim('https://github.com/anti-work/shortest')}
+
+${pc.bold('Usage:')}
+  shortest [options] [test-pattern]
+
+${pc.bold('Options:')}
+  --headless          Run tests in headless browser mode
+  --debug-ai          Show AI conversation and decision process
+  --target=<url>      Set target URL for tests (default: http://localhost:3000)
+  --github-code       Generate GitHub 2FA code for authentication
+
+${pc.bold('Authentication:')}
+  --secret=<key>      GitHub TOTP secret key (or use .env.local)
+
+${pc.bold('Examples:')}
+  ${pc.dim('# Run all tests')}
+  shortest
+
+  ${pc.dim('# Run specific test file')}
+  shortest login.test.ts
+
+  ${pc.dim('# Run tests in headless mode')}
+  shortest --headless
+
+  ${pc.dim('# Generate GitHub 2FA code')}
+  shortest --github-code --secret=<OTP_SECRET>
+
+${pc.bold('Environment Setup:')}
+  Required variables in .env.local:
+  - ANTHROPIC_API_KEY     Required for AI test execution
+  - GITHUB_TOTP_SECRET    Required for GitHub authentication
+  - GITHUB_USERNAME       GitHub login credentials
+  - GITHUB_PASSWORD       GitHub login credentials
+
+${pc.bold('Documentation:')}
+  Visit ${pc.cyan('https://github.com/anti-work/shortest')} for detailed setup and usage
+`);
+}
 
 async function main() {
   const args = process.argv.slice(2);
+  
+  // Check for help flag first
+  if (args.includes('--help') || args.includes('-h')) {
+    showHelp();
+    process.exit(0);
+  }
   
   // Parse args with values
   const params = new Map<string, string>();
