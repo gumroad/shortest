@@ -2,7 +2,7 @@ import { Reporter } from './reporter';
 import { TestCompiler } from './compiler';
 import { TestParser } from './parser';
 import { BrowserManager } from '../browser/manager';
-import { BrowserTool } from '../browser/browser';
+import { BrowserTool } from '../browser/core/browser-tool';
 import { AIClient } from '../ai/ai';
 import { initialize, getConfig } from '../index';
 import { TestContext } from '../types';

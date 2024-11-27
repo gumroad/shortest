@@ -1,5 +1,14 @@
 import { TestContext } from "./test";
 
+export interface BrowserToolInterface {
+  waitForSelector(selector: string, options?: { timeout: number }): Promise<void>;
+  fill(selector: string, value: string): Promise<void>;
+  press(selector: string, key: string): Promise<void>;
+  findElement(selector: string): Promise<any>;
+  waitForNavigation(options?: { timeout: number }): Promise<void>;
+  click(selector: string): Promise<void>;
+}
+
 export type BrowserAction = 
   | "mouse_move"
   | "left_click"

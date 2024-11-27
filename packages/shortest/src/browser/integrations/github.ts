@@ -1,6 +1,6 @@
 import { authenticator } from 'otplib';
 import dotenv from 'dotenv';
-import { BrowserTool } from '../browser';
+import { BrowserToolInterface } from '../../types/browser';
 
 export class GitHubTool {
   private totpSecret: string;
@@ -36,7 +36,7 @@ export class GitHubTool {
     }
   }
 
-  async GithubLogin(browserTool: BrowserTool, credentials: { username: string; password: string }): Promise<{ success: boolean; error?: string }> {
+  async GithubLogin(browserTool: BrowserToolInterface, credentials: { username: string; password: string }): Promise<{ success: boolean; error?: string }> {
     try {
       // Wait for login form
       await browserTool.waitForSelector(this.selectors.loginForm, { timeout: 10000 });

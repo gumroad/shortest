@@ -6,17 +6,15 @@ declare global {
   }
 }
 
-// browser-tool.ts
 import { Page } from 'playwright';
-import { BaseBrowserTool, ToolError } from './core';
-import { ActionInput, ToolResult } from '../types/browser';
-import { BetaToolType } from '../types/browser';
+import { BaseBrowserTool, ToolError } from './index';
+import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
 import { writeFileSync, mkdirSync } from 'fs';
-import { rm } from 'fs/promises';
 import { join } from 'path';
-import { GitHubTool } from './integrations/github';
-import { BrowserManager } from './manager';
-import { TestContext, BrowserToolConfig } from '../types/index';
+import { GitHubTool } from '../integrations/github';
+import { BrowserManager } from '../manager';
+import { TestContext, BrowserToolConfig } from '../../types';
+import * as actions from '../actions';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -29,31 +27,6 @@ export class BrowserTool extends BaseBrowserTool {
   private githubTool: GitHubTool;
   private viewport: { width: number; height: number };
   private testContext?: TestContext;
-  
-  private readonly keyboardShortcuts: Record<string, string | string[]> = {
-    'ctrl+l': ['Control', 'l'],
-    'ctrl+a': ['Control', 'a'],
-    'ctrl+c': ['Control', 'c'],
-    'ctrl+v': ['Control', 'v'],
-    'alt+tab': ['Alt', 'Tab'],
-    'return': ['Enter'],
-    'enter': ['Enter'],
-    'esc': ['Escape'],
-    'tab': ['Tab'],
-    'delete': ['Delete'],
-    'backspace': ['Backspace'],
-    'space': [' '],
-    'arrowup': ['ArrowUp'],
-    'arrowdown': ['ArrowDown'],
-    'arrowleft': ['ArrowLeft'],
-    'arrowright': ['ArrowRight']
-  };
-
-  // Add scaling ratios based on actual vs AI coordinates
-  private readonly scaleRatio = {
-    x: 1543 / 1170,  // ≈ 1.318
-    y: 32 / 24       // ≈ 1.333
-  };
 
   constructor(
     page: Page, 
@@ -73,13 +46,9 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async initialize(): Promise<void> {
-    // Set up navigation listener with error handling
     this.page.on('load', async () => {
       try {
-        // Wait for page to stabilize
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Try to initialize cursor
         await this.page.evaluate(() => {
           if (!document.getElementById('ai-cursor')) {
             const cursor = document.createElement('div');
@@ -115,20 +84,12 @@ export class BrowserTool extends BaseBrowserTool {
     });
   }
 
-  private async showClickAnimation(): Promise<void> {
-    try {
-      await this.page.evaluate(() => {
-        const cursor = document.getElementById('ai-cursor');
-        if (cursor) {
-          cursor.style.transform = 'translate(-50%, -50%) scale(0.8)';
-          setTimeout(() => {
-            cursor.style.transform = 'translate(-50%, -50%) scale(1)';
-          }, 100);
-        }
-      });
-    } catch (error) {
-      // fail silently
-    }
+  public async click(selector: string): Promise<void> {
+    await this.page.click(selector);
+  }
+
+  public async clickAtCoordinates(x: number, y: number): Promise<void> {
+    await actions.click(this.page, x, y);
   }
 
   async execute(input: ActionInput): Promise<ToolResult> {
@@ -142,7 +103,7 @@ export class BrowserTool extends BaseBrowserTool {
           if (!coords) {
             throw new ToolError('Coordinates required for mouse_move');
           }
-          await this.mouseMove(coords[0], coords[1]);
+          await actions.mouseMove(this.page, coords[0], coords[1]);
           this.lastMousePosition = [coords[0], coords[1]];
           output = `Mouse moved to (${coords[0]}, ${coords[1]})`;
           break;
@@ -152,7 +113,7 @@ export class BrowserTool extends BaseBrowserTool {
         case 'middle_click':
         case 'double_click':
           const clickCoords = input.coordinates || this.lastMousePosition;
-          await this.click(input.action, clickCoords[0], clickCoords[1]);
+          await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
           output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
           break;
 
@@ -160,12 +121,12 @@ export class BrowserTool extends BaseBrowserTool {
           if (!input.coordinates) {
             throw new ToolError('Coordinates required for left_click_drag');
           }
-          await this.dragMouse(input.coordinates[0], input.coordinates[1]);
+          await actions.dragMouse(this.page, input.coordinates[0], input.coordinates[1]);
           output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
           break;
 
         case 'cursor_position':
-          const position = await this.getCursorPosition();
+          const position = await actions.getCursorPosition(this.page);
           output = `Cursor position: (${position[0]}, ${position[1]})`;
           break;
 
@@ -190,13 +151,11 @@ export class BrowserTool extends BaseBrowserTool {
           await this.page.waitForTimeout(100);
           
           const keyText = input.text.toLowerCase();
-          // Check if it's a key combination or a mapped key
-          const keys = Array.isArray(this.keyboardShortcuts[keyText]) ? 
-            this.keyboardShortcuts[keyText] : 
-            [this.keyboardShortcuts[keyText] || input.text];
+          const keys = Array.isArray(actions.keyboardShortcuts[keyText]) ? 
+            actions.keyboardShortcuts[keyText] : 
+            [actions.keyboardShortcuts[keyText] || input.text];
 
           if (Array.isArray(keys)) {
-            // Handle key combination
             for (const key of keys) {
               await this.page.keyboard.down(key);
             }
@@ -204,7 +163,6 @@ export class BrowserTool extends BaseBrowserTool {
               await this.page.keyboard.up(key);
             }
           } else {
-            // Handle single key
             await this.page.keyboard.press(keys);
           }
           
@@ -225,13 +183,8 @@ export class BrowserTool extends BaseBrowserTool {
           break;
 
         case 'clear_session':
-          // Get new context from browser manager
           const newContext = await this.browserManager.recreateContext();
-          
-          // Get the first page from new context
           this.page = newContext.pages()[0] || await newContext.newPage();
-          
-          // Clear browser storage
           await this.page.evaluate(() => {
             localStorage.clear();
             sessionStorage.clear();
@@ -276,59 +229,12 @@ export class BrowserTool extends BaseBrowserTool {
     }
   }
 
-  private async mouseMove(x: number, y: number): Promise<void> {
-    // Simple coordinate validation
-    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0) {
-      throw new ToolError('Coordinates must be non-negative integers');
-    }
-    
-    // Scale coordinates
-    const scaledX = Math.round(x * this.scaleRatio.x);
-    const scaledY = Math.round(y * this.scaleRatio.y);
-    
-    // Direct mouse movement with scaled coordinates
-    await this.page.mouse.move(scaledX, scaledY);
-    this.lastMousePosition = [scaledX, scaledY];
-    await this.page.waitForTimeout(100);
-  }
-
-  public async click(selector: string): Promise<void>;
-  public async click(action: string, x: number, y: number): Promise<void>;
-  public async click(actionOrSelector: string, x?: number, y?: number): Promise<void> {
-    if (x !== undefined && y !== undefined) {
-      const scaledX = Math.round(x * this.scaleRatio.x);
-      const scaledY = Math.round(y * this.scaleRatio.y);
-      
-      await this.mouseMove(x, y);
-      await this.page.mouse.click(scaledX, scaledY);
-      await this.showClickAnimation();
-    } else {
-      await this.page.click(actionOrSelector);
-    }
-  }
-
-  private async dragMouse(x: number, y: number): Promise<void> {
-    const scaledX = Math.round(x * this.scaleRatio.x);
-    const scaledY = Math.round(y * this.scaleRatio.y);
-    
-    await this.page.mouse.down();
-    await this.page.mouse.move(scaledX, scaledY);
-    await this.page.mouse.up();
-  }
-
-  private async getCursorPosition(): Promise<[number, number]> {
-    const position = await this.page.evaluate(() => {
-      return window.cursorPosition || { x: 0, y: 0 };
-    });
-    return [position.x, position.y];
-  }
-
   private async isPageReady(): Promise<boolean> {
     try {
       return await this.page.evaluate(() => {
         return document.readyState === 'complete' && 
                !document.querySelector('.loading') && 
-               !document.querySelector('.cl-loading') && // Check for Clerk loading
+               !document.querySelector('.cl-loading') && 
                Boolean(document.body);
       });
     } catch {
@@ -337,13 +243,12 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async getMetadata(): Promise<any> {
-    // Check page readiness first
     if (!await this.isPageReady()) {
       await this.page.waitForLoadState('networkidle');
-      await this.page.waitForTimeout(500); // Small buffer for any JS initialization
+      await this.page.waitForTimeout(500);
     }
 
-    const position = await this.getCursorPosition();
+    const position = await actions.getCursorPosition(this.page);
     const viewport = this.page.viewportSize() || { width: this.width, height: this.height };
 
     return {
@@ -393,7 +298,7 @@ export class BrowserTool extends BaseBrowserTool {
     };
   }
 
-  // New selector-based methods
+  // Selector-based methods
   public async waitForSelector(selector: string, options?: { timeout: number }): Promise<void> {
     await this.page.waitForSelector(selector, options);
   }
