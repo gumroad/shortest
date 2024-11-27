@@ -25,12 +25,14 @@ export class TestRunner {
   private compiler: TestCompiler;
   private browserManager: BrowserManager;
   private logger: Logger;
+  private debugAI: boolean;
 
-  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false, targetUrl?: string) {
+  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false, targetUrl?: string, debugAI = false) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
     this.targetUrl = targetUrl;
+    this.debugAI = debugAI;
     this.compiler = new TestCompiler();
     this.browserManager = new BrowserManager();
     this.logger = new Logger();
@@ -154,7 +156,8 @@ export class TestRunner {
           const aiClient = new AIClient({
             apiKey,
             model: 'claude-3-5-sonnet-20241022',
-            maxMessages: 10
+            maxMessages: 10,
+            debug: this.debugAI
           });
 
           try {
