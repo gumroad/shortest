@@ -21,36 +21,40 @@
   ],
   "scripts": {
     "build": "rm -rf dist && pnpm build:types && pnpm build:js && pnpm build:cli",
+    "postinstall": "node ./dist/cli/setup.js",
     "build:types": "tsc --emitDeclarationOnly",
-    "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents --external:chokidar --external:glob --external:esbuild --external:playwright --external:playwright-core --external:chromium-bidi",
-    "build:cli": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outfile=dist/cli/bin.js --external:fsevents --external:chokidar --external:glob --external:esbuild --banner:js='import { createRequire } from \"module\"; const require = createRequire(import.meta.url); import { fileURLToPath } from \"url\"; const __filename = fileURLToPath(import.meta.url); import { dirname } from \"path\"; const __dirname = dirname(__filename);' --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url",
+    "build:js": "pnpm build:main && pnpm build:cjs",
+    "build:main": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
+    "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
+    "build:cli": "esbuild src/cli/bin.ts src/cli/setup.ts --bundle --platform=node --format=esm --outdir=dist/cli --metafile=dist/meta-cli.json --external:fsevents --external:chokidar --external:glob --external:esbuild --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:otplib --external:picocolors --external:punycode",
     "dev": "pnpm build:types --watch",
-    "prepare": "pnpm exec playwright install && pnpm build && chmod +x dist/cli/bin.js",
-    "preinstall": "pnpm build",
-    "postinstall": "pnpm exec playwright install",
+    "prepublishOnly": "pnpm build && chmod +x dist/cli/bin.js",
     "test:ai": "tsx tests/test-ai.ts",
     "test:browser": "tsx tests/test-browser.ts",
     "test:coordinates": "tsx tests/test-coordinates.ts",
     "test:github": "tsx tests/test-github.ts",
-    "test:assertion": "tsx tests/test-assertion.ts"
+    "test:assertion": "tsx tests/test-assertion.ts",
+    "analyze": "esbuild-visualizer --metadata dist/meta-cli.json --open"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.32.0",
-    "ai": "^3.4.31",
-    "chokidar": "^3.5.3",
-    "chromium-bidi": "^0.5.2",
-    "esbuild": "^0.20.1",
     "glob": "^10.3.10",
-    "dotenv": "^16.4.5",
     "otplib": "^12.0.1",
-    "picocolors": "^1.0.0",
-    "playwright": "^1.42.1",
-    "expect": "^29.7.0"
+    "picocolors": "^1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.24",
     "tsx": "^4.7.1",
     "typescript": "~5.6.2",
-    "@types/jest": "^29.5.12"
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.24"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "playwright": "^1.42.1",
+    "esbuild": "^0.20.1",
+    "@anthropic-ai/sdk": "0.32.0",
+    "expect": "^29.7.0",
+    "dotenv": "^16.4.5"
   }
 }
