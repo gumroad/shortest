@@ -2,7 +2,7 @@ import { BrowserManager } from '../src/browser/manager';
 import { BrowserTool } from '../src/browser/core/browser-tool';
 import { defaultConfig, initialize } from '../src/index';
 import Anthropic from '@anthropic-ai/sdk';
-import { SYSTEM_PROMPT } from '../src/ai/system-prompt';
+import { SYSTEM_PROMPT } from '../src/ai/prompts';
 
 async function testBrowser() {
   const browserManager = new BrowserManager();
