@@ -1,7 +1,6 @@
 import { glob } from 'glob';
 import { resolve } from 'path';
 import { TestCompiler } from '../compiler';
-import { TestParser } from '../parser';
 import { BrowserManager } from '../../browser/manager';
 import { BrowserTool } from '../../browser/core/browser-tool';
 import { AIClient } from '../../ai/ai';
@@ -9,6 +8,7 @@ import { initialize, getConfig } from '../../index';
 import { ShortestConfig, TestContext } from '../../types';
 import { Logger } from '../../utils/logger';
 import Anthropic from '@anthropic-ai/sdk';
+import { UITestBuilder } from '../builder';
 
 interface TestResult {
   result: 'pass' | 'fail';
@@ -22,7 +22,6 @@ export class TestRunner {
   private forceHeadless: boolean;
   private targetUrl: string | undefined;
   private compiler: TestCompiler;
-  private parser: TestParser;
   private browserManager: BrowserManager;
   private logger: Logger;
 
@@ -32,7 +31,6 @@ export class TestRunner {
     this.forceHeadless = forceHeadless;
     this.targetUrl = targetUrl;
     this.compiler = new TestCompiler();
-    this.parser = new TestParser();
     this.browserManager = new BrowserManager();
     this.logger = new Logger();
   }
@@ -123,7 +121,7 @@ export class TestRunner {
       this.logger.startFile(file);
       const compiledPath = await this.compiler.compileFile(file);
       const module = await import(compiledPath);
-      const suites = await this.parser.parseModule(module);
+      const suites = await UITestBuilder.parseModule(module);
       
       for (const suite of suites) {
         this.logger.startSuite(suite.name);
@@ -156,7 +154,7 @@ export class TestRunner {
           });
 
           try {
-            const prompt = this.parser.generateTestPrompt(test, suite.name);
+            const prompt = UITestBuilder.generateTestPrompt(test, suite.name);
             const result = await aiClient.processAction(
               prompt,
               browserTool,
