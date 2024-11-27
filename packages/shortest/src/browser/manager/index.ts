@@ -6,7 +6,7 @@ import { mkdirSync, existsSync, rmSync } from 'fs';
 export class BrowserManager {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
-  private userDataDir = path.join(process.cwd(), '.browser-data');
+  private userDataDir = path.join(process.cwd(), '.shortest');
 
   async launch(): Promise<BrowserContext> {
     const config = getConfig();
