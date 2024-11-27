@@ -114,6 +114,13 @@ export class TestRegistry {
       this.suites.set(currentSuite, suite);
     }
   }
+
+  static clear() {
+    global.__shortest__.registry.suites.clear();
+    global.__shortest__.registry.currentSuite = null;
+    global.__shortest__.registry.beforeAllFns = [];
+    global.__shortest__.registry.afterAllFns = [];
+  }
 }
 
 export { UITestBuilder };
