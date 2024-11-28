@@ -168,6 +168,9 @@ importers:
         specifier: ^3.23.8
         version: 3.23.8
     devDependencies:
+      '@antiwork/shortest':
+        specifier: workspace:*
+        version: link:packages/shortest
       '@testing-library/jest-dom':
         specifier: ^6.5.0
         version: 6.5.0
@@ -192,9 +195,6 @@ importers:
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1(bufferutil@4.0.8)
-      shortest:
-        specifier: workspace:*
-        version: link:packages/shortest
       smee-client:
         specifier: ^2.0.3
         version: 2.0.3

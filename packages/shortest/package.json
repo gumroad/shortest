@@ -1,5 +1,5 @@
 {
-  "name": "shortest",
+  "name": "@antiwork/shortest",
   "version": "0.0.1",
   "description": "AI-powered natural language end-to-end testing framework",
   "type": "module",
