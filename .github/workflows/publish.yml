@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'packages/shortest/**'
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -15,22 +16,31 @@ jobs:
         working-directory: packages/shortest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: pnpm/action-setup@v4
         with:
           version: 9.7.1
+      
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
       
+      - name: Check npm token
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
       
       - name: Build
         run: pnpm build
       
       - name: Publish to NPM
-        run: pnpm publish --access public --no-git-checks
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
+          pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
