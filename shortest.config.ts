@@ -1,8 +1,8 @@
-import type { ShortestConfig } from 'shortest';
+import type { ShortestConfig } from '@antiwork/shortest';
 
 export default {
   browsers: [
-    { name: 'chrome', headless: true }
+    { name: 'chrome', headless: false }
   ],
   baseUrl: 'http://localhost:3000',
   testDir: ['app/__tests__'],

@@ -1,4 +1,4 @@
-import { UITestBuilder } from 'shortest';
+import { UITestBuilder } from '@antiwork/shortest';
 
 interface loginButton {
   url: string;
