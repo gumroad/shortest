@@ -1,4 +1,4 @@
-import { UITestBuilder } from 'shortest';
+import { UITestBuilder } from '@antiwork/shortest';
 import { db } from "@/lib/db/drizzle";
 
 interface User {
