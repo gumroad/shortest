@@ -1,4 +1,4 @@
-import { define, UITestBuilder, expect } from 'shortest';
+import { UITestBuilder } from 'shortest';
 import { db } from "@/lib/db/drizzle";
 import { sql } from "drizzle-orm";
 import dotenv from "dotenv";
@@ -39,5 +39,5 @@ define('Validate login feature implemented with Clerk', async () => {
         throw error; // Re-throw to fail the test
       }
     })
-    .expect('user should be redirected to /dashboard');
+    .expect('user should be redirected to /dashboard after logged in via Github');
 });

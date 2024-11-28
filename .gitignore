@@ -51,4 +51,4 @@ docker-compose.yml
 screenshots/
 
 # browser data
-.browser-data/
+.shortest/
