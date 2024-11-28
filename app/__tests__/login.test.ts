@@ -1,4 +1,4 @@
-import { UITestBuilder } from 'shortest';
+import { UITestBuilder } from '@antiwork/shortest';
 import { db } from "@/lib/db/drizzle";
 import { sql } from "drizzle-orm";
 import dotenv from "dotenv";
