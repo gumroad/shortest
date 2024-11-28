@@ -44,7 +44,7 @@ shortest login.test.ts     # Run specific test
 shortest --headless        # Run in headless mode
 ```
 
-## GitHub 2FA Setup
+## GitHub 2FA Login Setup
 For GitHub authentication tests:
 1. Get OTP secret from GitHub settings > Security > 2FA
 2. Add secret to `.env.local` or use CLI:
