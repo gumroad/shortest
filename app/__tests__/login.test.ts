@@ -39,5 +39,5 @@ define('Validate login feature implemented with Clerk', async () => {
         throw error; // Re-throw to fail the test
       }
     })
-    .expect('user should be redirected to /dashboard');
+    .expect('user should be redirected to /dashboard after logged in via Github');
 });

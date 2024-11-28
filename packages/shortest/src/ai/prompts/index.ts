@@ -19,7 +19,10 @@ Then you can ask for a screenshot to determine for your next action if anything 
 you will need to clear the browser data first. For that you can use the "clear_session" tool 
 that is provided to you via the tools api.
 
-4.IMPORTANT! There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a test step.
+4. If you need to test a login flow with Github 2fa, you need to call the "github_login" tool only after you have 
+seen the github login page. If you call the tool before, it will not work as expected.
+
+5.IMPORTANT! There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a test step.
 Whenever you see [HAS_CALLBACK] after the step description, you must call "run_callback" tool. Remember, only 
 call "run_callback" tool after you have completed the browser actions for that step otherwise the callback will not work as expected.
 When done, you can continue with the next step.
