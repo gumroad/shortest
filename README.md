@@ -15,7 +15,7 @@ This guide will help you set up the Shortest web app for local development.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/gumroad/shortest.git
+   git clone https://github.com/anti-work/shortest.git
    cd shortest
    ```
 
@@ -131,7 +131,7 @@ pnpm vitest
 
 
 ## Setup Guide for Running and Building Shortest Package Locally
-   
+
 When running `pnpm install` in the root, the `shortest` package will be built and added in the `node_modules` folder. However, in order to use the cli, you need to setup the cli locally as follows:
 
 # to install shortest package
