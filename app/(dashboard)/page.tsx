@@ -19,7 +19,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex justify-center">
               <SignedOut>
-                <a href="https://github.com/gumroad/shortest" target="_blank">
+                <a href="https://github.com/anti-work/shortest" target="_blank">
                   <Button className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
                     View on GitHub
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -118,7 +118,7 @@ export default function HomePage() {
             <div className="mt-8 lg:mt-0 flex justify-center lg:justify-end">
               <SignedOut>
                 <a
-                  href="https://github.com/gumroad/shortest"
+                  href="https://github.com/anti-work/shortest"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
