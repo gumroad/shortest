@@ -18,6 +18,8 @@ declare const global: {
   __shortest__: any;
   define: any;
   expect: any;
+  beforeAll: (fn: () => void | Promise<void>) => void;
+  afterAll: (fn: () => void | Promise<void>) => void;
 } & typeof globalThis;
 
 if (!global.__shortest__) {
@@ -29,6 +31,12 @@ if (!global.__shortest__) {
       });
     },
     expect: jestExpect,
+    beforeAll: (fn: () => void | Promise<void>) => {
+      global.__shortest__.registry.beforeAllFns.push(fn);
+    },
+    afterAll: (fn: () => void | Promise<void>) => {
+      global.__shortest__.registry.afterAllFns.push(fn);
+    },
     registry: {
       suites: new Map<string, UITestBuilderInterface[]>(),
       currentSuite: null,
@@ -40,6 +48,8 @@ if (!global.__shortest__) {
   // Attach to global scope
   global.define = global.__shortest__.define;
   global.expect = global.__shortest__.expect;
+  global.beforeAll = global.__shortest__.beforeAll;
+  global.afterAll = global.__shortest__.afterAll;
 
   dotenv.config({ path: join(process.cwd(), '.env') });
   dotenv.config({ path: join(process.cwd(), '.env.local') });
