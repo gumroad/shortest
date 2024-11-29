@@ -1,3 +1,38 @@
+# Quick start
+
+1. Install the Shortest package
+   
+```
+npm install @antiwork/shortest
+```
+
+2. Write your first test
+
+```
+import { define } from 'shortest'
+
+define('Login Flow', () => {
+  test('User can login')
+    .given('I am on the login page')
+    .when('I enter my credentials')
+    .expect('I should be logged in')
+})
+```
+
+3. Don't forget to add an API key:
+
+```
+ANTHROPIC_API_KEY=your_api_key
+```
+
+4. Run your tests with:
+
+```
+shortest
+```
+
+And you're done!
+
 # Shortest
 
 **[shortest.com](https://shortest.com)**
