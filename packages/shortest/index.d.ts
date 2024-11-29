@@ -7,6 +7,8 @@ declare global {
   const define: (name: string, fn: () => void | Promise<void>) => void;
   const expect: Expect;
   const __shortest__: ShortestGlobals;
+  const beforeAll: (fn: () => void | Promise<void>) => void;
+  const afterAll: (fn: () => void | Promise<void>) => void;
 }
 
 // Export module types
