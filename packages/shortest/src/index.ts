@@ -123,5 +123,5 @@ export class TestRegistry {
   }
 }
 
-export { UITestBuilder };
+export { UITestBuilder } from './core/builder';
 export * from './types';
