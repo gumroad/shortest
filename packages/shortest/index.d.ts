@@ -2,6 +2,7 @@ import type { Expect } from 'expect';
 import type { ShortestGlobals } from './dist/types/globals';
 import type { UITestBuilderInterface } from './dist/types/ui-test-builder';
 import type { TestStep, BeforeAllFunction, AfterAllFunction } from './dist/types/test';
+import type { ShortestConfig } from './dist/types/config';
 
 declare global {
   const define: (name: string, fn: () => void | Promise<void>) => void;
@@ -13,6 +14,8 @@ declare global {
 
 // Export module types
 declare module '@antiwork/shortest' {
+  export type { ShortestConfig };
+  
   export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     path: string;
     testName: string;
