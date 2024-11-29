@@ -28,7 +28,8 @@ ANTHROPIC_API_KEY=your_api_key
 4. Run your tests with:
 
 ```
-shortest
+shortest               # to run all tests
+shortest login.test.ts # to run one test
 ```
 
 And you're done!
