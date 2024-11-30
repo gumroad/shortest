@@ -7,7 +7,8 @@ import {
   UITestBuilderInterface,
   ShortestConfig,
   defaultConfig,
-  TestCase
+  TestCase,
+  SuiteContext
 } from './types';
 
 // Initialize config
@@ -33,10 +34,10 @@ if (!global.__shortest__) {
     },
     expect: jestExpect,
     beforeAll: (fn: () => void | Promise<void>) => {
-      global.__shortest__.registry.beforeAllFns.push(fn);
+      TestRegistry.registerBeforeAll(fn);
     },
     afterAll: (fn: () => void | Promise<void>) => {
-      global.__shortest__.registry.afterAllFns.push(fn);
+      TestRegistry.registerAfterAll(fn);
     },
     registry: {
       suites: new Map<string, UITestBuilderInterface[]>(),
@@ -111,6 +112,14 @@ export class TestRegistry {
     if (!this.suites.has(name)) {
       this.suites.set(name, []);
     }
+    // Initialize suite hooks
+    if (!this.suiteHooks.has(name)) {
+      this.suiteHooks.set(name, {
+        name,
+        beforeAllFns: [],
+        afterAllFns: []
+      });
+    }
   }
 
   static endSuite() {
@@ -127,11 +136,34 @@ export class TestRegistry {
     }
   }
 
+  static registerBeforeAll(fn: () => Promise<void> | void) {
+    const currentSuite = this.getCurrentSuite();
+    if (currentSuite) {
+      const hooks = this.suiteHooks.get(currentSuite);
+      if (hooks) {
+        hooks.beforeAllFns.push(() => Promise.resolve(fn()));
+      }
+    }
+  }
+
+  static registerAfterAll(fn: () => Promise<void> | void) {
+    const currentSuite = this.getCurrentSuite();
+    if (currentSuite) {
+      const hooks = this.suiteHooks.get(currentSuite);
+      if (hooks) {
+        hooks.afterAllFns.push(() => Promise.resolve(fn()));
+      }
+    }
+  }
+
+  static getSuiteHooks(suiteName: string): SuiteContext | undefined {
+    return this.suiteHooks.get(suiteName);
+  }
+
   static clear() {
     global.__shortest__.registry.suites.clear();
     global.__shortest__.registry.currentSuite = null;
-    global.__shortest__.registry.beforeAllFns = [];
-    global.__shortest__.registry.afterAllFns = [];
+    this.suiteHooks.clear();
   }
 
   static getTestBuilder(test: TestCase): UITestBuilder | null {
@@ -152,6 +184,8 @@ export class TestRegistry {
     console.log('🔍 Found builder in suite:', builder ? 'yes' : 'no');
     return builder as UITestBuilder || null;
   }
+
+  private static suiteHooks = new Map<string, SuiteContext>();
 }
 
 export { UITestBuilder } from './core/builder';

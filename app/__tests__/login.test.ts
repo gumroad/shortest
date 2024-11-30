@@ -11,6 +11,10 @@ interface LoginState {
 }
 
 define('Validate login feature implemented with Clerk', async () => {
+  beforeAll(async () => {
+    console.log('Clearing DB before all tests');
+  });
+
   new UITestBuilder<LoginState>('/')
     .test('Login to the app using Github login')
     .before(async () => {
@@ -46,4 +50,8 @@ define('Validate login feature implemented with Clerk', async () => {
     .after(async () => {
       console.log('Clearing DB after each test');
     });
+
+  afterAll(async () => {
+    console.log('Clearing DB after all tests');
+  });
 });

@@ -5,6 +5,12 @@ interface loginButton {
 }
 
 define('Validate Dasboard is accessible by users', async () => {
+  afterAll(async () => {
+    console.log('Clearing DB after all tests');
+  });
+  beforeAll(async () => {
+    console.log('Clearing DB before all tests');
+  });
   new UITestBuilder<loginButton>('/')
     .test('Validate that users can access the dashboard')
     
