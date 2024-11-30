@@ -59,13 +59,14 @@ export class Logger {
       (sum, suite) => sum + suite.tests.filter(t => t.status === 'failed').length, 
       0
     );
+    const passedTests = totalTests - failedTests;
 
     console.log(pc.dim('⎯'.repeat(50)));
     
     console.log(pc.bold('\n Test Files '), 
       failedTests ? pc.red(`${failedTests} failed`) : '',
-      failedTests && totalTests-failedTests ? ' | ' : '',
-      pc.green(`${totalTests-failedTests} passed`),
+      failedTests && passedTests ? ' | ' : '',
+      pc.green(`${passedTests} passed`),
       pc.dim(`(${totalTests})`)
     );
 

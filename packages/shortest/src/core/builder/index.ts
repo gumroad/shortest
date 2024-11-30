@@ -10,20 +10,23 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   steps: TestStep[] = [];
   private suiteName: string = '';
   private processedSuites = new Set<string>();
+  private beforeHooks: (() => Promise<void>)[] = [];
+  private afterHooks: (() => Promise<void>)[] = [];
 
   constructor(path: string) {
     this.path = path;
     this.testName = '';
-    TestRegistry.registerTest(this);
   }
 
   test(name: string): this {
     this.testName = name;
+    TestRegistry.registerTest(this);
     return this;
   }
 
   setSuiteName(name: string): this {
     this.suiteName = name;
+    TestRegistry.startSuite(name);
     return this;
   }
 
@@ -91,22 +94,42 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this;
   }
 
-  before(actionOrFn: ActionType | BeforeAllFunction, payload?: T): this {
+  before(actionOrFn: string | BeforeAllFunction, payload?: T): this {
     if (typeof actionOrFn === 'function') {
-      this.addStep('BEFORE', 'EXECUTE_FUNCTION', actionOrFn);
+      console.log('🔍 Registering before hook for test:', this.testName);
+      this.beforeHooks.push(actionOrFn as () => Promise<void>);
     } else {
-      this.addStep('BEFORE', typeof actionOrFn === 'string' ? actionOrFn : 'SET_STATE', payload);
+      this.steps.push({
+        type: 'BEFORE',
+        description: typeof actionOrFn === 'string' ? actionOrFn : 'SET_STATE',
+        action: actionOrFn,
+        payload
+      });
     }
     return this;
   }
 
-  after(actionOrFn: ActionType | AfterAllFunction, payload?: T): this {
+  after(actionOrFn: string | AfterAllFunction, payload?: T): this {
     if (typeof actionOrFn === 'function') {
-      this.addStep('AFTER', 'EXECUTE_FUNCTION', actionOrFn);
+      console.log('🔍 Registering after hook for test:', this.testName);
+      this.afterHooks.push(actionOrFn as () => Promise<void>);
     } else {
-      this.addStep('AFTER', typeof actionOrFn === 'string' ? actionOrFn : 'SET_STATE', payload);
+      this.steps.push({
+        type: 'AFTER',
+        description: typeof actionOrFn === 'string' ? actionOrFn : 'SET_STATE',
+        action: actionOrFn,
+        payload
+      });
     }
     return this;
+  }
+
+  getBeforeHooks(): (() => Promise<void>)[] {
+    return this.beforeHooks;
+  }
+
+  getAfterHooks(): (() => Promise<void>)[] {
+    return this.afterHooks;
   }
 
   private async addStep(
