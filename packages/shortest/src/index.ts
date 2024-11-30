@@ -6,7 +6,8 @@ import { UITestBuilder } from './core/builder';
 import { 
   UITestBuilderInterface,
   ShortestConfig,
-  defaultConfig
+  defaultConfig,
+  TestCase
 } from './types';
 
 // Initialize config
@@ -119,6 +120,7 @@ export class TestRegistry {
   static registerTest(builder: UITestBuilderInterface): void {
     const currentSuite = this.getCurrentSuite();
     if (currentSuite) {
+      builder.setSuiteName(currentSuite);
       const suite = this.suites.get(currentSuite) || [];
       suite.push(builder);
       this.suites.set(currentSuite, suite);
@@ -130,6 +132,25 @@ export class TestRegistry {
     global.__shortest__.registry.currentSuite = null;
     global.__shortest__.registry.beforeAllFns = [];
     global.__shortest__.registry.afterAllFns = [];
+  }
+
+  static getTestBuilder(test: TestCase): UITestBuilder | null {
+    console.log('🔍 Looking for builder:', {
+      suiteName: test.suiteName,
+      testName: test.testName
+    });
+    
+    const suite = this.suites.get(test.suiteName);
+    console.log('🔍 Found suite:', suite ? 'yes' : 'no');
+    
+    if (!suite) return null;
+    
+    const builder = suite.find((builder: UITestBuilderInterface) => 
+      builder.testName === test.testName
+    );
+    
+    console.log('🔍 Found builder in suite:', builder ? 'yes' : 'no');
+    return builder as UITestBuilder || null;
   }
 }
 

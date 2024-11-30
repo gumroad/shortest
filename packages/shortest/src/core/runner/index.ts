@@ -113,9 +113,7 @@ export class TestRunner {
 
   private async executeTest(file: string) {
     try {
-      // Clear registry before each test file
       TestRegistry.clear();
-
       await initialize();
       const config = getConfig();
       const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
@@ -125,6 +123,8 @@ export class TestRunner {
       }
 
       this.logger.startFile(file);
+      let fileHasFailures = false;
+      
       const compiledPath = await this.compiler.compileFile(file);
       const module = await import(compiledPath);
       const suites = await UITestBuilder.parseModule(module);
@@ -133,11 +133,32 @@ export class TestRunner {
         this.logger.startSuite(suite.name);
         
         for (const test of suite.tests) {
+          console.log('🔍 Executing test:', test.testName, 'in suite:', test.suiteName);
+
           const testContext: TestContext = {
             currentTest: test,
             currentStepIndex: 0,
             testName: test.testName
           };
+          
+          const builder = TestRegistry.getTestBuilder(test);
+          console.log('🔍 Found builder:', builder ? 'yes' : 'no');
+          
+          if (builder) {
+            console.log('🔍 Before hooks count:', builder.getBeforeHooks().length);
+            console.log('🔍 After hooks count:', builder.getAfterHooks().length);
+            
+            try {
+              for (const hook of builder.getBeforeHooks()) {
+                console.log('🔍 Executing before hook');
+                await hook();
+              }
+            } catch (error) {
+              console.log('🔍 Before hook error:', error);
+              this.logger.reportError('Before Hook', error instanceof Error ? error.message : String(error));
+              continue;
+            }
+          }
 
           this.logger.reportStatus(' Launching browser...');
           const context = await this.browserManager.launch();
@@ -212,13 +233,26 @@ export class TestRunner {
               this.logger.reportError('Test Failed', unknownError.message);
             }
           } finally {
+            // Execute after hooks
+            if (builder) {
+              try {
+                for (const hook of builder.getAfterHooks()) {
+                  console.log('🔍 Executing after hook');
+                  await hook();
+                }
+              } catch (error) {
+                console.log('🔍 After hook error:', error);
+                this.logger.reportError('After Hook', error instanceof Error ? error.message : String(error));
+              }
+            }
+
             this.logger.reportStatus('🧹 Cleaning up browser...');
             await this.browserManager.close();
           }
         }
       }
 
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof Error) {
         this.logger.reportError('Test Execution', error.message);
       } else {
