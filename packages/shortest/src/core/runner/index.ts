@@ -123,8 +123,6 @@ export class TestRunner {
       }
 
       this.logger.startFile(file);
-      let fileHasFailures = false;
-      
       const compiledPath = await this.compiler.compileFile(file);
       const module = await import(compiledPath);
       const suites = await UITestBuilder.parseModule(module);
@@ -132,6 +130,19 @@ export class TestRunner {
       for (const suite of suites) {
         this.logger.startSuite(suite.name);
         
+        // Execute beforeAll hooks
+        const suiteHooks = TestRegistry.getSuiteHooks(suite.name);
+        if (suiteHooks) {
+          try {
+            for (const hook of suiteHooks.beforeAllFns) {
+              await hook();
+            }
+          } catch (error) {
+            this.logger.reportError('BeforeAll Hook', error instanceof Error ? error.message : String(error));
+            continue;
+          }
+        }
+
         for (const test of suite.tests) {
           console.log('🔍 Executing test:', test.testName, 'in suite:', test.suiteName);
 
@@ -248,6 +259,17 @@ export class TestRunner {
 
             this.logger.reportStatus('🧹 Cleaning up browser...');
             await this.browserManager.close();
+          }
+        }
+
+        // Execute afterAll hooks
+        if (suiteHooks) {
+          try {
+            for (const hook of suiteHooks.afterAllFns) {
+              await hook();
+            }
+          } catch (error) {
+            this.logger.reportError('AfterAll Hook', error instanceof Error ? error.message : String(error));
           }
         }
       }
