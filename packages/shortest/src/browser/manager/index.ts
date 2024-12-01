@@ -17,6 +17,17 @@ export class BrowserManager {
       await this.ensureUserDataDir();
       return await this.createContext(browserConfig, baseUrl);
     } catch (error: unknown) {
+      // If launch fails due to corrupt user data
+      if (error instanceof Error && 
+          (error.message.includes('user data directory is already in use') ||
+           error.message.includes('Failed to create a ProcessSingleton'))) {
+        console.log('🔧 Browser data appears corrupt, cleaning up...');
+        await this.cleanUserDataDir();
+        await this.ensureUserDataDir();
+        return await this.createContext(browserConfig, baseUrl);
+      }
+      
+      // Other errors
       if (error instanceof Error) {
         throw new Error(`Failed to launch Chrome: ${error.message}`);
       }

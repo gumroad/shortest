@@ -11,8 +11,15 @@ interface LoginState {
 }
 
 define('Validate login feature implemented with Clerk', async () => {
+  beforeAll(async () => {
+    console.log('Clearing DB before all tests');
+  });
+
   new UITestBuilder<LoginState>('/')
     .test('Login to the app using Github login')
+    .before(async () => {
+      console.log('Clearing DB before each test');
+    })
     .given('Github username and password', { 
       username: process.env.GITHUB_USERNAME || '',
       password: process.env.GITHUB_PASSWORD || ''
@@ -39,5 +46,12 @@ define('Validate login feature implemented with Clerk', async () => {
         throw error; // Re-throw to fail the test
       }
     })
-    .expect('user should be redirected to /dashboard after logged in via Github');
+    .expect('user should be redirected to /dashboard after logged in via Github')
+    .after(async () => {
+      console.log('Clearing DB after each test');
+    });
+
+  afterAll(async () => {
+    console.log('Clearing DB after all tests');
+  });
 });

@@ -58,6 +58,25 @@ export const AITools = [
       },
       required: ["action"]
     }
+  },
+  {
+    name: "navigate",
+    description: "Navigate to URLs in new browser tabs",
+    input_schema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: ["navigate"],
+          description: "The action to perform"
+        },
+        url: {
+          type: "string",
+          description: "The URL to navigate to"
+        }
+      },
+      required: ["action", "url"]
+    }
   }
 ] as const;
 

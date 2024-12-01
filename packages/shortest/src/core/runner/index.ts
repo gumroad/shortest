@@ -113,9 +113,7 @@ export class TestRunner {
 
   private async executeTest(file: string) {
     try {
-      // Clear registry before each test file
       TestRegistry.clear();
-
       await initialize();
       const config = getConfig();
       const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
@@ -132,13 +130,27 @@ export class TestRunner {
       for (const suite of suites) {
         this.logger.startSuite(suite.name);
         
+        // Execute beforeAll hooks
+        const suiteHooks = TestRegistry.getSuiteHooks(suite.name);
+        if (suiteHooks) {
+          try {
+            for (const hook of suiteHooks.beforeAllFns) {
+              await hook();
+            }
+          } catch (error) {
+            this.logger.reportError('BeforeAll Hook', error instanceof Error ? error.message : String(error));
+            continue;
+          }
+        }
+
         for (const test of suite.tests) {
           const testContext: TestContext = {
             currentTest: test,
             currentStepIndex: 0,
             testName: test.testName
           };
-
+          
+          // Launch browser first
           this.logger.reportStatus(' Launching browser...');
           const context = await this.browserManager.launch();
           const page = context.pages()[0];
@@ -152,6 +164,19 @@ export class TestRunner {
               testContext
             }
           );
+
+          // Execute before hooks after browser launch
+          const builder = TestRegistry.getTestBuilder(test);
+          if (builder) {
+            try {
+              for (const hook of builder.getBeforeHooks()) {
+                await hook();
+              }
+            } catch (error) {
+              this.logger.reportError('Before Hook', error instanceof Error ? error.message : String(error));
+              continue;
+            }
+          }
 
           const aiClient = new AIClient({
             apiKey,
@@ -202,6 +227,17 @@ export class TestRunner {
               this.logger.reportError('Test Failed', noResultError.message);
             }
 
+            // Execute after hooks before processing result
+            if (builder) {
+              try {
+                for (const hook of builder.getAfterHooks()) {
+                  await hook();
+                }
+              } catch (error) {
+                this.logger.reportError('After Hook', error instanceof Error ? error.message : String(error));
+              }
+            }
+
           } catch (error: unknown) {
             if (error instanceof Error) {
               this.logger.reportTest(test.testName, 'failed', error);
@@ -212,13 +248,23 @@ export class TestRunner {
               this.logger.reportError('Test Failed', unknownError.message);
             }
           } finally {
-            this.logger.reportStatus('🧹 Cleaning up browser...');
             await this.browserManager.close();
+          }
+        }
+
+        // Execute afterAll hooks
+        if (suiteHooks) {
+          try {
+            for (const hook of suiteHooks.afterAllFns) {
+              await hook();
+            }
+          } catch (error) {
+            this.logger.reportError('AfterAll Hook', error instanceof Error ? error.message : String(error));
           }
         }
       }
 
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof Error) {
         this.logger.reportError('Test Execution', error.message);
       } else {

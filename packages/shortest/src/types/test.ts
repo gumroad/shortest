@@ -24,6 +24,7 @@ export interface TestCase {
 export interface TestSuite {
   name: string;
   tests: TestCase[];
+  context?: SuiteContext;
 }
 
 export interface BeforeAllFunction {
@@ -43,4 +44,10 @@ export interface AssertionError extends Error {
   };
 }
 
-export type ActionType = string | Record<string, any>; 
+export type ActionType = string | Record<string, any>;
+
+export interface SuiteContext {
+  name: string;
+  beforeAllFns: (() => Promise<void>)[];
+  afterAllFns: (() => Promise<void>)[];
+} 
