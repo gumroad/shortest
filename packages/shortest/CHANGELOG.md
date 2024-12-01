@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3] - 2024-11-30
+
+### Fixed
+- Fixed execution order of lifecycle hooks
+- Fixed CLI help command requiring GitHub TOTP secret
+- Improved browser navigation performance using 'load' instead of 'networkidle'
+- Fixed GitHub tool initialization to be lazy-loaded
+- Improved error handling in browser navigation
+
+### Changed
+- Reduced navigation timeouts for better performance
+- Made GitHub TOTP validation more flexible
+- Improved browser cleanup on process termination
+
 ## [0.0.2] - 2024-11-28
 
 ### Fixed
