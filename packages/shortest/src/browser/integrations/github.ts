@@ -26,7 +26,14 @@ export class GitHubTool {
     }
   }
 
+  private validateSecret() {
+    if (!this.totpSecret) {
+      throw new Error('GITHUB_TOTP_SECRET is required in .env file or via --secret flag');
+    }
+  }
+
   generateTOTPCode(): { code: string; timeRemaining: number } {
+    this.validateSecret();
     try {
       const code = authenticator.generate(this.totpSecret);
       const timeRemaining = authenticator.timeRemaining();
@@ -86,5 +93,3 @@ export class GitHubTool {
     }
   }
 }
-
-export const githubTool = new GitHubTool();
