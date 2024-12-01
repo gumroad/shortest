@@ -14,6 +14,8 @@ export class BrowserManager {
     const baseUrl = config.baseUrl || 'http://localhost:3000';
 
     try {
+      await this.forceCleanup();
+      
       await this.ensureUserDataDir();
       return await this.createContext(browserConfig, baseUrl);
     } catch (error: unknown) {
@@ -21,6 +23,26 @@ export class BrowserManager {
         throw new Error(`Failed to launch Chrome: ${error.message}`);
       }
       throw error;
+    }
+  }
+
+  private async forceCleanup(): Promise<void> {
+    const lockFile = path.join(this.userDataDir, 'SingletonLock');
+    
+    try {
+      // Force remove lock file if it exists
+      if (existsSync(lockFile)) {
+        console.log('🧹 Cleaning up stale lock file...');
+        rmSync(lockFile, { force: true });
+      }
+
+      // Clean entire directory if it exists
+      if (existsSync(this.userDataDir)) {
+        console.log('🧹 Cleaning up browser data directory...');
+        rmSync(this.userDataDir, { recursive: true, force: true });
+      }
+    } catch (error) {
+      console.warn('⚠️ Cleanup warning:', error);
     }
   }
 
@@ -141,11 +163,34 @@ export class BrowserManager {
   }
 
   async close(): Promise<void> {
-    await this.closeContext();
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
+    try {
+      await this.closeContext();
+      if (this.browser) {
+        await this.browser.close();
+        this.browser = null;
+      }
+      // Always try to clean up after closing
+      await this.forceCleanup();
+    } catch (error) {
+      console.error('⚠️ Error during browser cleanup:', error);
+      // Force cleanup even if close fails
+      await this.forceCleanup();
     }
+  }
+
+  // Add process termination handler
+  setupCleanupHandlers(): void {
+    process.on('SIGINT', async () => {
+      console.log('\n🧹 Cleaning up before exit...');
+      await this.close();
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', async () => {
+      console.log('\n🧹 Cleaning up before termination...');
+      await this.close();
+      process.exit(0);
+    });
   }
 
   getContext(): BrowserContext | null {
