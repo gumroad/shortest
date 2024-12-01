@@ -99,7 +99,7 @@ export class AIClient {
             .filter(block => block.type === 'tool_use')
             .map(block => {
               const toolBlock = block as Anthropic.Beta.Messages.BetaToolUseBlock;
-              console.log('🛠️ Executing tool:', toolBlock.name, 'with input:', toolBlock.input);
+              // console.log('🛠️ Executing tool:', toolBlock.name, 'with input:', toolBlock.input);
               
               return {
                 toolBlock,
@@ -108,7 +108,7 @@ export class AIClient {
             });
 
           const results = await Promise.all(toolResults.map(t => t.result));
-          console.log('🛠️ Tool execution results:', results);
+          // console.log('🛠️ Tool execution results:', results);
 
           // console.log('🛠️ Sending to AI:', messages[messages.length - 1]);
 
