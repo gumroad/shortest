@@ -96,7 +96,6 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
 
   before(actionOrFn: string | BeforeAllFunction, payload?: T): this {
     if (typeof actionOrFn === 'function') {
-      // console.log('🔍 Registering before hook for test:', this.testName);
       this.beforeHooks.push(actionOrFn as () => Promise<void>);
     } else {
       this.steps.push({
@@ -111,7 +110,6 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
 
   after(actionOrFn: string | AfterAllFunction, payload?: T): this {
     if (typeof actionOrFn === 'function') {
-      // console.log('🔍 Registering after hook for test:', this.testName);
       this.afterHooks.push(actionOrFn as () => Promise<void>);
     } else {
       this.steps.push({
