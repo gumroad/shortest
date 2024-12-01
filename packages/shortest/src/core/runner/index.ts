@@ -144,7 +144,7 @@ export class TestRunner {
         }
 
         for (const test of suite.tests) {
-          console.log('🔍 Executing test:', test.testName, 'in suite:', test.suiteName);
+          // console.log('🔍 Executing test:', test.testName, 'in suite:', test.suiteName);
 
           const testContext: TestContext = {
             currentTest: test,
@@ -153,19 +153,19 @@ export class TestRunner {
           };
           
           const builder = TestRegistry.getTestBuilder(test);
-          console.log('🔍 Found builder:', builder ? 'yes' : 'no');
+          // console.log('🔍 Found builder:', builder ? 'yes' : 'no');
           
-          if (builder) {
-            console.log('🔍 Before hooks count:', builder.getBeforeHooks().length);
-            console.log('🔍 After hooks count:', builder.getAfterHooks().length);
+          if (builder) {            
+            // console.log('🔍 Before hooks count:', builder.getBeforeHooks().length);
+            // console.log('🔍 After hooks count:', builder.getAfterHooks().length);
             
             try {
               for (const hook of builder.getBeforeHooks()) {
-                console.log('🔍 Executing before hook');
+                // console.log('🔍 Executing before hook');
                 await hook();
               }
             } catch (error) {
-              console.log('🔍 Before hook error:', error);
+              // console.log('🔍 Before hook error:', error);
               this.logger.reportError('Before Hook', error instanceof Error ? error.message : String(error));
               continue;
             }
@@ -248,11 +248,11 @@ export class TestRunner {
             if (builder) {
               try {
                 for (const hook of builder.getAfterHooks()) {
-                  console.log('🔍 Executing after hook');
+                  // console.log('🔍 Executing after hook');
                   await hook();
                 }
               } catch (error) {
-                console.log('🔍 After hook error:', error);
+                // console.log('🔍 After hook error:', error);
                 this.logger.reportError('After Hook', error instanceof Error ? error.message : String(error));
               }
             }
