@@ -207,9 +207,7 @@ export class BrowserTool extends BaseBrowserTool {
           }
           return { output: 'Callback executed successfully' };
 
-        case 'navigate': {
-          console.log('🚀 Starting navigation to:', input.url);
-          
+        case 'navigate': {          
           if (!input.url) {
             throw new ToolError('URL required for navigation');
           }
@@ -218,15 +216,13 @@ export class BrowserTool extends BaseBrowserTool {
           const newPage = await this.page.context().newPage();
           
           try {
-            const navigationTimeout = 30000; // 30 seconds
+            const navigationTimeout = 30000;
             
-            console.log('🚀 Attempting navigation...');
             await newPage.goto(input.url, {
               timeout: navigationTimeout,
               waitUntil: 'domcontentloaded'
             });
 
-            console.log('🚀 Waiting for page load...');
             await newPage.waitForLoadState('load', {
               timeout: 5000
             }).catch(e => {
@@ -244,11 +240,9 @@ export class BrowserTool extends BaseBrowserTool {
                 size: this.page.viewportSize() || { width: this.width, height: this.height }
               }
             };
-            console.log('🚀 Navigation completed, metadata:', metadata);
             
             break;
           } catch (error) {
-            console.error('🚨 Navigation failed:', error);
             await newPage.close();
             throw new ToolError(`Navigation failed: ${error}`);
           }
@@ -267,7 +261,6 @@ export class BrowserTool extends BaseBrowserTool {
         metadata = {};
       }
       
-      console.log('🚀 Final tool result:', { output, metadata });
       return {
         output,
         metadata
