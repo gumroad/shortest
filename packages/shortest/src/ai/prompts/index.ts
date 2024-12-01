@@ -27,6 +27,13 @@ Whenever you see [HAS_CALLBACK] after the step description, you must call "run_c
 call "run_callback" tool after you have completed the browser actions for that step otherwise the callback will not work as expected.
 When done, you can continue with the next step.
 
+6. IMPORTANT! ONLY USE THIS TOOL IF YOU ARE SPECIFIED TO NAVIGATE TO A NEW PAGE IN THE TEST CASE INSTRUCTIONS. 
+DO NOT USE THIS TOOL INTUITIVELY! If you need to navigate to a new page, you must use the "navigate" tool. 
+Although you are already in a browser, you do not have access to the browser search bar, therefore, 
+you must use the "navigate" tool to navigate to the new page. After navigating to the new page is done, 
+you will recieve the result of the navigation and you can see if the the requested page is loaded or not from the 
+url field in the metadata.
+
 Your task is to:
 1. Execute browser actions to validate test cases
 2. Use provided browser tools to interact with the page

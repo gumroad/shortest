@@ -22,7 +22,8 @@ export type BrowserAction =
   | "clear_session"
   | "type"
   | "key"
-  | "run_callback";
+  | "run_callback"
+  | "navigate";
 
 export interface BrowserToolOptions {
   width: number;
@@ -37,6 +38,7 @@ export interface ActionInput {
   text?: string;
   username?: string;
   password?: string;
+  url?: string;
 }
 
 export interface ToolResult {
