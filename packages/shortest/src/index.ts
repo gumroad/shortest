@@ -167,13 +167,7 @@ export class TestRegistry {
   }
 
   static getTestBuilder(test: TestCase): UITestBuilder | null {
-    // console.log('🔍 Looking for builder:', {
-    //   suiteName: test.suiteName,
-    //   testName: test.testName
-    // });
-    
     const suite = this.suites.get(test.suiteName);
-    // console.log('🔍 Found suite:', suite ? 'yes' : 'no');
     
     if (!suite) return null;
     
@@ -181,7 +175,6 @@ export class TestRegistry {
       builder.testName === test.testName
     );
     
-    // console.log('🔍 Found builder in suite:', builder ? 'yes' : 'no');
     return builder as UITestBuilder || null;
   }
 
