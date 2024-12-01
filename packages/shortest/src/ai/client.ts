@@ -99,9 +99,6 @@ export class AIClient {
             .filter(block => block.type === 'tool_use')
             .map(block => {
               const toolBlock = block as Anthropic.Beta.Messages.BetaToolUseBlock;
-              if (toolOutputCallback) {
-                toolOutputCallback(toolBlock.name as string, toolBlock.input);
-              }
               
               return {
                 toolBlock,
@@ -110,7 +107,7 @@ export class AIClient {
             });
 
           const results = await Promise.all(toolResults.map(t => t.result));
-          
+
           // Add tool results to message history
           messages.push({
             role: 'user',

@@ -8,7 +8,19 @@ interface User {
 
 define('Test Assertions', async () => {
   // Test 1: Basic Assertions (Will Pass)
+  afterAll(async () => {
+    console.log('Clearing DB after all tests');
+  });
+  beforeAll(async () => {
+    console.log('Clearing DB before all tests');
+  });
    new UITestBuilder<User>('/')
+    .after(async () => {
+      console.log('end assert test 1');
+    })
+    .before(async () => {
+      console.log('start assert test 1');
+    })
     .test('Basic assertions that pass')
     .given('a test user', { email: 'test@test.com', name: 'Test User' }, async () => {
       expect(true).toBe(true);
@@ -24,6 +36,12 @@ define('Test Assertions', async () => {
 
   // Test 2: Failing Assertions (Will Fail)
 new UITestBuilder<User>('/')
+    .after(async () => {
+      console.log('end assert test 2');
+    })
+    .before(async () => {
+      console.log('start assert test 2');
+    })
     .test('Assertions that should fail')
     .given('some data', { email: 'fail@test.com', name: 'Fail Test' }, async () => {
       expect(true).toBe(false);
@@ -37,6 +55,12 @@ new UITestBuilder<User>('/')
 
   // Test 3: Async Assertions (Mix of Pass/Fail)
 new UITestBuilder<User>('/')
+    .after(async () => {
+      console.log('end assert test 3');
+    })
+    .before(async () => {
+      console.log('start assert test 3');
+    })
     .test('Async assertions')
     .given('database connection', async () => {
       const user = await db.query.users.findFirst();

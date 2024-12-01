@@ -24,7 +24,7 @@ export class BrowserTool extends BaseBrowserTool {
   private screenshotDir: string;
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
-  private githubTool: GitHubTool;
+  private githubTool?: GitHubTool;
   private viewport: { width: number; height: number };
   private testContext?: TestContext;
 
@@ -38,7 +38,6 @@ export class BrowserTool extends BaseBrowserTool {
     this.browserManager = browserManager;
     this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
-    this.githubTool = new GitHubTool();
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
     
@@ -171,7 +170,10 @@ export class BrowserTool extends BaseBrowserTool {
           break;
         }
 
-        case 'github_login':
+        case 'github_login': {
+          if (!this.githubTool) {
+            this.githubTool = new GitHubTool();
+          }
           const loginResult = await this.githubTool.GithubLogin(this, {
             username: input.username as string,
             password: input.password as string
@@ -181,6 +183,7 @@ export class BrowserTool extends BaseBrowserTool {
               'GitHub login was successfully completed' : 
               `GitHub login failed: ${loginResult.error}`;
           break;
+        }
 
         case 'clear_session':
           const newContext = await this.browserManager.recreateContext();
@@ -207,10 +210,52 @@ export class BrowserTool extends BaseBrowserTool {
           }
           return { output: 'Callback executed successfully' };
 
+        case 'navigate': {          
+          if (!input.url) {
+            throw new ToolError('URL required for navigation');
+          }
+
+          // Create new tab
+          const newPage = await this.page.context().newPage();
+          
+          try {
+            const navigationTimeout = 30000;
+            
+            await newPage.goto(input.url, {
+              timeout: navigationTimeout,
+              waitUntil: 'domcontentloaded'
+            });
+
+            await newPage.waitForLoadState('load', {
+              timeout: 5000
+            }).catch(e => {
+              console.log('⚠️ Load timeout, continuing anyway');
+            });
+            
+            // Switch focus
+            this.page = newPage;
+
+            output = `Navigated to ${input.url}`;
+            metadata = {
+              window_info: {
+                url: input.url,
+                title: await newPage.title(),
+                size: this.page.viewportSize() || { width: this.width, height: this.height }
+              }
+            };
+            
+            break;
+          } catch (error) {
+            await newPage.close();
+            throw new ToolError(`Navigation failed: ${error}`);
+          }
+        }
+
         default:
           throw new ToolError(`Unknown action: ${input.action}`);
       }
 
+      // This will now execute for navigation too
       try {
         await this.page.waitForTimeout(200);
         metadata = await this.getMetadata();
@@ -244,7 +289,7 @@ export class BrowserTool extends BaseBrowserTool {
 
   private async getMetadata(): Promise<any> {
     if (!await this.isPageReady()) {
-      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForLoadState('load');
       await this.page.waitForTimeout(500);
     }
 
@@ -316,7 +361,7 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   public async waitForNavigation(options?: { timeout: number }): Promise<void> {
-    await this.page.waitForLoadState('networkidle', { timeout: options?.timeout });
+    await this.page.waitForLoadState('load', { timeout: options?.timeout });
   }
 
   updateTestContext(newContext: TestContext) {
