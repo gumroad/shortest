@@ -24,7 +24,7 @@ export class BrowserTool extends BaseBrowserTool {
   private screenshotDir: string;
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
-  private githubTool: GitHubTool;
+  private githubTool?: GitHubTool;
   private viewport: { width: number; height: number };
   private testContext?: TestContext;
 
@@ -38,7 +38,6 @@ export class BrowserTool extends BaseBrowserTool {
     this.browserManager = browserManager;
     this.screenshotDir = join(process.cwd(), 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
-    this.githubTool = new GitHubTool();
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
     
@@ -171,7 +170,10 @@ export class BrowserTool extends BaseBrowserTool {
           break;
         }
 
-        case 'github_login':
+        case 'github_login': {
+          if (!this.githubTool) {
+            this.githubTool = new GitHubTool();
+          }
           const loginResult = await this.githubTool.GithubLogin(this, {
             username: input.username as string,
             password: input.password as string
@@ -181,6 +183,7 @@ export class BrowserTool extends BaseBrowserTool {
               'GitHub login was successfully completed' : 
               `GitHub login failed: ${loginResult.error}`;
           break;
+        }
 
         case 'clear_session':
           const newContext = await this.browserManager.recreateContext();
