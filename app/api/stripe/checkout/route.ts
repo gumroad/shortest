@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe, handleSubscriptionChange } from "@/lib/payments/stripe";
 
 export async function GET(request: NextRequest) {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (!userId) {
     return NextResponse.redirect(new URL("/pricing", request.url));
