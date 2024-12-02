@@ -54,7 +54,7 @@ export async function getUserByClerkId(clerkId: string): Promise<User> {
 }
 
 export async function getPullRequests(): Promise<PullRequest[]> {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     throw new Error("User not authenticated");
   }

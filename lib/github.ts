@@ -15,7 +15,7 @@ function matchTestPatterns(testPatterns: string[], filePath: string) {
 }
 
 export async function getOctokit() {
-  const { userId }: { userId: string | null } = await auth();
+  const { userId } = await auth();
   
   if (!userId) throw new Error("Clerk: User not authenticated");
 

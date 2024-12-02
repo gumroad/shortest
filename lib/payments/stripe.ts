@@ -115,7 +115,7 @@ export async function handleSubscriptionChange(
   const subscriptionId = subscription.id;
   const status = subscription.status;
 
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     console.error("User not authenticated");
     return;
