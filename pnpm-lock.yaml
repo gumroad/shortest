@@ -14,6 +14,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^0.0.61
         version: 0.0.61(zod@3.23.8)
+      '@clerk/clerk-sdk-node':
+        specifier: ^5.0.69
+        version: 5.0.69(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)
       '@clerk/nextjs':
         specifier: ^6.5.1
         version: 6.5.1(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.48.2)(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106))(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)
@@ -474,6 +477,10 @@ packages:
     peerDependencies:
       react: ^18 || ^19.0.0-0
       react-dom: ^18 || ^19.0.0-0
+
+  '@clerk/clerk-sdk-node@5.0.69':
+    resolution: {integrity: sha512-a6uV8uBUeb1mnJyI52SZ/TXgnmoiIyK1brsMCuq2H47/Wq67scrw8yUMfyAnSSzOvaVAbc50bTPqo9krIYC7Gw==}
+    engines: {node: '>=18.17.0'}
 
   '@clerk/nextjs@6.5.1':
     resolution: {integrity: sha512-/FS1wRMOZvEF7azI+DX/DoQ3Q49oqjC3R4GgJzKnd1TIXZxhnPQbM1OvOnwBa7OEieieaXm+aPko+EYPYnSy9A==}
@@ -5187,6 +5194,16 @@ snapshots:
       react: 19.0.0-rc-66855b96-20241106
       react-dom: 19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106)
       tslib: 2.4.1
+
+  '@clerk/clerk-sdk-node@5.0.69(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)':
+    dependencies:
+      '@clerk/backend': 1.18.0(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)
+      '@clerk/shared': 2.17.0(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)
+      '@clerk/types': 4.35.0
+      tslib: 2.4.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   '@clerk/nextjs@6.5.1(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.48.2)(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106))(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)':
     dependencies:

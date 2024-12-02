@@ -19,6 +19,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",
     "@ai-sdk/openai": "^0.0.61",
+    "@clerk/clerk-sdk-node": "^5.0.69",
     "@clerk/nextjs": "^6.5.1",
     "@octokit/rest": "^21.0.2",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -83,8 +84,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.14",
     "@antiwork/shortest": "workspace:*",
+    "@tailwindcss/typography": "^0.5.14",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
     "@types/adm-zip": "^0.5.5",

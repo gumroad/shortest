@@ -1,14 +1,12 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
-const isProtectedRoute = createRouteMatcher([
-  "/dashboard(.*)",
-  "/api/generate-tests(.*)",
-]);
-
-export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) auth().protect();
-});
+export default clerkMiddleware();
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/api/generate-tests(.*)"],
-};
+  matcher: [
+    // Skip Next.js internals and all static files
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Our API routes
+    '/api/generate-tests(.*)',
+  ],
+}

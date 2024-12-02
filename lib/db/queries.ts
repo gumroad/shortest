@@ -3,7 +3,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "./drizzle";
 import { users, User, NewUser, pullRequests, PullRequest } from "./schema";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
+import { clerkClient } from '@clerk/clerk-sdk-node'
 
 export async function updateUserSubscription(
   clerkId: string,

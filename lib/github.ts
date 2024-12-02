@@ -1,6 +1,7 @@
 "use server";
 
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
+import { clerkClient } from '@clerk/clerk-sdk-node'
 import { Octokit } from "@octokit/rest";
 import { TestFile, PullRequest } from "../app/(dashboard)/dashboard/types";
 import AdmZip from "adm-zip";
@@ -14,11 +15,11 @@ function matchTestPatterns(testPatterns: string[], filePath: string) {
 }
 
 export async function getOctokit() {
-  const { userId } = auth();
+  const { userId }: { userId: string | null } = await auth();
+  
   if (!userId) throw new Error("Clerk: User not authenticated");
 
-  const clerk = clerkClient();
-  const [{ token: githubToken }] = await clerk.users
+  const [{ token: githubToken }] = await clerkClient.users
     .getUserOauthAccessToken(userId, "oauth_github")
     .then(({ data }) => data);
 
