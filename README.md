@@ -9,10 +9,11 @@ npm install @antiwork/shortest
 2. Write your first test
 
 ```
-import { define } from 'shortest'
+import { UITestBuilder } from '@antiwork/shortest'
 
 define('Login Flow', () => {
-  test('User can login')
+  new UITestBuilder<LoginState>('/')
+    .test('User can login')
     .given('I am on the login page')
     .when('I enter my credentials')
     .expect('I should be logged in')

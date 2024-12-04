@@ -11,19 +11,20 @@ AI-powered natural language end-to-end testing framework.
 
 ## Installation
 ```bash
-npm install shortest
+npm install @antiwork/shortest
 # or
-pnpm add shortest
+pnpm add @antiwork/shortest
 # or
-yarn add shortest
+yarn add @antiwork/shortest
 ```
 
 ## Quick Start
 ```typescript
-import { define } from 'shortest'
+import { UITestBuilder } from '@antiwork/shortest'
 
 define('Login Flow', () => {
-  test('User can login')
+  new UITestBuilder<LoginState>('/')
+    .test('User can login')
     .given('I am on the login page')
     .when('I enter my credentials')
     .expect('I should be logged in')
