@@ -1,57 +1,45 @@
-import { UITestBuilder } from '@antiwork/shortest';
-import { db } from "@/lib/db/drizzle";
-import { sql } from "drizzle-orm";
-import dotenv from "dotenv";
+import { db } from '@/lib/db/drizzle';
+import { test } from '@antiwork/shortest';
+import { sql } from 'drizzle-orm';
 
-dotenv.config();
-
-interface LoginState {
-  username: string;
-  password: string;
-}
-
-define('Validate login feature implemented with Clerk', async () => {
-  beforeAll(async () => {
-    console.log('Clearing DB before all tests');
-  });
-
-  new UITestBuilder<LoginState>('/')
-    .test('Login to the app using Github login')
-    .before(async () => {
-      console.log('Clearing DB before each test');
-    })
-    .given('Github username and password', { 
-      username: process.env.GITHUB_USERNAME || '',
-      password: process.env.GITHUB_PASSWORD || ''
-    }, async () => {
-      expect(process.env.GITHUB_USERNAME).toBeDefined();
-    })
-    .when('user is logged in', async () => {
-      try {
-        console.log('Starting DB validation...');
-        const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
-          SELECT * FROM customers WHERE email = 'delba@oliveira.com'
-        `);
-
-        if (!customer) {
-          throw new Error('Customer delba@oliveira.com not found in database');
-        }
-
-        console.log('Found customer in DB:', customer);
-        expect(customer.email).toBe('delba@oliveira.com');
-        expect(customer.name).toBe('Delba de Oliveira');
-
-      } catch (error) {
-        console.error('DB Validation Error:', error);
-        throw error; // Re-throw to fail the test
-      }
-    })
-    .expect('user should be redirected to /dashboard after logged in via Github')
-    .after(async () => {
-      console.log('Clearing DB after each test');
-    });
-
-  afterAll(async () => {
-    console.log('Clearing DB after all tests');
-  });
+test.beforeAll('Clear DB before tests', async () => {
+  console.log('Clearing DB before all tests');
 });
+
+test.afterAll('Clear DB after tests', async ({}) => {
+  console.log('Clearing DB after all tests');
+});
+
+test.beforeEach('Set up test environment', async ({}) => {
+  console.log('Setting up test environment');
+});
+
+test.afterEach('Tear down test environment', async ({}) => {
+  console.log('Tearing down test environment');
+});
+
+
+test('Login to the app using Github login', {
+  username: process.env.GITHUB_USERNAME || '',
+  password: process.env.GITHUB_PASSWORD || ''
+}, async ({ page }) => {
+  try {
+    console.log('Starting DB validation...');
+    const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
+      SELECT * FROM customers WHERE email = 'delba@oliveira.com'
+    `);
+
+    if (!customer) {
+      throw new Error('Customer delba@oliveira.com not found in database');
+    }
+
+    console.log('Found customer in DB:', customer);
+    expect(customer.email).toBe('delba@oliveira.com');
+    expect(customer.name).toBe('Delba de Oliveira');
+
+  } catch (error) {
+    console.error('DB Validation Error:', error);
+    throw error;
+  }
+})
+.expect('user should be redirected to /dashboard after logged in via Github', async () => {});
