@@ -16,7 +16,7 @@ define('Login Flow', () => {
     .test('User can login')
     .given('I am on the login page')
     .when('I enter my credentials')
-    .expect('I should be logged in')
+    .expect('I should be redirected to the dashboard page')
 })
 ```
 
