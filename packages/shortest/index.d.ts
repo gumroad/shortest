@@ -1,4 +1,5 @@
 import type { Expect } from 'expect';
+import type { Page } from 'playwright';
 import type { ShortestGlobals } from './dist/types/globals';
 import type { UITestBuilderInterface } from './dist/types/ui-test-builder';
 import type { TestStep, BeforeAllFunction, AfterAllFunction } from './dist/types/test';
@@ -12,9 +13,14 @@ declare global {
   const afterAll: (fn: () => void | Promise<void>) => void;
 }
 
-// Export module types
 declare module '@antiwork/shortest' {
   export type { ShortestConfig };
+  
+  export interface StepContext {
+    page: Page;
+  }
+
+  export type StepCallback = (context: StepContext) => Promise<void>;
   
   export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     path: string;
@@ -27,18 +33,18 @@ declare module '@antiwork/shortest' {
     test(name: string): this;
 
     given(description: string): this;
-    given(description: string, callback: () => Promise<void>): this;
-    given(description: string, payload: T, callback?: () => Promise<void>): this;
+    given(description: string, callback: StepCallback): this;
+    given(description: string, payload: T, callback?: StepCallback): this;
 
     when(description: string): this;
-    when(description: string, callback: () => Promise<void>): this;
-    when(description: string, payload: T, callback?: () => Promise<void>): this;
+    when(description: string, callback: StepCallback): this;
+    when(description: string, payload: T, callback?: StepCallback): this;
 
     expect(description: string): this;
-    expect(description: string, callback: () => Promise<void>): this;
-    expect(description: string, payload: T, callback?: () => Promise<void>): this;
+    expect(description: string, callback: StepCallback): this;
+    expect(description: string, payload: T, callback?: StepCallback): this;
 
-    before(actionOrFn: string | BeforeAllFunction, payload?: T): this;
-    after(actionOrFn: string | AfterAllFunction, payload?: T): this;
+    before(actionOrFn: string | StepCallback, payload?: T): this;
+    after(actionOrFn: string | StepCallback, payload?: T): this;
   }
 } 

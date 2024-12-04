@@ -170,7 +170,7 @@ export class TestRunner {
           if (builder) {
             try {
               for (const hook of builder.getBeforeHooks()) {
-                await hook();
+                await hook({ page });
               }
             } catch (error) {
               this.logger.reportError('Before Hook', error instanceof Error ? error.message : String(error));
@@ -231,7 +231,7 @@ export class TestRunner {
             if (builder) {
               try {
                 for (const hook of builder.getAfterHooks()) {
-                  await hook();
+                  await hook({ page });
                 }
               } catch (error) {
                 this.logger.reportError('After Hook', error instanceof Error ? error.message : String(error));

@@ -1,8 +1,17 @@
+import { Page } from 'playwright';
+
 export interface TestContext {
   currentTest: TestCase;
   currentStepIndex: number;
   testName?: string;
+  browserTool?: any;
 }
+
+export interface StepContext {
+  page: Page;
+}
+
+export type StepCallback = (context: StepContext) => Promise<void>;
 
 export interface TestStep {
   type: 'GIVEN' | 'WHEN' | 'EXPECT' | 'BEFORE' | 'AFTER';
@@ -10,7 +19,7 @@ export interface TestStep {
   action: string;
   payload?: any;
   hasCallback?: boolean;
-  callback?: () => Promise<void>;
+  callback?: StepCallback;
 }
 
 export interface TestCase {

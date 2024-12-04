@@ -3,6 +3,13 @@ import { TestStep, BeforeAllFunction, AfterAllFunction, ActionType } from '../..
 import { UITestBuilderInterface } from '../../types/ui-test-builder';
 import { TestCase, TestSuite } from '../../types/test';
 import { getConfig } from '../../index';
+import { Page } from 'playwright';
+
+export interface StepContext {
+  page: Page;
+}
+
+export type StepCallback = (context: StepContext) => Promise<void>;
 
 export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   path: string;
@@ -10,8 +17,8 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
   steps: TestStep[] = [];
   private suiteName: string = '';
   private processedSuites = new Set<string>();
-  private beforeHooks: (() => Promise<void>)[] = [];
-  private afterHooks: (() => Promise<void>)[] = [];
+  private beforeHooks: StepCallback[] = [];
+  private afterHooks: StepCallback[] = [];
 
   constructor(path: string) {
     this.path = path;
@@ -34,15 +41,15 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this.suiteName;
   }
 
-  private isCallbackFunction(value: any): value is () => Promise<void> {
+  private isCallbackFunction(value: any): value is StepCallback {
     return typeof value === 'function';
   }
 
   private createStep(
     type: TestStep['type'],
     description: string,
-    callbackOrPayload?: (() => Promise<void>) | T,
-    callback?: () => Promise<void>
+    callbackOrPayload?: StepCallback | T,
+    callback?: StepCallback
   ): TestStep {
     const baseStep = {
       type,
@@ -122,11 +129,11 @@ export class UITestBuilder<T = any> implements UITestBuilderInterface<T> {
     return this;
   }
 
-  getBeforeHooks(): (() => Promise<void>)[] {
+  getBeforeHooks(): StepCallback[] {
     return this.beforeHooks;
   }
 
-  getAfterHooks(): (() => Promise<void>)[] {
+  getAfterHooks(): StepCallback[] {
     return this.afterHooks;
   }
 

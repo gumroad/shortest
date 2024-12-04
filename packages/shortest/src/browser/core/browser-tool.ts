@@ -44,6 +44,10 @@ export class BrowserTool extends BaseBrowserTool {
     this.initialize();
   }
 
+  getPage(): Page {
+    return this.page;
+  }
+
   private async initialize(): Promise<void> {
     this.page.on('load', async () => {
       try {
@@ -205,7 +209,7 @@ export class BrowserTool extends BaseBrowserTool {
 
           const currentStep = this.testContext.currentTest.steps[this.testContext.currentStepIndex];
           if (currentStep?.callback) {
-            await currentStep.callback();
+            await currentStep.callback({ page: this.page });
             this.testContext.currentStepIndex++;
           }
           return { output: 'Callback executed successfully' };
