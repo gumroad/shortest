@@ -9,14 +9,15 @@ npm install @antiwork/shortest
 2. Write your first test
 
 ```
-import { define } from 'shortest'
+import { UITestBuilder } from '@antiwork/shortest'
 
-define('Login Flow', () => {
-  test('User can login')
-    .given('I am on the login page')
-    .when('I enter my credentials')
-    .expect('I should be logged in')
-})
+define('Validate Dasboard is accessible by users', async () => {
+  new UITestBuilder<loginButton>('/')
+    .test('Validate that users can access the dashboard')
+    .given('You are on the home page')
+    .when('Navigating to /dashboard')
+    .expect('Should be able to see the text "Dashboard"')
+});
 ```
 
 3. Don't forget to add an API key:
