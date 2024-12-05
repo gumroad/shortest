@@ -33,10 +33,10 @@ export interface TestChain {
 
 export interface TestAPI {
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
-  beforeAll: (name?: string, fn?: TestHookFunction) => void;
-  afterAll: (name?: string, fn?: TestHookFunction) => void;
-  beforeEach: (name?: string, fn?: TestHookFunction) => void;
-  afterEach: (name?: string, fn?: TestHookFunction) => void;
+  beforeAll: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
+  afterAll: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
+  beforeEach: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
+  afterEach: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
 }
 
 export type { Page } from 'playwright';

@@ -101,20 +101,20 @@ export const test: TestAPI = Object.assign(
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>) => 
     createTestChain(name, payload, fn),
   {
-    beforeAll: (nameOrFn?: string | TestHookFunction, fn?: TestHookFunction) => {
-      const hook = typeof nameOrFn === 'function' ? nameOrFn : fn;
+    beforeAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
+      const hook = typeof nameOrFn === 'function' ? nameOrFn : undefined;
       if (hook) global.__shortest__.registry.beforeAllFns.push(hook);
     },
-    afterAll: (nameOrFn?: string | TestHookFunction, fn?: TestHookFunction) => {
-      const hook = typeof nameOrFn === 'function' ? nameOrFn : fn;
+    afterAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
+      const hook = typeof nameOrFn === 'function' ? nameOrFn : undefined;
       if (hook) global.__shortest__.registry.afterAllFns.push(hook);
     },
-    beforeEach: (nameOrFn?: string | TestHookFunction, fn?: TestHookFunction) => {
-      const hook = typeof nameOrFn === 'function' ? nameOrFn : fn;
+    beforeEach: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
+      const hook = typeof nameOrFn === 'function' ? nameOrFn : undefined;
       if (hook) global.__shortest__.registry.beforeEachFns.push(hook);
     },
-    afterEach: (nameOrFn?: string | TestHookFunction, fn?: TestHookFunction) => {
-      const hook = typeof nameOrFn === 'function' ? nameOrFn : fn;
+    afterEach: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
+      const hook = typeof nameOrFn === 'function' ? nameOrFn : undefined;
       if (hook) global.__shortest__.registry.afterEachFns.push(hook);
     }
   }

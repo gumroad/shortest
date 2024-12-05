@@ -9,6 +9,23 @@ declare global {
 
 declare module '@antiwork/shortest' {
   export const test: TestAPI;
-  export { TestContext, Page };
+  
+  export interface TestContextProps {
+    page: Page;
+  }
+  
+  export interface TestAPI {
+    (name: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;
+    beforeAll(nameOrFn?: string | ((context: TestContextProps) => Promise<void>), fn?: (context: TestContextProps) => Promise<void>): void;
+    afterAll(nameOrFn?: string | ((context: TestContextProps) => Promise<void>), fn?: (context: TestContextProps) => Promise<void>): void;
+    beforeEach(nameOrFn?: string | ((context: TestContextProps) => Promise<void>), fn?: (context: TestContextProps) => Promise<void>): void;
+    afterEach(nameOrFn?: string | ((context: TestContextProps) => Promise<void>), fn?: (context: TestContextProps) => Promise<void>): void;
+  }
+
+  export interface TestChain {
+    expect(description: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
+  }
+  
+  export { TestContext };
   export type { ShortestConfig };
 } 
