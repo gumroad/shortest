@@ -84,11 +84,19 @@ function createTestChain(name: string, payload?: any, fn?: (context: TestContext
   );
 
   const chain: TestChain = {
-    expect: (description: string, expectFn?: (context: TestContext) => Promise<void>) => {
+    expect(description: string, payloadOrFn?: any, fn?: (context: TestContext) => Promise<void>) {
       test.expectations = test.expectations || [];
+      
+      // Handle different overloads
+      if (typeof payloadOrFn === 'function') {
+        fn = payloadOrFn;
+        payloadOrFn = undefined;
+      }
+      
       test.expectations.push({
         description,
-        fn: expectFn
+        payload: payloadOrFn,
+        fn
       });
       return chain;
     }

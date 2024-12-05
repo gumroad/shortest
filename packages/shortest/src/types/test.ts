@@ -23,20 +23,33 @@ export interface TestFunction {
   fn: (context: TestContext) => Promise<void>;
   expectations?: {
     description: string;
+    payload?: any;
     fn?: (context: TestContext) => Promise<void>;
   }[];
 }
 
 export interface TestChain {
-  expect: (description: string, fn?: (context: TestContext) => Promise<void>) => TestChain;
+  expect(description: string): TestChain;
+  expect(description: string, fn?: (context: TestContext) => Promise<void>): TestChain;
+  expect(description: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
 }
 
 export interface TestAPI {
+  (name: string): TestChain;
+  (name: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
-  beforeAll: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
-  afterAll: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
-  beforeEach: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
-  afterEach: (nameOrFn: string | ((ctx: TestContext | { page: Page }) => Promise<void>)) => void;
+  
+  beforeAll(fn: (context: TestContext) => Promise<void>): void;
+  beforeAll(name: string, fn: (context: TestContext) => Promise<void>): void;
+  
+  afterAll(fn: (context: TestContext) => Promise<void>): void;
+  afterAll(name: string, fn: (context: TestContext) => Promise<void>): void;
+  
+  beforeEach(fn: (context: TestContext) => Promise<void>): void;
+  beforeEach(name: string, fn: (context: TestContext) => Promise<void>): void;
+  
+  afterEach(fn: (context: TestContext) => Promise<void>): void;
+  afterEach(name: string, fn: (context: TestContext) => Promise<void>): void;
 }
 
 export type { Page } from 'playwright';
