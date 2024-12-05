@@ -13,7 +13,7 @@ import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { GitHubTool } from '../integrations/github';
 import { BrowserManager } from '../manager';
-import { TestContext, BrowserToolConfig } from '../../types';
+import { TestContext, BrowserToolConfig, TestFunction } from '../../types';
 import * as actions from '../actions';
 
 export class BrowserTool extends BaseBrowserTool {
@@ -203,16 +203,37 @@ export class BrowserTool extends BaseBrowserTool {
           };
 
         case 'run_callback':
-          if (!this.testContext) {
+          if (!this.testContext?.currentTest) {
             throw new Error('No test context available for callback execution');
           }
 
-          const currentStep = this.testContext.currentTest.steps[this.testContext.currentStepIndex];
-          if (currentStep?.callback) {
-            await currentStep.callback({ page: this.page });
-            this.testContext.currentStepIndex++;
+          const testContext = this.testContext;
+          const currentTest = testContext.currentTest as TestFunction;
+          const currentStepIndex = testContext.currentStepIndex ?? 0;
+
+          try {
+            if (currentStepIndex === 0) {
+              await currentTest.fn({ page: this.page });
+              testContext.currentStepIndex = 1;
+              output = 'Test function executed successfully';
+            } else {
+              const expectationIndex = currentStepIndex - 1;
+              const expectation = currentTest.expectations?.[expectationIndex];
+              
+              if (expectation?.fn) {
+                await expectation.fn({ page: this.page });
+                output = `Expectation "${expectation.description}" executed successfully`;
+              } else {
+                output = `No callback for expectation at index ${expectationIndex}`;
+              }
+              testContext.currentStepIndex = currentStepIndex + 1;
+            }
+          } catch (error) {
+            throw new ToolError(
+              `Callback execution failed: ${error instanceof Error ? error.message : String(error)}`
+            );
           }
-          return { output: 'Callback executed successfully' };
+          return { output };
 
         case 'navigate': {          
           if (!input.url) {

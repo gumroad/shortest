@@ -5,11 +5,11 @@ import { BrowserManager } from '../../browser/manager';
 import { BrowserTool } from '../../browser/core/browser-tool';
 import { AIClient } from '../../ai/client';
 import { initialize, getConfig } from '../../index';
-import { ShortestConfig, TestContext } from '../../types';
+import { TestFunction, TestContext, ShortestConfig } from '../../types';
 import { Logger } from '../../utils/logger';
+import { TestBuilder } from '../builder';
 import Anthropic from '@anthropic-ai/sdk';
-import { UITestBuilder } from '../builder';
-import { TestRegistry } from '../../index';
+import { BrowserContext } from 'playwright';
 
 interface TestResult {
   result: 'pass' | 'fail';
@@ -27,7 +27,13 @@ export class TestRunner {
   private logger: Logger;
   private debugAI: boolean;
 
-  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false, targetUrl?: string, debugAI = false) {
+  constructor(
+    cwd: string, 
+    exitOnSuccess = true, 
+    forceHeadless = false, 
+    targetUrl?: string,
+    debugAI = false
+  ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
@@ -45,14 +51,12 @@ export class TestRunner {
       'shortest.config.mjs'
     ];
 
-    // Try to load config file
     for (const file of configFiles) {
       try {
         const module = await this.compiler.loadModule(file, this.cwd);
         if (module.default) {
           this.config = module.default;
           
-          // Override config with CLI flags
           if (this.forceHeadless && this.config.browsers) {
             this.config.browsers = this.config.browsers.map(browser => ({
               ...browser,
@@ -89,7 +93,6 @@ export class TestRunner {
           .pop();
         
         const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-                
         const matches = await glob(globPattern, { 
           cwd: this.cwd,
           absolute: true
@@ -111,157 +114,120 @@ export class TestRunner {
     return files;
   }
 
-  private async executeTest(file: string) {
-    try {
-      TestRegistry.clear();
-      await initialize();
-      const config = getConfig();
-      const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
-      
-      if (!apiKey) {
-        throw new Error('Anthropic API key not found');
+  private async executeTest(test: TestFunction, context: BrowserContext) {
+    const page = context.pages()[0];
+    const browserTool = new BrowserTool(page, this.browserManager, {
+      width: 1920,
+      height: 1080,
+      testContext: {
+        page,
+        currentTest: test,
+        currentStepIndex: 0
       }
+    });
 
-      this.logger.startFile(file);
-      const compiledPath = await this.compiler.compileFile(file);
-      const module = await import(compiledPath);
-      const suites = await UITestBuilder.parseModule(module);
-      
-      for (const suite of suites) {
-        this.logger.startSuite(suite.name);
-        
-        // Execute beforeAll hooks
-        const suiteHooks = TestRegistry.getSuiteHooks(suite.name);
-        if (suiteHooks) {
-          try {
-            for (const hook of suiteHooks.beforeAllFns) {
-              await hook();
-            }
-          } catch (error) {
-            this.logger.reportError('BeforeAll Hook', error instanceof Error ? error.message : String(error));
-            continue;
+    const apiKey = this.config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('Anthropic API key not found');
+    }
+
+    const aiClient = new AIClient({
+      apiKey,
+      model: 'claude-3-5-sonnet-20241022',
+      maxMessages: 10,
+      debug: this.debugAI
+    }, this.debugAI);
+
+    try {
+      const prompt = TestBuilder.generatePrompt(test);
+      const result = await aiClient.processAction(
+        prompt,
+        browserTool,
+        (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
+          if (content.type === 'text') {
+            // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
           }
         }
+      );
 
-        for (const test of suite.tests) {
-          const testContext: TestContext = {
-            currentTest: test,
-            currentStepIndex: 0,
-            testName: test.testName
-          };
-          
-          // Launch browser first
-          this.logger.reportStatus(' Launching browser...');
-          const context = await this.browserManager.launch();
-          const page = context.pages()[0];
-          
-          const browserTool = new BrowserTool(
-            page,
-            this.browserManager,
-            {
-              width: 1920,
-              height: 1080,
-              testContext
-            }
-          );
+      if (!result) {
+        throw new Error('AI processing failed: no result returned');
+      }
 
-          // Execute before hooks after browser launch
-          const builder = TestRegistry.getTestBuilder(test);
-          if (builder) {
-            try {
-              for (const hook of builder.getBeforeHooks()) {
-                await hook({ page });
-              }
-            } catch (error) {
-              this.logger.reportError('Before Hook', error instanceof Error ? error.message : String(error));
-              continue;
-            }
-          }
+      const finalMessage = result.finalResponse.content.find(block => 
+        block.type === 'text' && 
+        (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
+      );
 
-          const aiClient = new AIClient({
-            apiKey,
-            model: 'claude-3-5-sonnet-20241022',
-            maxMessages: 10,
-            debug: this.debugAI
-          }, this.debugAI);
+      if (finalMessage && finalMessage.type === 'text') {
+        const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          const testResult = JSON.parse(jsonMatch[0]) as TestResult;
+          return testResult;
+        }
+      }
 
-          try {
-            const prompt = UITestBuilder.generateTestPrompt(test, suite.name);
-            const result = await aiClient.processAction(
-              prompt,
-              browserTool,
-              (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
-                if (content.type === 'text') {
-                  // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
-                }
-              },
-              (name: string, input: any) => {
-                // this.logger.reportStatus(`🔧 ${name}: ${JSON.stringify(input)}`);
-              }
-            );
+      throw new Error('No test result found in AI response');
+    } catch (error) {
+      return {
+        result: 'fail' as const,
+        reason: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 
-            if (!result) {
-              throw new Error('AI processing failed: no result returned');
+  private async executeTestFile(file: string) {
+    try {
+      const registry = (global as any).__shortest__.registry;
+      registry.tests.clear();
+      
+      await initialize();
+      
+      this.logger.startFile(file);
+      const compiledPath = await this.compiler.compileFile(file);
+      await import(compiledPath);
+      
+      const context = await this.browserManager.launch();
+      const testContext: TestContext = { page: context.pages()[0] };
+
+      try {
+        // Execute beforeAll hooks
+        for (const hook of registry.beforeAllFns) {
+          await hook(testContext);
+        }
+
+        // Execute tests
+        for (const [testName, testFns] of registry.tests) {
+          for (const test of testFns) {
+            // Execute beforeEach hooks
+            for (const hook of registry.beforeEachFns) {
+              await hook(testContext);
             }
 
-            const finalMessage = result.finalResponse.content.find(block => 
-              block.type === 'text' && 
-              (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
-            );
-
-            if (finalMessage && finalMessage.type === 'text') {
-              const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
-              if (jsonMatch) {
-                const testResult = JSON.parse(jsonMatch[0]) as TestResult;
-                
-                if (testResult.result === 'pass') {
-                  this.logger.reportTest(test.testName, 'passed');
-                } else {
-                  this.logger.reportTest(test.testName, 'failed', new Error(testResult.reason));
-                  this.logger.reportError('Test Failed', testResult.reason);
-                }
-              }
+            // Execute test
+            const result = await this.executeTest(test, context);
+            
+            if (result.result === 'pass') {
+              this.logger.reportTest(test.name, 'passed');
             } else {
-              const noResultError = new Error('No test result found in AI response');
-              this.logger.reportTest(test.testName, 'failed', noResultError);
-              this.logger.reportError('Test Failed', noResultError.message);
+              this.logger.reportTest(test.name, 'failed', new Error(result.reason));
+              this.logger.reportError('Test Failed', result.reason);
             }
 
-            // Execute after hooks before processing result
-            if (builder) {
-              try {
-                for (const hook of builder.getAfterHooks()) {
-                  await hook({ page });
-                }
-              } catch (error) {
-                this.logger.reportError('After Hook', error instanceof Error ? error.message : String(error));
-              }
+            // Execute afterEach hooks
+            for (const hook of registry.afterEachFns) {
+              await hook(testContext);
             }
-
-          } catch (error: unknown) {
-            if (error instanceof Error) {
-              this.logger.reportTest(test.testName, 'failed', error);
-              this.logger.reportError('Test Failed', error.message);
-            } else {
-              const unknownError = new Error('Unknown error occurred');
-              this.logger.reportTest(test.testName, 'failed', unknownError);
-              this.logger.reportError('Test Failed', unknownError.message);
-            }
-          } finally {
-            await this.browserManager.close();
           }
         }
 
         // Execute afterAll hooks
-        if (suiteHooks) {
-          try {
-            for (const hook of suiteHooks.afterAllFns) {
-              await hook();
-            }
-          } catch (error) {
-            this.logger.reportError('AfterAll Hook', error instanceof Error ? error.message : String(error));
-          }
+        for (const hook of registry.afterAllFns) {
+          await hook(testContext);
         }
+
+      } finally {
+        await this.browserManager.close();
       }
 
     } catch (error) {
@@ -283,7 +249,7 @@ export class TestRunner {
     }
 
     for (const file of files) {
-      await this.executeTest(file);
+      await this.executeTestFile(file);
     }
     
     this.logger.summary();
@@ -300,7 +266,7 @@ export class TestRunner {
     const files = await this.findTestFiles();
     
     for (const file of files) {
-      await this.executeTest(file);
+      await this.executeTestFile(file);
     }
     
     this.logger.summary();

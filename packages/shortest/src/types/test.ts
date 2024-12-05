@@ -1,48 +1,4 @@
-import { Page } from 'playwright';
-
-export interface TestContext {
-  currentTest: TestCase;
-  currentStepIndex: number;
-  testName?: string;
-  browserTool?: any;
-}
-
-export interface StepContext {
-  page: Page;
-}
-
-export type StepCallback = (context: StepContext) => Promise<void>;
-
-export interface TestStep {
-  type: 'GIVEN' | 'WHEN' | 'EXPECT' | 'BEFORE' | 'AFTER';
-  description: string;
-  action: string;
-  payload?: any;
-  hasCallback?: boolean;
-  callback?: StepCallback;
-}
-
-export interface TestCase {
-  suiteName: string;
-  path: string;
-  fullPath: string;
-  testName: string;
-  steps: TestStep[];
-}
-
-export interface TestSuite {
-  name: string;
-  tests: TestCase[];
-  context?: SuiteContext;
-}
-
-export interface BeforeAllFunction {
-  (): Promise<void> | void;
-}
-
-export interface AfterAllFunction {
-  (): Promise<void> | void;
-}
+import type { Page } from 'playwright';
 
 export interface AssertionError extends Error {
   matcherResult?: {
@@ -53,10 +9,35 @@ export interface AssertionError extends Error {
   };
 }
 
-export type ActionType = string | Record<string, any>;
+export interface TestContext {
+  page: Page;
+  currentTest?: TestFunction;
+  currentStepIndex?: number;
+}
 
-export interface SuiteContext {
+export type TestHookFunction = (context: TestContext) => Promise<void>;
+
+export interface TestFunction {
   name: string;
-  beforeAllFns: (() => Promise<void>)[];
-  afterAllFns: (() => Promise<void>)[];
-} 
+  payload?: any;
+  fn: (context: TestContext) => Promise<void>;
+  expectations?: {
+    description: string;
+    fn?: (context: TestContext) => Promise<void>;
+  }[];
+}
+
+export interface TestChain {
+  expect: (description: string, fn?: (context: TestContext) => Promise<void>) => TestChain;
+}
+
+export interface TestAPI {
+  (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
+  beforeAll: (name?: string, fn?: TestHookFunction) => void;
+  afterAll: (name?: string, fn?: TestHookFunction) => void;
+  beforeEach: (name?: string, fn?: TestHookFunction) => void;
+  afterEach: (name?: string, fn?: TestHookFunction) => void;
+}
+
+export type { Page } from 'playwright';
+ 
