@@ -43,7 +43,7 @@ pnpm test:assertion
 
 3. Build Package
 ```bash
-pnpm build
+pnpm build:pkg
 ```
 
 ## Pull Request Process
@@ -58,7 +58,6 @@ pnpm build
 
 - Use TypeScript
 - Follow existing code style
-- Add JSDoc comments for public APIs
 - Use meaningful variable names
 
 ## Commit Messages
