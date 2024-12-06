@@ -219,12 +219,24 @@ export class BrowserTool extends BaseBrowserTool {
           const currentTest = testContext.currentTest as TestFunction;
           const currentStepIndex = testContext.currentStepIndex ?? 0;
 
+          // Check if it's the default empty function
+          if (currentTest?.fn?.toString() === '(async () => {})') {
+            return {
+              output: 'Skipping callback execution: No callback function defined for this test'
+            };
+          }
+
           try {
             if (currentStepIndex === 0) {
-              await currentTest.fn({ page: this.page });
-              testContext.currentStepIndex = 1;
+              if (currentTest.fn) {
+                await currentTest.fn({ page: this.page });
+                testContext.currentStepIndex = 1;
+                return {
+                  output: 'Test function executed successfully'
+                };
+              }
               return {
-                output: 'Test function executed successfully'
+                output: 'Skipping callback execution: No callback function defined for this test'
               };
             } else {
               const expectationIndex = currentStepIndex - 1;
@@ -238,7 +250,7 @@ export class BrowserTool extends BaseBrowserTool {
                 };
               } else {
                 return {
-                  output: `No callback found for this step`
+                  output: `Skipping callback execution: No callback function defined for expectation "${expectation?.description}"`
                 };
               }
             }

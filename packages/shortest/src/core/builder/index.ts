@@ -6,22 +6,21 @@ export class TestBuilder {
       `Test: "${test.name}"`,
     ];
 
-    // Add context if payload exists
     if (test.payload) {
       lines.push(`Context: ${JSON.stringify(test.payload)}`);
     }
 
-    // Add test execution step
+    const hasCallback = Boolean(test.fn);
+    
     lines.push(
       'Steps:',
-      '1. Execute test function [HAS_CALLBACK]'
+      `1. Execute test function${hasCallback ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`
     );
 
-    // Add expectations
     if (test.expectations && test.expectations.length > 0) {
       lines.push('Expected Results:');
       test.expectations.forEach(exp => {
-        lines.push(`- ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : ''}`);
+        lines.push(`- ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`);
       });
     }
 

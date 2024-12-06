@@ -20,7 +20,7 @@ export type TestHookFunction = (context: TestContext) => Promise<void>;
 export interface TestFunction {
   name: string;
   payload?: any;
-  fn: (context: TestContext) => Promise<void>;
+  fn?: (context: TestContext) => Promise<void>;
   expectations?: {
     description: string;
     payload?: any;

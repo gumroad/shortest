@@ -76,7 +76,7 @@ function createTestChain(name: string, payload?: any, fn?: (context: TestContext
   const test: TestFunction = {
     name,
     payload,
-    fn: fn || (async () => {}),
+    fn,
     expectations: []
   };
 

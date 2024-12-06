@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const githubCredentials = {
-  email: process.env.GITHUB_EMAIL,
+  email: process.env.GITHUB_EMAIL || 'argo.mohrad@gmail.com',
   username: process.env.GITHUB_USERNAME,
   password: process.env.GITHUB_PASSWORD,
 }
@@ -25,8 +25,8 @@ test('Login to the app using Github login', githubCredentials , async ({ page })
       }
   
       console.log('Found customer in DB:', customer);
-      expect(customer.email).toBe(githubCredentials.username);
-      expect(customer.name).toBe(githubCredentials.email);
+      expect(customer.email).toBe(githubCredentials.email);
+      expect(customer.name).toBe(githubCredentials.username);
   
     } catch (error) {
       console.error('DB Validation Error:', error);
