@@ -17,6 +17,7 @@ import { TestContext, BrowserToolConfig, TestFunction } from '../../types';
 import * as actions from '../actions';
 import pc from 'picocolors';
 import { CallbackError } from '../../types/test';
+import { AssertionCallbackError } from '../../types/test';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -219,13 +220,6 @@ export class BrowserTool extends BaseBrowserTool {
           const currentTest = testContext.currentTest as TestFunction;
           const currentStepIndex = testContext.currentStepIndex ?? 0;
 
-          // Check if it's the default empty function
-          if (currentTest?.fn?.toString() === '(async () => {})') {
-            return {
-              output: 'Skipping callback execution: No callback function defined for this test'
-            };
-          }
-
           try {
             if (currentStepIndex === 0) {
               if (currentTest.fn) {
@@ -239,6 +233,7 @@ export class BrowserTool extends BaseBrowserTool {
                 output: 'Skipping callback execution: No callback function defined for this test'
               };
             } else {
+              // Handle expectations
               const expectationIndex = currentStepIndex - 1;
               const expectation = currentTest.expectations?.[expectationIndex];
               
@@ -255,8 +250,16 @@ export class BrowserTool extends BaseBrowserTool {
               }
             }
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            throw new CallbackError(errorMessage);
+            // Check if it's an assertion error from jest/expect
+            if (error && (error as any).matcherResult) {
+              const assertionError = error as any;
+              throw new AssertionCallbackError(
+                assertionError.message,
+                assertionError.matcherResult.actual,
+                assertionError.matcherResult.expected
+              );
+            }
+            throw new CallbackError(error instanceof Error ? error.message : String(error));
           }
         }
 
@@ -323,12 +326,20 @@ export class BrowserTool extends BaseBrowserTool {
     } catch (error) {
       console.error(pc.red('\n❌ Browser Action Failed:'), error);
       
+      if (error instanceof AssertionCallbackError) {
+        return {
+          output: `Assertion failed: ${error.message}${
+            error.actual !== undefined ? 
+            `\nExpected: ${error.expected}\nReceived: ${error.actual}` : 
+            ''
+          }`
+        };
+      }
       if (error instanceof CallbackError) {
         return {
           output: `Callback execution failed: ${error.message}`
         };
       }
-
       throw new ToolError(`Action failed: ${error}`);
     }
   }

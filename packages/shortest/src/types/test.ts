@@ -69,4 +69,11 @@ export class CallbackError extends Error {
     this.name = 'CallbackError';
   }
 }
+
+export class AssertionCallbackError extends CallbackError {
+  constructor(message: string, public actual?: any, public expected?: any) {
+    super(message);
+    this.name = 'AssertionCallbackError';
+  }
+}
  

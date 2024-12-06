@@ -11,27 +11,20 @@ const githubCredentials = {
   password: process.env.GITHUB_PASSWORD,
 }
 
-test('Login to the app using Github login', githubCredentials , async ({ page }) => {
-    console.log('Validating DB for the given user: ', githubCredentials.username);
-    
+test('Login to the app using Github login', githubCredentials , async ({ page }) => {    
     try {
-      console.log('Starting DB validation...');
-      const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
-        SELECT * FROM customers WHERE email = 'argo.mohrad@gmail.com'
-      `);
-  
-      if (!customer) {
-        throw new Error('Customer argo.mohrad@gmail.com not found in database');
-      }
-  
-      console.log('Found customer in DB:', customer);
-      expect(customer.email).toBe(githubCredentials.email);
-      expect(customer.name).toBe(githubCredentials.username);
-  
+      // Basic URL assertion
+      expect(1).toBe(2);
+      
+      // DOM element assertions
+      const title = await page.title();
+      console.log('Title:', title);
+      expect(title).toBe('Shortest');
+
     } catch (error) {
-      console.error('DB Validation Error:', error);
+      console.error('Assertion Error:', error);
       throw error;
     }
-})
+});
 
 test('Validate write new test button generates test cases and make sure you can commit new tests to github')
