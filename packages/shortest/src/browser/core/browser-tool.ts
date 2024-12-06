@@ -106,12 +106,6 @@ export class BrowserTool extends BaseBrowserTool {
       let output = '';
       let metadata = {};
 
-      console.log(pc.magenta('\n🔍 Browser Action:'), {
-        action: input.action,
-        coordinates: input.coordinates,
-        url: input.url
-      });
-
       switch (input.action) {
         case 'left_click':
         case 'right_click':
@@ -332,7 +326,6 @@ export class BrowserTool extends BaseBrowserTool {
       try {
         await this.page.waitForTimeout(200);
         metadata = await this.getMetadata();
-        console.log(pc.magenta('\n📊 Page Metadata:'), metadata);
       } catch (metadataError) {
         console.warn('Failed to get metadata:', metadataError);
         metadata = {};
