@@ -1,3 +1,12 @@
 import { test } from '@antiwork/shortest';
 
-test('Validate that users can access the dashboard')
+
+const githubCredentials = {
+    username: process.env.GITHUB_USERNAME,
+    password: process.env.GITHUB_PASSWORD,
+}
+  
+test('Login to the app using Github login', githubCredentials)
+
+test('clicking write new test button should initiate test generation')
+.expect("Test case to be generated within at least 20 seconds")
