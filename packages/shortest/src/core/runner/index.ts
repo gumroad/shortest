@@ -139,16 +139,28 @@ export class TestRunner {
     }, this.debugAI);
 
     try {
-      const prompt = TestBuilder.generatePrompt(test);
-      const result = await aiClient.processAction(
-        prompt,
-        browserTool,
-        (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
-          if (content.type === 'text') {
-            // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
-          }
+      // First get page state
+      const initialState = await browserTool.execute({ 
+        action: 'screenshot' 
+      });
+
+      // Build prompt with initial state and screenshot
+      const prompt = [
+        `Test: "${test.name}"`,
+        test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
+        `\nSteps:`,
+        `1. Execute test function${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
+        '\nCurrent Page State:',
+        `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
+        `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
+      ].filter(Boolean).join('\n');
+
+      // Execute test with enhanced prompt
+      const result = await aiClient.processAction(prompt, browserTool, (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
+        if (content.type === 'text') {
+          // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
         }
-      );
+      });
 
       if (!result) {
         throw new Error('AI processing failed: no result returned');
