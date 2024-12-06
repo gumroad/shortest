@@ -131,5 +131,4 @@ export const test: TestAPI = Object.assign(
   }
 );
 
-export type { TestContext };
 export type { ShortestConfig };
