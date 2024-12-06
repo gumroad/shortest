@@ -36,12 +36,7 @@ export default {
 ```typescript
 import { test } from '@antiwork/shortest'
 
-const loginCredentials = {
-  email: process.env.EMAIL,
-  password: process.env.PASSWORD,
-}
-
-test('Login to the app using email and password', githubCredentials)
+test('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
 ```
 
 ## Running Tests
