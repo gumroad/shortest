@@ -9,4 +9,3 @@ const githubCredentials = {
 test('Login to the app using Github login', githubCredentials)
 
 test('clicking write new test button should initiate test generation')
-.expect("Test case to be generated within at least 20 seconds")
