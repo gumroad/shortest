@@ -202,23 +202,18 @@ export class TestRunner {
             await hook(testContext);
           }
 
-          // Execute test
+          // Execute test and report result
           const result = await this.executeTest(test, context);
-          
-          if (result.result === 'pass') {
-            this.logger.reportTest(test.name, 'passed');
-          } else {
-            this.logger.reportTest(test.name, 'failed', new Error(result.reason));
-            this.logger.reportError('Test Failed', result.reason);
-          }
+          this.logger.reportTest(
+            test.name, 
+            result.result === 'pass' ? 'passed' : 'failed',
+            result.result === 'fail' ? new Error(result.reason) : undefined
+          );
 
           // Execute afterEach hooks
           for (const hook of registry.afterEachFns) {
             await hook(testContext);
           }
-
-          // Clear browser context between tests
-          // await this.browserManager.clearContext();
         }
 
         // Execute afterAll hooks
@@ -233,8 +228,6 @@ export class TestRunner {
     } catch (error) {
       if (error instanceof Error) {
         this.logger.reportError('Test Execution', error.message);
-      } else {
-        this.logger.reportError('Test Execution', String(error));
       }
     }
   }
