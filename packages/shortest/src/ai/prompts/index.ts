@@ -45,6 +45,8 @@ you must use the "navigate" tool to navigate to the new page. After navigating t
 you will recieve the result of the navigation and you can see if the the requested page is loaded or not from the 
 url field in the metadata.
 
+7. IMPORTANT! If there is a "Expect" present in the test intruction, you must make sure it is fulfilled. If not, you must fail the test case.
+
 MUST FOLLOW THIS RULE: perform exactly as instructed in the test case instructions.
 
 Your task is to:
