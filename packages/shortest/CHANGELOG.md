@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved browser navigation performance
 - Enhanced AI prompt generation
 - Added more robus test reporting
+- Add support for playwright's page object model
 
 ### Changed
 - Simplified test writing with a more intuitive API
