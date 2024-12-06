@@ -23,6 +23,10 @@ export class Logger {
     const icon = this.getStatusIcon(status);
     console.log(`    ${icon} ${name}`);
     
+    if (status === 'failed' && error?.message) {
+      console.log(pc.red(`        Reason: ${error.message}`));
+    }
+    
     this.testResults.push({ name, status, error });
   }
 
@@ -47,7 +51,7 @@ export class Logger {
 
     console.log(pc.dim('⎯'.repeat(50)));
     
-    console.log(pc.bold('\n Test Files '), 
+    console.log(pc.bold('\n Tests '), 
       failedTests ? pc.red(`${failedTests} failed`) : '',
       failedTests && passedTests ? ' | ' : '',
       pc.green(`${passedTests} passed`),
