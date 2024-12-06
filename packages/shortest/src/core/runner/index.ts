@@ -149,8 +149,16 @@ export class TestRunner {
       const prompt = [
         `Test: "${test.name}"`,
         test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
-        `\nSteps:`,
-        `1. Execute test function${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
+        `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
+        
+        // Add expectations if they exist
+        ...(test.expectations?.length ? [
+          '\nExpect:',
+          ...test.expectations.map((exp, i) => 
+            `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
+          )
+        ] : []),
+        
         '\nCurrent Page State:',
         `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
         `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
