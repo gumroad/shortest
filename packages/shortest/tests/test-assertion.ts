@@ -1,4 +1,4 @@
-import { UITestBuilder } from '../src/index';
+import { test } from '../src/index';
 import pc from 'picocolors';
 
 async function testAssertions() {
@@ -12,11 +12,9 @@ async function testAssertions() {
     // Test 1: Verify failing assertions are caught
     console.log(pc.cyan('\nTest 1: Verify failing assertions'));
     try {
-      const builder = new UITestBuilder('/')
-        .test('Test failing assertion')
-        .given('test data', undefined, async () => {
-          expect(true).toBe(false);
-        });
+      test('Test failing assertion', async ({ page }) => {
+        expect(true).toBe(false);
+      });
       
       console.log(pc.red('❌ Failed: Assertion should have thrown error'));
       failedTests++;
@@ -28,34 +26,16 @@ async function testAssertions() {
     // Test 2: Verify async assertions
     console.log(pc.cyan('\nTest 2: Verify async assertions'));
     try {
-      const builder = new UITestBuilder('/')
-        .test('Test async assertion')
-        .given('test data', undefined, async () => {
-          const result = await Promise.resolve(false);
-          expect(result).toBe(true);
-        });
+      test('Test async assertion', async ({ page }) => {
+        const result = await Promise.resolve(false);
+        expect(result).toBe(true);
+      });
       
       console.log(pc.red('❌ Failed: Async assertion should have thrown'));
       failedTests++;
     } catch (error) {
       console.log(pc.green('✅ Passed: Caught async failing assertion'));
       passedTests++;
-    }
-
-    // Test 3: Verify assertion steps are recorded
-    console.log(pc.cyan('\nTest 3: Verify assertion recording'));
-    const builder = new UITestBuilder('/')
-      .test('Test step recording')
-      .given('test data', undefined, async () => {
-        expect(true).toBe(true);
-      });
-    
-    if (builder.steps.length === 1 && builder.steps[0].callback) {
-      console.log(pc.green('✅ Passed: Assertion step recorded'));
-      passedTests++;
-    } else {
-      console.log(pc.red('❌ Failed: Assertion step not recorded'));
-      failedTests++;
     }
 
     // Summary

@@ -1,8 +1,8 @@
 import { AIClient } from '../src/ai/client';
 import { BrowserTool } from '../src/browser/core/browser-tool';
 import { BrowserManager } from '../src/browser/manager';
-import { defaultConfig, initialize } from '../src/index';
-import { TestCase } from '../src/types';
+import { initialize } from '../src/index';
+import type { TestFunction } from '../src/types/test';
 import pc from 'picocolors';
 
 async function testAI() {
@@ -18,28 +18,16 @@ async function testAI() {
     const page = context.pages()[0];
 
     // Mock test data with callback
-    const mockTest: TestCase = {
-      suiteName: 'Test Suite',
-      path: '/',
-      fullPath: 'http://localhost:3000',
-      testName: 'Test with callback',
-      steps: [
+    const mockTest: TestFunction = {
+      name: 'Test with callback',
+      fn: async () => {
+        console.log('Callback executed: Main test');
+      },
+      expectations: [
         {
-          type: 'GIVEN',
-          description: 'test setup',
-          action: 'test setup',
-          hasCallback: true,
-          callback: async () => {
-            console.log('Callback executed: GIVEN step');
-          }
-        },
-        {
-          type: 'WHEN',
           description: 'action performed',
-          action: 'action performed',
-          hasCallback: true,
-          callback: async () => {
-            console.log('Callback executed: WHEN step');
+          fn: async () => {
+            console.log('Callback executed: Expectation');
           }
         }
       ]
@@ -49,9 +37,9 @@ async function testAI() {
       width: 1920,
       height: 1080,
       testContext: {
+        page,
         currentTest: mockTest,
-        currentStepIndex: 0,
-        testName: mockTest.testName
+        currentStepIndex: 0
       }
     });
 
@@ -62,15 +50,15 @@ async function testAI() {
     });
     console.log('Result:', result);
 
-    // Update test context for second callback
+    // Update test context for expectation callback
     browserTool.updateTestContext({
+      page,
       currentTest: mockTest,
-      currentStepIndex: 1,
-      testName: mockTest.testName
+      currentStepIndex: 1
     });
 
-    // Test second callback
-    console.log('\n🔍 Testing second callback:');
+    // Test expectation callback
+    console.log('\n🔍 Testing expectation callback:');
     const result2 = await browserTool.execute({ 
       action: 'run_callback' 
     });

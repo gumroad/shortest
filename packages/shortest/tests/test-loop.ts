@@ -1,6 +1,6 @@
 import { BrowserManager } from '../src/browser/manager';
 import { BrowserTool } from '../src/browser/core/browser-tool';
-import { defaultConfig, initialize } from '../src/index';
+import { initialize } from '../src/index';
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT } from '../src/ai/prompts';
 
@@ -8,9 +8,9 @@ async function testBrowser() {
   const browserManager = new BrowserManager();
   const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
   
-  const apiKey = defaultConfig.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.error('Error: Anthropic API key not found in config or environment');
+    console.error('Error: Anthropic API key not found in environment');
     process.exit(1);
   }
 
