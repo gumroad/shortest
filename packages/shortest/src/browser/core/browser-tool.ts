@@ -9,7 +9,7 @@ declare global {
 import { Page } from 'playwright';
 import { BaseBrowserTool, ToolError } from './index';
 import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { GitHubTool } from '../integrations/github';
 import { BrowserManager } from '../manager';
@@ -30,6 +30,8 @@ export class BrowserTool extends BaseBrowserTool {
   private githubTool?: GitHubTool;
   private viewport: { width: number; height: number };
   private testContext?: TestContext;
+  private readonly MAX_SCREENSHOTS = 10;
+  private readonly MAX_AGE_HOURS = 5;
 
   constructor(
     page: Page, 
@@ -39,12 +41,13 @@ export class BrowserTool extends BaseBrowserTool {
     super(config);
     this.page = page;
     this.browserManager = browserManager;
-    this.screenshotDir = join(process.cwd(), 'screenshots');
+    this.screenshotDir = join(process.cwd(), '.shortest', 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
     
     this.initialize();
+    this.cleanupScreenshots();
   }
 
   getPage(): Page {
@@ -487,5 +490,36 @@ export class BrowserTool extends BaseBrowserTool {
 
   updateTestContext(newContext: TestContext) {
     this.testContext = newContext;
+  }
+
+  private cleanupScreenshots(): void {
+    try {
+      const files = readdirSync(this.screenshotDir)
+        .filter(file => file.endsWith('.png') || file.endsWith('.jpg'))
+        .map(file => ({
+          name: file,
+          path: join(this.screenshotDir, file),
+          time: statSync(join(this.screenshotDir, file)).mtime.getTime()
+        }))
+        .sort((a, b) => b.time - a.time); // newest first
+
+      const now = Date.now();
+      const fiveHoursMs = this.MAX_AGE_HOURS * 60 * 60 * 1000;
+
+      files.forEach((file, index) => {
+        const isOld = (now - file.time) > fiveHoursMs;
+        const isBeyondLimit = index >= this.MAX_SCREENSHOTS;
+
+        if (isOld || isBeyondLimit) {
+          try {
+            unlinkSync(file.path);
+          } catch (error) {
+            console.warn(`Failed to delete screenshot: ${file.path}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to cleanup screenshots:', error);
+    }
   }
 }
