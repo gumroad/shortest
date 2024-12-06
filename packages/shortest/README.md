@@ -53,10 +53,14 @@ shortest --headless        # Run in headless mode using cli
 
 ## GitHub 2FA Login Setup
 Shortest currently supports login using Github 2FA. For GitHub authentication tests:
-1. Get OTP secret from GitHub settings > Security > 2FA
-2. Add secret to `.env.local` or use CLI:
-3. After generating OTP code you can enter it in Github OTP section and shortest will be able to use OTP code to login.
 
+1. Go to your repository settings
+2. Navigate to "Password and Authentication"
+3. Click on "Authenticator App"
+4. Select "Use your authenticator app"
+5. Click "Setup key" to obtain the OTP secret
+6. Add the OTP secret to your `.env.local` file or use the Shortest CLI to add it
+7. Enter the 2FA code displayed in your terminal into Github's Authenticator setup page to complete the process
 ```bash
 shortest --github-code --secret=<OTP_SECRET>
 ```
