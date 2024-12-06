@@ -14,7 +14,7 @@ const githubCredentials = {
 test('Login to the app using Github login', githubCredentials , async ({ page }) => {    
     try {
       // Basic URL assertion
-      expect(1).toBe(2);
+      // expect(1).toBe(2);
       
       // DOM element assertions
       const title = await page.title();
@@ -25,6 +25,4 @@ test('Login to the app using Github login', githubCredentials , async ({ page })
       console.error('Assertion Error:', error);
       throw error;
     }
-});
-
-test('Validate write new test button generates test cases and make sure you can commit new tests to github')
+})

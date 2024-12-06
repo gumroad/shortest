@@ -8,24 +8,21 @@ declare global {
 }
 
 declare module '@antiwork/shortest' {
-  export interface TestContextProps {
+  export type TestContextProps = {
     page: Page;
-  }
+  };
 
-  export interface TestChain {
-    // Expect overloads - similar to test function overloads
+  export type TestChain = {
     expect(description: string): TestChain;
     expect(description: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     expect(description: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;
-  }
+  };
 
-  export interface TestAPI {
-    // Test function overloads - only name is required
+  export type TestAPI = {
     (name: string): TestChain;
     (name: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     (name: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     
-    // Lifecycle hooks overloads
     beforeAll(fn: (context: TestContextProps) => Promise<void>): void;
     beforeAll(name: string, fn: (context: TestContextProps) => Promise<void>): void;
     
@@ -37,9 +34,8 @@ declare module '@antiwork/shortest' {
     
     afterEach(fn: (context: TestContextProps) => Promise<void>): void;
     afterEach(name: string, fn: (context: TestContextProps) => Promise<void>): void;
-  }
+  };
 
   export const test: TestAPI;
-  export { TestContext };
-  export type { ShortestConfig };
+  export type { TestContext, ShortestConfig };
 } 

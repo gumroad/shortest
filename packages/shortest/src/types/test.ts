@@ -9,15 +9,29 @@ export interface AssertionError extends Error {
   };
 }
 
-export interface TestContext {
+export class CallbackError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CallbackError';
+  }
+}
+
+export class AssertionCallbackError extends CallbackError {
+  constructor(message: string, public actual?: any, public expected?: any) {
+    super(message);
+    this.name = 'AssertionCallbackError';
+  }
+}
+
+export type TestContext = {
   page: Page;
   currentTest?: TestFunction;
   currentStepIndex?: number;
-}
+};
 
 export type TestHookFunction = (context: TestContext) => Promise<void>;
 
-export interface TestFunction {
+export type TestFunction = {
   name: string;
   payload?: any;
   fn?: (context: TestContext) => Promise<void>;
@@ -26,15 +40,15 @@ export interface TestFunction {
     payload?: any;
     fn?: (context: TestContext) => Promise<void>;
   }[];
-}
+};
 
-export interface TestChain {
+export type TestChain = {
   expect(description: string): TestChain;
   expect(description: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
-}
+};
 
-export interface TestAPI {
+export type TestAPI = {
   (name: string): TestChain;
   (name: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
@@ -50,30 +64,16 @@ export interface TestAPI {
   
   afterEach(fn: (context: TestContext) => Promise<void>): void;
   afterEach(name: string, fn: (context: TestContext) => Promise<void>): void;
-}
+};
 
-export type { Page } from 'playwright';
-
-export interface TestRegistry {
+export type TestRegistry = {
   tests: Map<string, TestFunction[]>;
   currentFileTests: TestFunction[];
   beforeAllFns: TestHookFunction[];
   afterAllFns: TestHookFunction[];
   beforeEachFns: TestHookFunction[];
   afterEachFns: TestHookFunction[];
-}
+};
 
-export class CallbackError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CallbackError';
-  }
-}
-
-export class AssertionCallbackError extends CallbackError {
-  constructor(message: string, public actual?: any, public expected?: any) {
-    super(message);
-    this.name = 'AssertionCallbackError';
-  }
-}
+export type { Page } from 'playwright';
  
