@@ -45,6 +45,10 @@ export class TestRunner {
   }
 
   async initialize() {
+    await this.initializeConfig();
+  }
+
+  private async initializeConfig() {
     const configFiles = [
       'shortest.config.ts',
       'shortest.config.js',
@@ -57,11 +61,8 @@ export class TestRunner {
         if (module.default) {
           this.config = module.default;
           
-          if (this.forceHeadless && this.config.browsers) {
-            this.config.browsers = this.config.browsers.map(browser => ({
-              ...browser,
-              headless: true
-            }));
+          if (this.forceHeadless) {
+            this.config.headless = true;
           }
 
           if (this.targetUrl) {
@@ -126,7 +127,7 @@ export class TestRunner {
       }
     });
 
-    const apiKey = this.config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
+    const apiKey = this.config.anthropicKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       throw new Error('Anthropic API key not found');
     }

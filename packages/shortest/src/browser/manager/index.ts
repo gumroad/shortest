@@ -9,11 +9,10 @@ export class BrowserManager {
 
   async launch(): Promise<BrowserContext> {
     const config = getConfig();
-    const browserConfig = config.browsers?.[0] || { name: 'chrome', headless: false };
     const baseUrl = config.baseUrl || 'http://localhost:3000';
 
     this.browser = await chromium.launch({
-      headless: browserConfig.headless
+      headless: config.headless
     });
 
     this.context = await this.browser.newContext({
