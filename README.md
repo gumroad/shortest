@@ -41,6 +41,71 @@ import { test } from '@antiwork/shortest'
 test('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
 ```
 
+## Using callback functions
+You can also use callback functions to add additoinal assertions and other logic. AI will execute the callback function after the test
+execution in browser is completed.
+
+```typescript
+import { test } from '@antiwork/shortest';
+import { db } from '@/lib/db/drizzle';
+import { users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+test('Login to the app using Github login', {
+  username: process.env.GITHUB_USERNAME,
+  password: process.env.GITHUB_PASSWORD
+}, async ({ page }) => {    
+  // Get current user's clerk ID from the page
+  const clerkId = await page.evaluate(() => {
+    return window.localStorage.getItem('clerk-user');
+  }); 
+
+  if (!clerkId) {
+    throw new Error('User not found in database');
+  }
+
+  // Query the database
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  expect(user).toBeDefined();
+});
+```
+
+## Lifecycle hooks
+You can use lifecycle hooks to run code before and after the test.
+
+```typescript
+import { test } from '@antiwork/shortest';
+
+test.beforeAll(async ({ page }) => {
+  await clerkSetup({
+    frontendApiUrl: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000",
+  });
+});
+
+test.beforeEach(async ({ page }) => {
+  await clerk.signIn({
+    page,
+    signInParams: { 
+      strategy: "email_code", 
+      identifier: "iffy+clerk_test@example.com" 
+    },
+  });
+});
+
+test.afterEach(async ({ page }) => {
+  await page.close();
+});
+
+test.afterAll(async ({ page }) => {
+  await clerk.signOut({ page });
+});
+```
+
 ## Running Tests
 ```bash
 shortest                    # Run all tests
