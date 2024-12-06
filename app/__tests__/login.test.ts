@@ -17,11 +17,11 @@ test('Login to the app using Github login', githubCredentials , async ({ page })
     try {
       console.log('Starting DB validation...');
       const [customer] = await db.execute<{ id: string, name: string, email: string }>(sql`
-        SELECT * FROM customers WHERE email = 'delba@oliveira.com'
+        SELECT * FROM customers WHERE email = 'argo.mohrad@gmail.com'
       `);
   
       if (!customer) {
-        throw new Error('Customer delba@oliveira.com not found in database');
+        throw new Error('Customer argo.mohrad@gmail.com not found in database');
       }
   
       console.log('Found customer in DB:', customer);
@@ -33,4 +33,5 @@ test('Login to the app using Github login', githubCredentials , async ({ page })
       throw error;
     }
 })
-.expect('user should be redirected to /dashboard after logged in via Github', githubCredentials);
+
+test('Validate write new test button generates test cases and make sure you can commit new tests to github')

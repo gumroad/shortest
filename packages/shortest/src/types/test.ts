@@ -53,4 +53,20 @@ export interface TestAPI {
 }
 
 export type { Page } from 'playwright';
+
+export interface TestRegistry {
+  tests: Map<string, TestFunction[]>;
+  currentFileTests: TestFunction[];
+  beforeAllFns: TestHookFunction[];
+  afterAllFns: TestHookFunction[];
+  beforeEachFns: TestHookFunction[];
+  afterEachFns: TestHookFunction[];
+}
+
+export class CallbackError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CallbackError';
+  }
+}
  

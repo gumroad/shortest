@@ -180,8 +180,7 @@ export class TestRunner {
     try {
       const registry = (global as any).__shortest__.registry;
       registry.tests.clear();
-      
-      await initialize();
+      registry.currentFileTests = [];
       
       this.logger.startFile(file);
       const compiledPath = await this.compiler.compileFile(file);
@@ -196,29 +195,30 @@ export class TestRunner {
           await hook(testContext);
         }
 
-        // Execute tests
-        for (const [testName, testFns] of registry.tests) {
-          for (const test of testFns) {
-            // Execute beforeEach hooks
-            for (const hook of registry.beforeEachFns) {
-              await hook(testContext);
-            }
-
-            // Execute test
-            const result = await this.executeTest(test, context);
-            
-            if (result.result === 'pass') {
-              this.logger.reportTest(test.name, 'passed');
-            } else {
-              this.logger.reportTest(test.name, 'failed', new Error(result.reason));
-              this.logger.reportError('Test Failed', result.reason);
-            }
-
-            // Execute afterEach hooks
-            for (const hook of registry.afterEachFns) {
-              await hook(testContext);
-            }
+        // Execute tests in order they were defined
+        for (const test of registry.currentFileTests) {
+          // Execute beforeEach hooks
+          for (const hook of registry.beforeEachFns) {
+            await hook(testContext);
           }
+
+          // Execute test
+          const result = await this.executeTest(test, context);
+          
+          if (result.result === 'pass') {
+            this.logger.reportTest(test.name, 'passed');
+          } else {
+            this.logger.reportTest(test.name, 'failed', new Error(result.reason));
+            this.logger.reportError('Test Failed', result.reason);
+          }
+
+          // Execute afterEach hooks
+          for (const hook of registry.afterEachFns) {
+            await hook(testContext);
+          }
+
+          // Clear browser context between tests
+          // await this.browserManager.clearContext();
         }
 
         // Execute afterAll hooks

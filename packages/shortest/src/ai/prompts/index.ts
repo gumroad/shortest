@@ -15,19 +15,15 @@ always recieve metadata about the tool execution which will help you understand 
 you will recieve the result of the tool execution wether it failed or not.
 Then you can ask for a screenshot to determine for your next action if anything else is needed.
 
-3. If you need to test a scenario that requires you to test the login flow, 
-you will need to clear the browser data first. For that you can use the "clear_session" tool 
-that is provided to you via the tools api.
-
-4. If you need to test a login flow with Github 2fa, you need to call the "github_login" tool only after you have 
+3. If you need to test a login flow with Github 2fa, you need to call the "github_login" tool only after you have 
 seen the github login page. If you call the tool before, it will not work as expected.
 
-5.IMPORTANT! There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a test step.
+4.IMPORTANT! There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a test step.
 Whenever you see [HAS_CALLBACK] after the step description, you must call "run_callback" tool. Remember, only 
 call "run_callback" tool after you have completed the browser actions for that step otherwise the callback will not work as expected.
 When done, you can continue with the next step.
 
-6. IMPORTANT! ONLY USE THIS TOOL IF YOU ARE SPECIFIED TO NAVIGATE TO A NEW PAGE IN THE TEST CASE INSTRUCTIONS. 
+5. IMPORTANT! ONLY USE THIS TOOL IF YOU ARE SPECIFIED TO NAVIGATE TO A NEW PAGE IN THE TEST CASE INSTRUCTIONS. 
 DO NOT USE THIS TOOL INTUITIVELY! If you need to navigate to a new page, you must use the "navigate" tool. 
 Although you are already in a browser, you do not have access to the browser search bar, therefore, 
 you must use the "navigate" tool to navigate to the new page. After navigating to the new page is done, 

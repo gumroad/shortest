@@ -15,6 +15,8 @@ import { GitHubTool } from '../integrations/github';
 import { BrowserManager } from '../manager';
 import { TestContext, BrowserToolConfig, TestFunction } from '../../types';
 import * as actions from '../actions';
+import pc from 'picocolors';
+import { CallbackError } from '../../types/test';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -99,6 +101,12 @@ export class BrowserTool extends BaseBrowserTool {
     try {
       let output = '';
       let metadata = {};
+
+      console.log(pc.magenta('\n🔍 Browser Action:'), {
+        action: input.action,
+        coordinates: input.coordinates,
+        url: input.url
+      });
 
       switch (input.action) {
         case 'mouse_move':
@@ -202,9 +210,9 @@ export class BrowserTool extends BaseBrowserTool {
             metadata: {}
           };
 
-        case 'run_callback':
+        case 'run_callback': {
           if (!this.testContext?.currentTest) {
-            throw new Error('No test context available for callback execution');
+            throw new ToolError('No test context available for callback execution');
           }
 
           const testContext = this.testContext;
@@ -215,25 +223,30 @@ export class BrowserTool extends BaseBrowserTool {
             if (currentStepIndex === 0) {
               await currentTest.fn({ page: this.page });
               testContext.currentStepIndex = 1;
-              output = 'Test function executed successfully';
+              return {
+                output: 'Test function executed successfully'
+              };
             } else {
               const expectationIndex = currentStepIndex - 1;
               const expectation = currentTest.expectations?.[expectationIndex];
               
               if (expectation?.fn) {
                 await expectation.fn({ page: this.page });
-                output = `Expectation "${expectation.description}" executed successfully`;
+                testContext.currentStepIndex = currentStepIndex + 1;
+                return {
+                  output: `Callback function for "${expectation.description}" passed successfully`
+                };
               } else {
-                output = `No callback for expectation at index ${expectationIndex}`;
+                return {
+                  output: `No callback found for this step`
+                };
               }
-              testContext.currentStepIndex = currentStepIndex + 1;
             }
           } catch (error) {
-            throw new ToolError(
-              `Callback execution failed: ${error instanceof Error ? error.message : String(error)}`
-            );
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new CallbackError(errorMessage);
           }
-          return { output };
+        }
 
         case 'navigate': {          
           if (!input.url) {
@@ -280,10 +293,11 @@ export class BrowserTool extends BaseBrowserTool {
           throw new ToolError(`Unknown action: ${input.action}`);
       }
 
-      // This will now execute for navigation too
+      // Get and log metadata
       try {
         await this.page.waitForTimeout(200);
         metadata = await this.getMetadata();
+        console.log(pc.magenta('\n📊 Page Metadata:'), metadata);
       } catch (metadataError) {
         console.warn('Failed to get metadata:', metadataError);
         metadata = {};
@@ -295,6 +309,14 @@ export class BrowserTool extends BaseBrowserTool {
       };
 
     } catch (error) {
+      console.error(pc.red('\n❌ Browser Action Failed:'), error);
+      
+      if (error instanceof CallbackError) {
+        return {
+          output: `Callback execution failed: ${error.message}`
+        };
+      }
+
       throw new ToolError(`Action failed: ${error}`);
     }
   }

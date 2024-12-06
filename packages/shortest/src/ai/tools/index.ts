@@ -30,21 +30,6 @@ export const AITools = [
     }
   },
   {
-    name: "clear_session",
-    description: "Clear user session and browser storage to test login flow",
-    input_schema: {
-      type: "object",
-      properties: {
-        action: {
-          type: "string",
-          enum: ["clear_session"],
-          description: "Clear browser storage and log out current user"
-        }
-      },
-      required: ["action"]
-    }
-  },
-  {
     name: "run_callback",
     description: "Run callback function for current test step",
     input_schema: {

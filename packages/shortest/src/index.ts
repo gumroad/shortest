@@ -27,6 +27,7 @@ if (!global.__shortest__) {
     expect: jestExpect,
     registry: {
       tests: new Map<string, TestFunction[]>(),
+      currentFileTests: [],
       beforeAllFns: [],
       afterAllFns: [],
       beforeEachFns: [],
@@ -82,6 +83,8 @@ function createTestChain(name: string, payload?: any, fn?: (context: TestContext
   global.__shortest__.registry.tests.set(name, 
     [...(global.__shortest__.registry.tests.get(name) || []), test]
   );
+  
+  global.__shortest__.registry.currentFileTests.push(test);
 
   const chain: TestChain = {
     expect(description: string, payloadOrFn?: any, fn?: (context: TestContext) => Promise<void>) {
