@@ -50,10 +50,6 @@ export class BrowserTool extends BaseBrowserTool {
     this.cleanupScreenshots();
   }
 
-  getPage(): Page {
-    return this.page;
-  }
-
   private async initialize(): Promise<void> {
     this.page.on('load', async () => {
       try {
@@ -357,19 +353,6 @@ export class BrowserTool extends BaseBrowserTool {
     }
   }
 
-  private async isPageReady(): Promise<boolean> {
-    try {
-      return await this.page.evaluate(() => {
-        return document.readyState === 'complete' && 
-               !document.querySelector('.loading') && 
-               !document.querySelector('.cl-loading') && 
-               Boolean(document.body);
-      });
-    } catch {
-      return false;
-    }
-  }
-
   private async getMetadata(): Promise<any> {
     const metadata: any = {
       window_info: {},
@@ -475,6 +458,10 @@ export class BrowserTool extends BaseBrowserTool {
 
   public async findElement(selector: string) {
     return this.page.$(selector);
+  }
+
+  getPage(): Page {
+    return this.page;
   }
 
   public async waitForNavigation(options?: { timeout: number }): Promise<void> {
