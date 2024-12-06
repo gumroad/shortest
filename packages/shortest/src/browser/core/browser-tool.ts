@@ -110,6 +110,32 @@ export class BrowserTool extends BaseBrowserTool {
       });
 
       switch (input.action) {
+        case 'left_click':
+        case 'right_click':
+        case 'middle_click':
+        case 'double_click': {
+          const clickCoords = input.coordinates || this.lastMousePosition;
+          await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
+          output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
+          
+          // Get initial metadata before potential navigation
+          metadata = await this.getMetadata();
+          
+          // Wait briefly for navigation to start
+          await this.page.waitForTimeout(100);
+          
+          // If navigation started, get updated metadata
+          if (await this.page.evaluate(() => document.readyState !== 'complete').catch(() => true)) {
+            try {
+              await this.page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+              metadata = await this.getMetadata();
+            } catch {
+              // Keep the initial metadata if navigation timeout
+            }
+          }
+          break;
+        }
+
         case 'mouse_move':
           const coords = input.coordinates || (input as any).coordinate;
           if (!coords) {
@@ -118,15 +144,6 @@ export class BrowserTool extends BaseBrowserTool {
           await actions.mouseMove(this.page, coords[0], coords[1]);
           this.lastMousePosition = [coords[0], coords[1]];
           output = `Mouse moved to (${coords[0]}, ${coords[1]})`;
-          break;
-
-        case 'left_click':
-        case 'right_click':
-        case 'middle_click':
-        case 'double_click':
-          const clickCoords = input.coordinates || this.lastMousePosition;
-          await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
-          output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
           break;
 
         case 'left_click_drag':
@@ -358,28 +375,62 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async getMetadata(): Promise<any> {
-    if (!await this.isPageReady()) {
-      await this.page.waitForLoadState('load');
-      await this.page.waitForTimeout(500);
-    }
-
-    const position = await actions.getCursorPosition(this.page);
-    const viewport = this.page.viewportSize() || { width: this.width, height: this.height };
-
-    return {
-      window_info: {
-        url: await this.page.url(),
-        title: await this.page.title(),
-        size: {
-          width: viewport.width,
-          height: viewport.height
-        }
-      },
-      cursor_info: {
-        position,
-        visible: this.cursorVisible
-      }
+    const metadata: any = {
+      window_info: {},
+      cursor_info: { position: [0, 0], visible: true }
     };
+
+    try {
+      // Try to get basic page info first
+      let url: string;
+      let title: string;
+      
+      try {
+        url = await this.page.url();
+      } catch {
+        url = 'navigating...';
+      }
+
+      try {
+        title = await this.page.title();
+      } catch {
+        title = 'loading...';
+      }
+
+      metadata.window_info = {
+        url,
+        title,
+        size: this.page.viewportSize() || { width: this.width, height: this.height }
+      };
+
+      // Only try to get cursor position if page is stable
+      if (await this.isPageStable()) {
+        const position = await actions.getCursorPosition(this.page);
+        metadata.cursor_info = {
+          position,
+          visible: this.cursorVisible
+        };
+      }
+
+      return metadata;
+
+    } catch (error) {
+      // Return whatever metadata we collected
+      return metadata;
+    }
+  }
+
+  private async isPageStable(): Promise<boolean> {
+    try {
+      // Quick check if page is in a stable state
+      return await this.page.evaluate(() => {
+        return document.readyState === 'complete' && 
+               !document.querySelector('.loading') && 
+               !document.querySelector('.cl-loading');
+      }).catch(() => false);
+    } catch {
+      return false;
+    }
   }
 
   private async takeScreenshotWithMetadata(): Promise<ToolResult> {
