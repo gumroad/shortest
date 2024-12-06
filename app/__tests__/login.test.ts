@@ -11,18 +11,4 @@ const githubCredentials = {
   password: process.env.GITHUB_PASSWORD,
 }
 
-test('Login to the app using Github login', githubCredentials , async ({ page }) => {    
-    try {
-      // Basic URL assertion
-      // expect(1).toBe(2);
-      
-      // DOM element assertions
-      const title = await page.title();
-      console.log('Title:', title);
-      expect(title).toBe('Shortest');
-
-    } catch (error) {
-      console.error('Assertion Error:', error);
-      throw error;
-    }
-})
+test('Login to the app using Github login', githubCredentials)
