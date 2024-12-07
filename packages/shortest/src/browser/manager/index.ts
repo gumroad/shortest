@@ -1,9 +1,20 @@
 import { chromium, Browser, BrowserContext } from 'playwright';
 import { getConfig } from '../../index';
+import { URL } from 'url';
 
 export class BrowserManager {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
+
+  private normalizeUrl(url: string): string {
+    try {
+      // Use built-in URL parsing instead of relying on punycode
+      const parsedUrl = new URL(url);
+      return parsedUrl.toString();
+    } catch {
+      return url;
+    }
+  }
 
   async launch(): Promise<BrowserContext> {
     const config = getConfig();
@@ -17,7 +28,7 @@ export class BrowserManager {
     });
 
     const page = await this.context.newPage();
-    await page.goto(config.baseUrl);
+    await page.goto(this.normalizeUrl(config.baseUrl));
     await page.waitForLoadState('networkidle');
 
     return this.context;

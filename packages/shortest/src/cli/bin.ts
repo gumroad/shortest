@@ -4,6 +4,14 @@ import { TestRunner } from '../core/runner';
 import { GitHubTool } from '../browser/integrations/github';
 import pc from 'picocolors';
 
+process.removeAllListeners('warning');
+process.on('warning', (warning) => {
+  if (warning.name === 'DeprecationWarning' && warning.message.includes('punycode')) {
+    return;
+  }
+  console.warn(warning);
+});
+
 const VALID_FLAGS = ['--headless', '--github-code', '--debug-ai', '--help', '-h'];
 const VALID_PARAMS = ['--target', '--secret'];
 
