@@ -13,7 +13,7 @@ import {
 } from './types';
 
 // Initialize config
-let config: ShortestConfig = defaultConfig;
+let globalConfig: ShortestConfig | null = null;
 const compiler = new TestCompiler();
 
 // Initialize shortest namespace and globals
@@ -43,6 +43,8 @@ if (!global.__shortest__) {
 }
 
 export async function initialize() {
+  if (globalConfig) return globalConfig;
+
   dotenv.config({ path: join(process.cwd(), '.env') });
   dotenv.config({ path: join(process.cwd(), '.env.local') });
   
@@ -56,19 +58,31 @@ export async function initialize() {
     try {
       const module = await compiler.loadModule(file, process.cwd());
       if (module.default) {
-        config = { ...defaultConfig, ...module.default };
-        return;
+        globalConfig = {
+          ...defaultConfig,
+          ...module.default,
+          // Override with env vars if present
+          anthropicKey: process.env.ANTHROPIC_API_KEY || module.default.anthropicKey || defaultConfig.anthropicKey,
+        };
+        return globalConfig;
       }
     } catch (error) {
       continue;
     }
   }
 
-  config = defaultConfig;
+  globalConfig = {
+    ...defaultConfig,
+    anthropicKey: process.env.ANTHROPIC_API_KEY || defaultConfig.anthropicKey,
+  };
+  return globalConfig;
 }
 
 export function getConfig(): ShortestConfig {
-  return config;
+  if (!globalConfig) {
+    throw new Error('Config not initialized. Call initialize() first');
+  }
+  return globalConfig;
 }
 
 // New Test API Implementation

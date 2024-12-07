@@ -1,7 +1,5 @@
 import { chromium, Browser, BrowserContext } from 'playwright';
 import { getConfig } from '../../index';
-import path from 'path';
-import { mkdirSync, existsSync, rmSync } from 'fs';
 
 export class BrowserManager {
   private browser: Browser | null = null;
@@ -9,10 +7,9 @@ export class BrowserManager {
 
   async launch(): Promise<BrowserContext> {
     const config = getConfig();
-    const baseUrl = config.baseUrl || 'http://localhost:3000';
 
     this.browser = await chromium.launch({
-      headless: config.headless
+      headless: config.headless ?? false
     });
 
     this.context = await this.browser.newContext({
@@ -20,7 +17,7 @@ export class BrowserManager {
     });
 
     const page = await this.context.newPage();
-    await page.goto(baseUrl);
+    await page.goto(config.baseUrl);
     await page.waitForLoadState('networkidle');
 
     return this.context;
@@ -62,7 +59,7 @@ export class BrowserManager {
     }
 
     // Navigate first page to baseUrl
-    const baseUrl = getConfig().baseUrl || 'http://localhost:3000';
+    const baseUrl = getConfig().baseUrl;
     await pages[0].goto(baseUrl);
     await pages[0].waitForLoadState('networkidle');
 
