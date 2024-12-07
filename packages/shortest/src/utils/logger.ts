@@ -9,34 +9,25 @@ interface TestResult {
   error?: Error;
 }
 
-interface SuiteResult {
-  name: string;
-  tests: TestResult[];
-}
-
 export class Logger {
   private currentFile: string = '';
-  private suiteResults: SuiteResult[] = [];
+  private testResults: TestResult[] = [];
   private startTime: number = Date.now();
 
   startFile(file: string) {
     this.currentFile = file.split('/').pop() || file;
-    this.startTime = Date.now();
     console.log(pc.blue(`\n📄 ${pc.bold(this.currentFile)}`));
-  }
-
-  startSuite(name: string) {
-    this.suiteResults.push({ name, tests: [] });
   }
 
   reportTest(name: string, status: TestStatus = 'passed', error?: Error) {
     const icon = this.getStatusIcon(status);
     console.log(`    ${icon} ${name}`);
     
-    const currentSuite = this.suiteResults[this.suiteResults.length - 1];
-    if (currentSuite) {
-      currentSuite.tests.push({ name, status, error });
+    if (status === 'failed' && error?.message) {
+      console.log(pc.red(`        Reason: ${error.message}`));
     }
+    
+    this.testResults.push({ name, status, error });
   }
 
   private getStatusIcon(status: TestStatus): string {
@@ -54,16 +45,13 @@ export class Logger {
 
   summary() {
     const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
-    const totalTests = this.suiteResults.reduce((sum, suite) => sum + suite.tests.length, 0);
-    const failedTests = this.suiteResults.reduce(
-      (sum, suite) => sum + suite.tests.filter(t => t.status === 'failed').length, 
-      0
-    );
+    const totalTests = this.testResults.length;
+    const failedTests = this.testResults.filter(t => t.status === 'failed').length;
     const passedTests = totalTests - failedTests;
 
     console.log(pc.dim('⎯'.repeat(50)));
     
-    console.log(pc.bold('\n Test Files '), 
+    console.log(pc.bold('\n Tests '), 
       failedTests ? pc.red(`${failedTests} failed`) : '',
       failedTests && passedTests ? ' | ' : '',
       pc.green(`${passedTests} passed`),
@@ -71,17 +59,12 @@ export class Logger {
     );
 
     console.log(pc.bold(' Duration  '), pc.dim(`${duration}s`));
-
-    const startTimeStr = new Date(this.startTime).toLocaleTimeString();
-    console.log(pc.bold(' Start at  '), pc.dim(startTimeStr));
-
+    console.log(pc.bold(' Start at  '), pc.dim(new Date(this.startTime).toLocaleTimeString()));
     console.log(pc.dim('\n' + '⎯'.repeat(50)));
   }
 
   allTestsPassed(): boolean {
-    return !this.suiteResults.some(suite => 
-      suite.tests.some(test => test.status === 'failed')
-    );
+    return !this.testResults.some(test => test.status === 'failed');
   }
 
   reportStatus(message: string) {

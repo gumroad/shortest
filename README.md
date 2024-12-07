@@ -1,44 +1,145 @@
-# Quick start
+# Shortest
+**[shortest.com](https://shortest.com)**
 
-1. Install the Shortest package
-   
-```
+AI-powered natural language end-to-end testing framework.
+
+## Features
+- Natural language E2E testing framework
+- AI-powered test execution using Anthropic Claude API
+- Built on Playwright
+- GitHub integration with 2FA support
+
+## Installation
+```bash
 npm install @antiwork/shortest
+# or
+pnpm add @antiwork/shortest
+# or
+yarn add @antiwork/shortest
 ```
 
-2. Write your first test
+## Quick Start
 
-```
-import { define } from 'shortest'
+1. Determine your test entry and add your Anthropic API key in config file: `shortest.config.ts`
 
-define('Login Flow', () => {
-  test('User can login')
-    .given('I am on the login page')
-    .when('I enter my credentials')
-    .expect('I should be logged in')
-})
-```
+```typescript
+import type { ShortestConfig } from '@antiwork/shortest';
 
-3. Don't forget to add an API key:
-
-```
-ANTHROPIC_API_KEY=your_api_key
+export default {
+  headless: false,
+  baseUrl: 'http://localhost:3000',
+  testDir: 'app/__tests__',
+  anthropicKey: process.env.ANTHROPIC_API_KEY
+} satisfies ShortestConfig; 
 ```
 
-4. Run your tests with:
+2. Write your test in your test directory: `app/__tests__/login.test.ts`
 
+```typescript
+import { test } from '@antiwork/shortest'
+
+test('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
 ```
-shortest               # to run all tests
-shortest login.test.ts # to run one test
+
+## Using callback functions
+You can also use callback functions to add additoinal assertions and other logic. AI will execute the callback function after the test
+execution in browser is completed.
+
+```typescript
+import { test } from '@antiwork/shortest';
+import { db } from '@/lib/db/drizzle';
+import { users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+test('Login to the app using Github login', {
+  username: process.env.GITHUB_USERNAME,
+  password: process.env.GITHUB_PASSWORD
+}, async ({ page }) => {    
+  // Get current user's clerk ID from the page
+  const clerkId = await page.evaluate(() => {
+    return window.localStorage.getItem('clerk-user');
+  }); 
+
+  if (!clerkId) {
+    throw new Error('User not found in database');
+  }
+
+  // Query the database
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.clerkId, clerkId))
+    .limit(1);
+
+  expect(user).toBeDefined();
+});
+```
+
+## Lifecycle hooks
+You can use lifecycle hooks to run code before and after the test.
+
+```typescript
+import { test } from '@antiwork/shortest';
+
+test.beforeAll(async ({ page }) => {
+  await clerkSetup({
+    frontendApiUrl: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000",
+  });
+});
+
+test.beforeEach(async ({ page }) => {
+  await clerk.signIn({
+    page,
+    signInParams: { 
+      strategy: "email_code", 
+      identifier: "iffy+clerk_test@example.com" 
+    },
+  });
+});
+
+test.afterEach(async ({ page }) => {
+  await page.close();
+});
+
+test.afterAll(async ({ page }) => {
+  await clerk.signOut({ page });
+});
+```
+
+## Running Tests
+```bash
+shortest                    # Run all tests
+shortest login.test.ts     # Run specific test
+shortest --headless        # Run in headless mode using cli
 ```
 
 And you're done!
 
-# Shortest
+## GitHub 2FA Login Setup
+Shortest currently supports login using Github 2FA. For GitHub authentication tests:
 
-**[shortest.com](https://shortest.com)**
+1. Go to your repository settings
+2. Navigate to "Password and Authentication"
+3. Click on "Authenticator App"
+4. Select "Use your authenticator app"
+5. Click "Setup key" to obtain the OTP secret
+6. Add the OTP secret to your `.env.local` file or use the Shortest CLI to add it
+7. Enter the 2FA code displayed in your terminal into Github's Authenticator setup page to complete the process
+```bash
+shortest --github-code --secret=<OTP_SECRET>
+```
 
-## Local Development Setup Guide
+## Environment Setup
+Required in `.env.local`:
+```bash
+ANTHROPIC_API_KEY=your_api_key
+GITHUB_TOTP_SECRET=your_secret  # Only for GitHub auth tests
+```
+
+## CI Setup
+You can run shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
+
+# Local Development Setup Guide
 
 This guide will help you set up the Shortest web app for local development.
 
@@ -157,24 +258,15 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
-### Running Tests
 
-To run unit tests:
+## Building Shortest Package Locally
 
 ```bash
-pnpm vitest
-```
-
-
-## Setup Guide for Running and Building Shortest Package Locally
-
-When running `pnpm install` in the root, the `shortest` package will be built and added in the `node_modules` folder. However, in order to use the cli, you need to setup the cli locally as follows:
-
-# to install shortest package
+pnpm build:pkg
 pnpm install
 ```
 
-### Setup Shortest CLI
+## Setup Shortest CLI for local development
 ```bash
 # packages/shortest
 cd packages/shortest
@@ -184,45 +276,3 @@ pnpm link --global
 cd ../..
 pnpm link --global shortest
 ```
-
-## Run Tests
-You can either run tests using the `shortest` cli:
-```bash
-shortest
-```
-
-or use the `pnpm` command:
-
-```bash
-pnpm test
-```
-
-## Testing Github MFA Login Flow with Shortest
-To test Github MFA login in a browser, you need to register Shortest as an OTP provider and add the OTP secret to your `.env.local` file:
-
-1. Go to your repository settings
-2. Navigate to "Password and Authentication"
-3. Click on "Authenticator App"
-4. Select "Use your authenticator app"
-5. Click "Setup key" to obtain the OTP secret
-6. Add the OTP secret to your `.env.local` file or use the Shortest CLI to add it
-7. Enter the 2FA code displayed in your terminal into Github's Authenticator setup page to complete the process
-```bash
-shortest --github-code --secret=<OTP_SECRET>
-```
-
-
-## To run tests in Github workflows
-
-prerequisites:
-
-- Add ANTHROPIC_API_KEY to your repo secrets
-- Connect your repo to Vercel
-
-### To add ANTHROPIC_API_KEY to your repo secrets:
-
-- Go to your repo settings
-- Navigate to `Security`
-- Click `Add secret`
-- Add the ANTHROPIC_API_KEY environment variable
-

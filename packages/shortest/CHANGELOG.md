@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] - 2024-12-06
+
+### Added
+- Improved browser navigation performance
+- Enhanced AI prompt generation
+- Added more robus test reporting
+- Add support for playwright's page object model
+
+### Changed
+- Simplified test writing with a more intuitive API
+- Moved screenshots to `.shortest/screenshots` directory with auto-cleanup 
+- Removed browser session persistence
+
 ## [0.0.3] - 2024-12-01
 
 ### Fixed

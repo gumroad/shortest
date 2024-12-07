@@ -2,17 +2,15 @@ import { BrowserConfig } from './browser';
 import { AIConfig } from './ai';
 
 export interface ShortestConfig {
-  browsers?: BrowserConfig[];
+  headless?: boolean;
   baseUrl?: string;
   testDir?: string | string[];
-  ai?: AIConfig;
+  anthropicKey?: string;
 }
 
 export const defaultConfig: ShortestConfig = {
-  browsers: [{ name: 'chrome', headless: false }],
+  headless: false,
   baseUrl: 'http://localhost:3000',
   testDir: '__tests__',
-  ai: {
-    apiKey: process.env.ANTHROPIC_API_KEY || ''
-  }
+  anthropicKey: process.env.ANTHROPIC_API_KEY
 }; 

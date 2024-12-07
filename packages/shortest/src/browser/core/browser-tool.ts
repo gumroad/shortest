@@ -9,12 +9,15 @@ declare global {
 import { Page } from 'playwright';
 import { BaseBrowserTool, ToolError } from './index';
 import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { GitHubTool } from '../integrations/github';
 import { BrowserManager } from '../manager';
-import { TestContext, BrowserToolConfig } from '../../types';
+import { TestContext, BrowserToolConfig, TestFunction } from '../../types';
 import * as actions from '../actions';
+import pc from 'picocolors';
+import { CallbackError } from '../../types/test';
+import { AssertionCallbackError } from '../../types/test';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -27,6 +30,8 @@ export class BrowserTool extends BaseBrowserTool {
   private githubTool?: GitHubTool;
   private viewport: { width: number; height: number };
   private testContext?: TestContext;
+  private readonly MAX_SCREENSHOTS = 10;
+  private readonly MAX_AGE_HOURS = 5;
 
   constructor(
     page: Page, 
@@ -36,12 +41,13 @@ export class BrowserTool extends BaseBrowserTool {
     super(config);
     this.page = page;
     this.browserManager = browserManager;
-    this.screenshotDir = join(process.cwd(), 'screenshots');
+    this.screenshotDir = join(process.cwd(), '.shortest', 'screenshots');
     mkdirSync(this.screenshotDir, { recursive: true });
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
     
     this.initialize();
+    this.cleanupScreenshots();
   }
 
   private async initialize(): Promise<void> {
@@ -97,6 +103,32 @@ export class BrowserTool extends BaseBrowserTool {
       let metadata = {};
 
       switch (input.action) {
+        case 'left_click':
+        case 'right_click':
+        case 'middle_click':
+        case 'double_click': {
+          const clickCoords = input.coordinates || this.lastMousePosition;
+          await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
+          output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
+          
+          // Get initial metadata before potential navigation
+          metadata = await this.getMetadata();
+          
+          // Wait briefly for navigation to start
+          await this.page.waitForTimeout(100);
+          
+          // If navigation started, get updated metadata
+          if (await this.page.evaluate(() => document.readyState !== 'complete').catch(() => true)) {
+            try {
+              await this.page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+              metadata = await this.getMetadata();
+            } catch {
+              // Keep the initial metadata if navigation timeout
+            }
+          }
+          break;
+        }
+
         case 'mouse_move':
           const coords = input.coordinates || (input as any).coordinate;
           if (!coords) {
@@ -105,15 +137,6 @@ export class BrowserTool extends BaseBrowserTool {
           await actions.mouseMove(this.page, coords[0], coords[1]);
           this.lastMousePosition = [coords[0], coords[1]];
           output = `Mouse moved to (${coords[0]}, ${coords[1]})`;
-          break;
-
-        case 'left_click':
-        case 'right_click':
-        case 'middle_click':
-        case 'double_click':
-          const clickCoords = input.coordinates || this.lastMousePosition;
-          await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
-          output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
           break;
 
         case 'left_click_drag':
@@ -198,17 +221,57 @@ export class BrowserTool extends BaseBrowserTool {
             metadata: {}
           };
 
-        case 'run_callback':
-          if (!this.testContext) {
-            throw new Error('No test context available for callback execution');
+        case 'run_callback': {
+          if (!this.testContext?.currentTest) {
+            throw new ToolError('No test context available for callback execution');
           }
 
-          const currentStep = this.testContext.currentTest.steps[this.testContext.currentStepIndex];
-          if (currentStep?.callback) {
-            await currentStep.callback();
-            this.testContext.currentStepIndex++;
+          const testContext = this.testContext;
+          const currentTest = testContext.currentTest as TestFunction;
+          const currentStepIndex = testContext.currentStepIndex ?? 0;
+
+          try {
+            if (currentStepIndex === 0) {
+              if (currentTest.fn) {
+                await currentTest.fn({ page: this.page });
+                testContext.currentStepIndex = 1;
+                return {
+                  output: 'Test function executed successfully'
+                };
+              }
+              return {
+                output: 'Skipping callback execution: No callback function defined for this test'
+              };
+            } else {
+              // Handle expectations
+              const expectationIndex = currentStepIndex - 1;
+              const expectation = currentTest.expectations?.[expectationIndex];
+              
+              if (expectation?.fn) {
+                await expectation.fn({ page: this.page });
+                testContext.currentStepIndex = currentStepIndex + 1;
+                return {
+                  output: `Callback function for "${expectation.description}" passed successfully`
+                };
+              } else {
+                return {
+                  output: `Skipping callback execution: No callback function defined for expectation "${expectation?.description}"`
+                };
+              }
+            }
+          } catch (error) {
+            // Check if it's an assertion error from jest/expect
+            if (error && (error as any).matcherResult) {
+              const assertionError = error as any;
+              throw new AssertionCallbackError(
+                assertionError.message,
+                assertionError.matcherResult.actual,
+                assertionError.matcherResult.expected
+              );
+            }
+            throw new CallbackError(error instanceof Error ? error.message : String(error));
           }
-          return { output: 'Callback executed successfully' };
+        }
 
         case 'navigate': {          
           if (!input.url) {
@@ -255,7 +318,7 @@ export class BrowserTool extends BaseBrowserTool {
           throw new ToolError(`Unknown action: ${input.action}`);
       }
 
-      // This will now execute for navigation too
+      // Get and log metadata
       try {
         await this.page.waitForTimeout(200);
         metadata = await this.getMetadata();
@@ -270,46 +333,83 @@ export class BrowserTool extends BaseBrowserTool {
       };
 
     } catch (error) {
+      console.error(pc.red('\n❌ Browser Action Failed:'), error);
+      
+      if (error instanceof AssertionCallbackError) {
+        return {
+          output: `Assertion failed: ${error.message}${
+            error.actual !== undefined ? 
+            `\nExpected: ${error.expected}\nReceived: ${error.actual}` : 
+            ''
+          }`
+        };
+      }
+      if (error instanceof CallbackError) {
+        return {
+          output: `Callback execution failed: ${error.message}`
+        };
+      }
       throw new ToolError(`Action failed: ${error}`);
     }
   }
 
-  private async isPageReady(): Promise<boolean> {
+  private async getMetadata(): Promise<any> {
+    const metadata: any = {
+      window_info: {},
+      cursor_info: { position: [0, 0], visible: true }
+    };
+
     try {
-      return await this.page.evaluate(() => {
-        return document.readyState === 'complete' && 
-               !document.querySelector('.loading') && 
-               !document.querySelector('.cl-loading') && 
-               Boolean(document.body);
-      });
-    } catch {
-      return false;
+      // Try to get basic page info first
+      let url: string;
+      let title: string;
+      
+      try {
+        url = await this.page.url();
+      } catch {
+        url = 'navigating...';
+      }
+
+      try {
+        title = await this.page.title();
+      } catch {
+        title = 'loading...';
+      }
+
+      metadata.window_info = {
+        url,
+        title,
+        size: this.page.viewportSize() || { width: this.width, height: this.height }
+      };
+
+      // Only try to get cursor position if page is stable
+      if (await this.isPageStable()) {
+        const position = await actions.getCursorPosition(this.page);
+        metadata.cursor_info = {
+          position,
+          visible: this.cursorVisible
+        };
+      }
+
+      return metadata;
+
+    } catch (error) {
+      // Return whatever metadata we collected
+      return metadata;
     }
   }
 
-  private async getMetadata(): Promise<any> {
-    if (!await this.isPageReady()) {
-      await this.page.waitForLoadState('load');
-      await this.page.waitForTimeout(500);
+  private async isPageStable(): Promise<boolean> {
+    try {
+      // Quick check if page is in a stable state
+      return await this.page.evaluate(() => {
+        return document.readyState === 'complete' && 
+               !document.querySelector('.loading') && 
+               !document.querySelector('.cl-loading');
+      }).catch(() => false);
+    } catch {
+      return false;
     }
-
-    const position = await actions.getCursorPosition(this.page);
-    const viewport = this.page.viewportSize() || { width: this.width, height: this.height };
-
-    return {
-      window_info: {
-        url: await this.page.url(),
-        title: await this.page.title(),
-        size: {
-          width: viewport.width,
-          height: viewport.height
-        }
-      },
-      cursor_info: {
-        position,
-        visible: this.cursorVisible
-      }
-    };
   }
 
   private async takeScreenshotWithMetadata(): Promise<ToolResult> {
@@ -360,11 +460,46 @@ export class BrowserTool extends BaseBrowserTool {
     return this.page.$(selector);
   }
 
+  getPage(): Page {
+    return this.page;
+  }
+
   public async waitForNavigation(options?: { timeout: number }): Promise<void> {
     await this.page.waitForLoadState('load', { timeout: options?.timeout });
   }
 
   updateTestContext(newContext: TestContext) {
     this.testContext = newContext;
+  }
+
+  private cleanupScreenshots(): void {
+    try {
+      const files = readdirSync(this.screenshotDir)
+        .filter(file => file.endsWith('.png') || file.endsWith('.jpg'))
+        .map(file => ({
+          name: file,
+          path: join(this.screenshotDir, file),
+          time: statSync(join(this.screenshotDir, file)).mtime.getTime()
+        }))
+        .sort((a, b) => b.time - a.time); // newest first
+
+      const now = Date.now();
+      const fiveHoursMs = this.MAX_AGE_HOURS * 60 * 60 * 1000;
+
+      files.forEach((file, index) => {
+        const isOld = (now - file.time) > fiveHoursMs;
+        const isBeyondLimit = index >= this.MAX_SCREENSHOTS;
+
+        if (isOld || isBeyondLimit) {
+          try {
+            unlinkSync(file.path);
+          } catch (error) {
+            console.warn(`Failed to delete screenshot: ${file.path}`);
+          }
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to cleanup screenshots:', error);
+    }
   }
 }
