@@ -234,6 +234,9 @@ importers:
       picocolors:
         specifier: ^1.0.0
         version: 1.1.1
+      playwright:
+        specifier: ^1.48.2
+        version: 1.48.2
     devDependencies:
       '@types/jest':
         specifier: ^29.5.12
@@ -241,9 +244,6 @@ importers:
       '@types/node':
         specifier: ^20.11.24
         version: 20.17.9
-      playwright:
-        specifier: 1.48.2
-        version: 1.48.2
       tsx:
         specifier: ^4.7.1
         version: 4.19.2
