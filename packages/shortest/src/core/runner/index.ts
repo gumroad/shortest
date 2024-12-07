@@ -23,7 +23,7 @@ export class TestRunner {
   private forceHeadless: boolean;
   private targetUrl: string | undefined;
   private compiler: TestCompiler;
-  private browserManager: BrowserManager;
+  private browserManager!: BrowserManager;
   private logger: Logger;
   private debugAI: boolean;
 
@@ -40,7 +40,6 @@ export class TestRunner {
     this.targetUrl = targetUrl;
     this.debugAI = debugAI;
     this.compiler = new TestCompiler();
-    this.browserManager = new BrowserManager();
     this.logger = new Logger();
   }
 
@@ -63,6 +62,8 @@ export class TestRunner {
         baseUrl: this.targetUrl
       };
     }
+
+    this.browserManager = new BrowserManager(this.config);
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {

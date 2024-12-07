@@ -1,14 +1,18 @@
 import { chromium, Browser, BrowserContext } from 'playwright';
-import { getConfig } from '../../index';
+import { ShortestConfig } from '../../types/config';
 import { URL } from 'url';
 
 export class BrowserManager {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
+  private config: ShortestConfig;
+
+  constructor(config: ShortestConfig) {
+    this.config = config;
+  }
 
   private normalizeUrl(url: string): string {
     try {
-      // Use built-in URL parsing instead of relying on punycode
       const parsedUrl = new URL(url);
       return parsedUrl.toString();
     } catch {
@@ -17,10 +21,8 @@ export class BrowserManager {
   }
 
   async launch(): Promise<BrowserContext> {
-    const config = getConfig();
-
     this.browser = await chromium.launch({
-      headless: config.headless ?? false
+      headless: this.config.headless ?? false
     });
 
     this.context = await this.browser.newContext({
@@ -28,7 +30,7 @@ export class BrowserManager {
     });
 
     const page = await this.context.newPage();
-    await page.goto(this.normalizeUrl(config.baseUrl));
+    await page.goto(this.normalizeUrl(this.config.baseUrl));
     await page.waitForLoadState('networkidle');
 
     return this.context;
@@ -70,7 +72,7 @@ export class BrowserManager {
     }
 
     // Navigate first page to baseUrl
-    const baseUrl = getConfig().baseUrl;
+    const baseUrl = this.config.baseUrl;
     await pages[0].goto(baseUrl);
     await pages[0].waitForLoadState('networkidle');
 

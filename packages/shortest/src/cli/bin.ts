@@ -75,6 +75,21 @@ async function handleGitHubCode(args: string[]) {
   }
 }
 
+function isValidArg(arg: string): boolean {
+  // Check if it's a flag
+  if (VALID_FLAGS.includes(arg)) {
+    return true;
+  }
+  
+  // Check if it's a parameter with value
+  const paramName = arg.split('=')[0];
+  if (VALID_PARAMS.includes(paramName)) {
+    return true;
+  }
+  
+  return false;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   
@@ -87,7 +102,9 @@ async function main() {
     await handleGitHubCode(args);
   }
 
-  const invalidFlags = args.filter(arg => arg.startsWith('--') && !VALID_FLAGS.includes(arg));
+  const invalidFlags = args
+    .filter(arg => arg.startsWith('--'))
+    .filter(arg => !isValidArg(arg));
   
   if (invalidFlags.length > 0) {
     console.error(`Error: Invalid argument(s): ${invalidFlags.join(', ')}`);
@@ -101,6 +118,7 @@ async function main() {
 
   try {
     const runner = new TestRunner(process.cwd(), true, headless, targetUrl, debugAI);
+    await runner.initialize();
     
     if (testPattern) {
       await runner.runFile(testPattern);
