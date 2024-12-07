@@ -1,4 +1,4 @@
-import { TestContext } from "./test";
+import { TestContext, Page } from "./test";
 
 export interface BrowserToolInterface {
   waitForSelector(selector: string, options?: { timeout: number }): Promise<void>;
@@ -7,6 +7,7 @@ export interface BrowserToolInterface {
   findElement(selector: string): Promise<any>;
   waitForNavigation(options?: { timeout: number }): Promise<void>;
   click(selector: string): Promise<void>;
+  getPage(): Page;
 }
 
 export type BrowserAction = 

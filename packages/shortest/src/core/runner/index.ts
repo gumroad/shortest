@@ -5,11 +5,11 @@ import { BrowserManager } from '../../browser/manager';
 import { BrowserTool } from '../../browser/core/browser-tool';
 import { AIClient } from '../../ai/client';
 import { initialize, getConfig } from '../../index';
-import { ShortestConfig, TestContext } from '../../types';
+import { TestFunction, TestContext, ShortestConfig } from '../../types';
 import { Logger } from '../../utils/logger';
+import { TestBuilder } from '../builder';
 import Anthropic from '@anthropic-ai/sdk';
-import { UITestBuilder } from '../builder';
-import { TestRegistry } from '../../index';
+import { BrowserContext } from 'playwright';
 
 interface TestResult {
   result: 'pass' | 'fail';
@@ -27,7 +27,13 @@ export class TestRunner {
   private logger: Logger;
   private debugAI: boolean;
 
-  constructor(cwd: string, exitOnSuccess = true, forceHeadless = false, targetUrl?: string, debugAI = false) {
+  constructor(
+    cwd: string, 
+    exitOnSuccess = true, 
+    forceHeadless = false, 
+    targetUrl?: string,
+    debugAI = false
+  ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
@@ -39,25 +45,24 @@ export class TestRunner {
   }
 
   async initialize() {
+    await this.initializeConfig();
+  }
+
+  private async initializeConfig() {
     const configFiles = [
       'shortest.config.ts',
       'shortest.config.js',
       'shortest.config.mjs'
     ];
 
-    // Try to load config file
     for (const file of configFiles) {
       try {
         const module = await this.compiler.loadModule(file, this.cwd);
         if (module.default) {
           this.config = module.default;
           
-          // Override config with CLI flags
-          if (this.forceHeadless && this.config.browsers) {
-            this.config.browsers = this.config.browsers.map(browser => ({
-              ...browser,
-              headless: true
-            }));
+          if (this.forceHeadless) {
+            this.config.headless = true;
           }
 
           if (this.targetUrl) {
@@ -89,7 +94,6 @@ export class TestRunner {
           .pop();
         
         const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-                
         const matches = await glob(globPattern, { 
           cwd: this.cwd,
           absolute: true
@@ -111,164 +115,140 @@ export class TestRunner {
     return files;
   }
 
-  private async executeTest(file: string) {
+  private async executeTest(test: TestFunction, context: BrowserContext) {
+    const page = context.pages()[0];
+    const browserTool = new BrowserTool(page, this.browserManager, {
+      width: 1920,
+      height: 1080,
+      testContext: {
+        page,
+        currentTest: test,
+        currentStepIndex: 0
+      }
+    });
+
+    const apiKey = this.config.anthropicKey || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error('Anthropic API key not found');
+    }
+
+    const aiClient = new AIClient({
+      apiKey,
+      model: 'claude-3-5-sonnet-20241022',
+      maxMessages: 10,
+      debug: this.debugAI
+    }, this.debugAI);
+
     try {
-      TestRegistry.clear();
-      await initialize();
-      const config = getConfig();
-      const apiKey = config.ai?.apiKey || process.env.ANTHROPIC_API_KEY;
-      
-      if (!apiKey) {
-        throw new Error('Anthropic API key not found');
+      // First get page state
+      const initialState = await browserTool.execute({ 
+        action: 'screenshot' 
+      });
+
+      // Build prompt with initial state and screenshot
+      const prompt = [
+        `Test: "${test.name}"`,
+        test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
+        `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
+        
+        // Add expectations if they exist
+        ...(test.expectations?.length ? [
+          '\nExpect:',
+          ...test.expectations.map((exp, i) => 
+            `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
+          )
+        ] : []),
+        
+        '\nCurrent Page State:',
+        `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
+        `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
+      ].filter(Boolean).join('\n');
+
+      // Execute test with enhanced prompt
+      const result = await aiClient.processAction(prompt, browserTool, (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
+        if (content.type === 'text') {
+          // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
+        }
+      });
+
+      if (!result) {
+        throw new Error('AI processing failed: no result returned');
       }
 
+      const finalMessage = result.finalResponse.content.find(block => 
+        block.type === 'text' && 
+        (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
+      );
+
+      if (finalMessage && finalMessage.type === 'text') {
+        const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          const testResult = JSON.parse(jsonMatch[0]) as TestResult;
+          return testResult;
+        }
+      }
+
+      throw new Error('No test result found in AI response');
+    } catch (error) {
+      return {
+        result: 'fail' as const,
+        reason: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  private async executeTestFile(file: string) {
+    try {
+      const registry = (global as any).__shortest__.registry;
+      registry.tests.clear();
+      registry.currentFileTests = [];
+      
       this.logger.startFile(file);
       const compiledPath = await this.compiler.compileFile(file);
-      const module = await import(compiledPath);
-      const suites = await UITestBuilder.parseModule(module);
+      await import(compiledPath);
       
-      for (const suite of suites) {
-        this.logger.startSuite(suite.name);
-        
+      const context = await this.browserManager.launch();
+      const testContext: TestContext = { page: context.pages()[0] };
+
+      try {
         // Execute beforeAll hooks
-        const suiteHooks = TestRegistry.getSuiteHooks(suite.name);
-        if (suiteHooks) {
-          try {
-            for (const hook of suiteHooks.beforeAllFns) {
-              await hook();
-            }
-          } catch (error) {
-            this.logger.reportError('BeforeAll Hook', error instanceof Error ? error.message : String(error));
-            continue;
-          }
+        for (const hook of registry.beforeAllFns) {
+          await hook(testContext);
         }
 
-        for (const test of suite.tests) {
-          const testContext: TestContext = {
-            currentTest: test,
-            currentStepIndex: 0,
-            testName: test.testName
-          };
-          
-          // Launch browser first
-          this.logger.reportStatus(' Launching browser...');
-          const context = await this.browserManager.launch();
-          const page = context.pages()[0];
-          
-          const browserTool = new BrowserTool(
-            page,
-            this.browserManager,
-            {
-              width: 1920,
-              height: 1080,
-              testContext
-            }
-          );
-
-          // Execute before hooks after browser launch
-          const builder = TestRegistry.getTestBuilder(test);
-          if (builder) {
-            try {
-              for (const hook of builder.getBeforeHooks()) {
-                await hook();
-              }
-            } catch (error) {
-              this.logger.reportError('Before Hook', error instanceof Error ? error.message : String(error));
-              continue;
-            }
+        // Execute tests in order they were defined
+        for (const test of registry.currentFileTests) {
+          // Execute beforeEach hooks
+          for (const hook of registry.beforeEachFns) {
+            await hook(testContext);
           }
 
-          const aiClient = new AIClient({
-            apiKey,
-            model: 'claude-3-5-sonnet-20241022',
-            maxMessages: 10,
-            debug: this.debugAI
-          }, this.debugAI);
+          // Execute test and report result
+          const result = await this.executeTest(test, context);
+          this.logger.reportTest(
+            test.name, 
+            result.result === 'pass' ? 'passed' : 'failed',
+            result.result === 'fail' ? new Error(result.reason) : undefined
+          );
 
-          try {
-            const prompt = UITestBuilder.generateTestPrompt(test, suite.name);
-            const result = await aiClient.processAction(
-              prompt,
-              browserTool,
-              (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
-                if (content.type === 'text') {
-                  // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
-                }
-              },
-              (name: string, input: any) => {
-                // this.logger.reportStatus(`🔧 ${name}: ${JSON.stringify(input)}`);
-              }
-            );
-
-            if (!result) {
-              throw new Error('AI processing failed: no result returned');
-            }
-
-            const finalMessage = result.finalResponse.content.find(block => 
-              block.type === 'text' && 
-              (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
-            );
-
-            if (finalMessage && finalMessage.type === 'text') {
-              const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
-              if (jsonMatch) {
-                const testResult = JSON.parse(jsonMatch[0]) as TestResult;
-                
-                if (testResult.result === 'pass') {
-                  this.logger.reportTest(test.testName, 'passed');
-                } else {
-                  this.logger.reportTest(test.testName, 'failed', new Error(testResult.reason));
-                  this.logger.reportError('Test Failed', testResult.reason);
-                }
-              }
-            } else {
-              const noResultError = new Error('No test result found in AI response');
-              this.logger.reportTest(test.testName, 'failed', noResultError);
-              this.logger.reportError('Test Failed', noResultError.message);
-            }
-
-            // Execute after hooks before processing result
-            if (builder) {
-              try {
-                for (const hook of builder.getAfterHooks()) {
-                  await hook();
-                }
-              } catch (error) {
-                this.logger.reportError('After Hook', error instanceof Error ? error.message : String(error));
-              }
-            }
-
-          } catch (error: unknown) {
-            if (error instanceof Error) {
-              this.logger.reportTest(test.testName, 'failed', error);
-              this.logger.reportError('Test Failed', error.message);
-            } else {
-              const unknownError = new Error('Unknown error occurred');
-              this.logger.reportTest(test.testName, 'failed', unknownError);
-              this.logger.reportError('Test Failed', unknownError.message);
-            }
-          } finally {
-            await this.browserManager.close();
+          // Execute afterEach hooks
+          for (const hook of registry.afterEachFns) {
+            await hook(testContext);
           }
         }
 
         // Execute afterAll hooks
-        if (suiteHooks) {
-          try {
-            for (const hook of suiteHooks.afterAllFns) {
-              await hook();
-            }
-          } catch (error) {
-            this.logger.reportError('AfterAll Hook', error instanceof Error ? error.message : String(error));
-          }
+        for (const hook of registry.afterAllFns) {
+          await hook(testContext);
         }
+
+      } finally {
+        await this.browserManager.close();
       }
 
     } catch (error) {
       if (error instanceof Error) {
         this.logger.reportError('Test Execution', error.message);
-      } else {
-        this.logger.reportError('Test Execution', String(error));
       }
     }
   }
@@ -283,7 +263,7 @@ export class TestRunner {
     }
 
     for (const file of files) {
-      await this.executeTest(file);
+      await this.executeTestFile(file);
     }
     
     this.logger.summary();
@@ -300,7 +280,7 @@ export class TestRunner {
     const files = await this.findTestFiles();
     
     for (const file of files) {
-      await this.executeTest(file);
+      await this.executeTestFile(file);
     }
     
     this.logger.summary();

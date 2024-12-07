@@ -43,22 +43,22 @@ pnpm test:assertion
 
 3. Build Package
 ```bash
-pnpm build
+pnpm build:pkg
 ```
 
 ## Pull Request Process
 
-1. Update documentation if needed
-2. Add or update tests
-3. Update CHANGELOG.md
-4. Ensure all tests pass
-5. Request review
+1. Bump the version if needed
+2. Update documentation if needed
+3. Add or update tests
+4. Update CHANGELOG.md
+5. Ensure all tests pass
+6. Request review
 
 ## Code Style
 
 - Use TypeScript
 - Follow existing code style
-- Add JSDoc comments for public APIs
 - Use meaningful variable names
 
 ## Commit Messages

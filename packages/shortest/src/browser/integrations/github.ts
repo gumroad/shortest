@@ -55,9 +55,7 @@ export class GitHubTool {
       // Submit form
       await browserTool.click(this.selectors.submitButton);
       
-      // Handle both 2FA paths
       try {
-        // First try the button
         await browserTool.waitForSelector(this.selectors.useAuthenticatorButton, { timeout: 5000 });
         await browserTool.click(this.selectors.useAuthenticatorButton);
       } catch {
@@ -67,25 +65,41 @@ export class GitHubTool {
       }
       
       // Wait for OTP input to be visible
-      await browserTool.waitForSelector(this.selectors.otpInput, { timeout: 10000 });
+      await browserTool.waitForSelector(this.selectors.otpInput, { timeout: 1000 });
       
       // Generate and enter TOTP code
       const { code } = this.generateTOTPCode();
       await browserTool.fill(this.selectors.otpInput, code);
+      
+      // Start navigation promise before pressing Enter
+      const navigationPromise = browserTool.waitForNavigation({ timeout: 3000 });
+      
+      // Press Enter and wait for navigation
       await browserTool.press(this.selectors.otpInput, 'Enter');
+      await navigationPromise;
       
-      // Check for errors
-      const errorElement = await browserTool.findElement(this.selectors.errorMessage);
-      if (errorElement) {
-        const errorText = await errorElement.textContent();
-        return { success: false, error: errorText || 'Unknown error' };
-      }
+      // Get current URL to verify login success
+      const currentUrl = await browserTool.getPage().url();
+      const isLoggedIn = await browserTool.findElement(this.selectors.loginForm) === null;
       
-      // Wait for navigation after successful login
-      await browserTool.waitForNavigation({ timeout: 100 }); 
-      return { success: true };
+      return { 
+        success: isLoggedIn,
+        error: isLoggedIn ? undefined : 'Failed to verify login success'
+      };
       
     } catch (error) {
+      // Check if we're actually logged in despite the error
+      try {
+        const currentUrl = await browserTool.getPage().url();
+        if (!currentUrl.includes('github.com')) {
+          return { 
+            success: true 
+          };
+        }
+      } catch {
+        // Ignore URL check errors
+      }
+
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error during GitHub login'
