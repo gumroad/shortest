@@ -8,7 +8,6 @@ import {
   TestContext,
   TestChain,
   ShortestConfig,
-  defaultConfig,
   TestHookFunction
 } from './types';
 
@@ -42,6 +41,22 @@ if (!global.__shortest__) {
   dotenv.config({ path: join(process.cwd(), '.env.local') });
 }
 
+function validateConfig(config: Partial<ShortestConfig>) {
+  const missingFields: string[] = [];
+  
+  if (config.headless === undefined) missingFields.push('headless');
+  if (!config.baseUrl) missingFields.push('baseUrl');
+  if (!config.testDir) missingFields.push('testDir');
+  if (!config.anthropicKey && !process.env.ANTHROPIC_API_KEY) missingFields.push('anthropicKey');
+
+  if (missingFields.length > 0) {
+    throw new Error(
+      `Missing required fields in shortest.config.ts:\n` +
+      missingFields.map(field => `  - ${field}`).join('\n')
+    );
+  }
+}
+
 export async function initialize() {
   if (globalConfig) return globalConfig;
 
@@ -58,24 +73,32 @@ export async function initialize() {
     try {
       const module = await compiler.loadModule(file, process.cwd());
       if (module.default) {
+        const config = module.default;
+        validateConfig(config);
+        
         globalConfig = {
-          ...defaultConfig,
-          ...module.default,
-          // Override with env vars if present
-          anthropicKey: process.env.ANTHROPIC_API_KEY || module.default.anthropicKey || defaultConfig.anthropicKey,
+          ...config,
+          anthropicKey: process.env.ANTHROPIC_API_KEY || config.anthropicKey
         };
+        
         return globalConfig;
       }
     } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Config Error: ${error.message}`);
+      }
       continue;
     }
   }
 
-  globalConfig = {
-    ...defaultConfig,
-    anthropicKey: process.env.ANTHROPIC_API_KEY || defaultConfig.anthropicKey,
-  };
-  return globalConfig;
+  throw new Error(
+    'No config file found. Create shortest.config.ts in your project root.\n' +
+    'Required fields:\n' +
+    '  - headless: boolean\n' +
+    '  - baseUrl: string\n' +
+    '  - testDir: string | string[]\n' +
+    '  - anthropicKey: string'
+  );
 }
 
 export function getConfig(): ShortestConfig {

@@ -4,5 +4,5 @@ export default {
   headless: true,
   baseUrl: 'http://localhost:3000',
   testDir: 'app/__tests__',
-  anthropicKey: ""
+  anthropicKey: process.env.ANTHROPIC_API_KEY
 } satisfies ShortestConfig; 

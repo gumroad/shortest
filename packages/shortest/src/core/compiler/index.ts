@@ -2,7 +2,6 @@ import { build, BuildOptions } from 'esbuild';
 import { join, resolve } from 'path';
 import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
-import { defaultConfig } from '../../types';
 
 export class TestCompiler {
   private cacheDir: string;
@@ -68,7 +67,7 @@ export class TestCompiler {
     const absolutePath = resolve(cwd, filePath);
     
     if (!existsSync(absolutePath)) {
-      return { default: defaultConfig };
+      throw new Error(`Config file not found: ${filePath}`);
     }
 
     try {
@@ -82,8 +81,7 @@ export class TestCompiler {
       const code = result.outputFiles[0].text;
       return import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
     } catch (error) {
-      console.warn(`Error loading config from ${absolutePath}:`, error);
-      return { default: defaultConfig };
+      throw new Error(`Failed to load config from ${absolutePath}: ${error}`);
     }
   }
 }
