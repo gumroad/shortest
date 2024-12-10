@@ -86,7 +86,7 @@ function PricingCard({
         ))}
       </ul>
       {priceId ? (
-        <form action={checkoutAction as any}>
+        <form action={checkoutAction}>
           <input type="hidden" name="priceId" value={priceId} />
           <SubmitButton />
         </form>
