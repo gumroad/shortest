@@ -144,9 +144,12 @@ You can run shortest in your CI/CD pipeline by running tests in headless mode. M
 This guide will help you set up the Shortest web app for local development.
 
 ### Prerequisites
+- React >=19.0.0 (if using with Next.js 14+ or Server Actions)
+- Next.js >=14.0.0 (if using Server Components/Actions)
 
-- Node.js
-- pnpm
+⚠️ **Known Issues**
+- Using this package with React 18 in Next.js 14+ projects may cause type conflicts with Server Actions and `useFormStatus`
+- If you encounter type errors with form actions or React hooks, ensure you're using React 19
 
 ### Getting Started
 
