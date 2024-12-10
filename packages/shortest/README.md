@@ -139,10 +139,6 @@ You can run shortest in your CI/CD pipeline by running tests in headless mode. M
 Visit [GitHub](https://github.com/anti-work/shortest) for detailed docs
 
 ### Prerequisites
-
-- Node.js
-- pnpm
-
 - React >=19.0.0 (if using with Next.js 14+ or Server Actions)
 - Next.js >=14.0.0 (if using Server Components/Actions)
 
