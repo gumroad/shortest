@@ -2,6 +2,8 @@ import { build, BuildOptions } from 'esbuild';
 import { join, resolve } from 'path';
 import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 export class TestCompiler {
   private cacheDir: string;
@@ -25,7 +27,17 @@ export class TestCompiler {
       'buffer',
       'querystring',
       'fsevents'
-    ]
+    ],
+    banner: {
+      js: `
+        import { fileURLToPath } from 'url';
+        import { dirname } from 'path';
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = dirname(__filename);
+        import { createRequire } from "module";
+        const require = createRequire(import.meta.url);
+      `
+    }
   };
 
   constructor() {
@@ -79,7 +91,9 @@ export class TestCompiler {
       });
       
       const code = result.outputFiles[0].text;
-      return import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+      const tempFile = join(this.cacheDir, 'config.mjs');
+      writeFileSync(tempFile, code);
+      return import(`file://${tempFile}`);
     } catch (error) {
       throw new Error(`Failed to load config from ${absolutePath}: ${error}`);
     }
