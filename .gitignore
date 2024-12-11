@@ -52,3 +52,7 @@ screenshots/
 
 # browser data
 .shortest/
+
+# tarball
+*.tar.gz
+*.tgz
