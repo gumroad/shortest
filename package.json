@@ -14,7 +14,8 @@
     "db:studio": "drizzle-kit studio",
     "db:cleanup": "tsx lib/db/cleanup.ts",
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
-    "test": "shortest"
+    "test": "shortest",
+    "prepare": "cd packages/shortest && pnpm build"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",

@@ -11,11 +11,18 @@ AI-powered natural language end-to-end testing framework.
 
 ## Installation
 ```bash
-npm install @antiwork/shortest
+npm install -g @antiwork/shortest
 # or
-pnpm add @antiwork/shortest
+pnpm add -g @antiwork/shortest
 # or
-yarn add @antiwork/shortest
+yarn add -g @antiwork/shortest
+```
+
+### If you installed shortest without `-g` flag, you can run tests as follows:
+```bash
+npx shortest    # for npm
+pnpm shortest   # for pnpm
+yarn shortest   # for yarn
 ```
 
 ## Quick Start
@@ -279,3 +286,38 @@ pnpm link --global
 cd ../..
 pnpm link --global shortest
 ```
+
+## Test Cli Locally
+
+1. Create a temporary test directory outside your project:
+```bash
+cd ~/shortest-test
+```
+
+2. Pack shortest package locally:
+```bash
+cd /packages/shortest
+pnpm pack
+```
+
+3. Install the packed tarball in your test directory:
+```bash
+cd ~/test-cli
+npm init -y
+npm install ../packages/shortest/antiwork-shortest-{version}.tgz
+# or to run globally
+npm install -g ../packages/shortest/antiwork-shortest-{version}.tgz
+```
+
+4. Try cli
+```bash
+npx shortest -h
+# or
+./node_modules/.bin/shortest -h
+# or if you have installed shortest globally
+shortest -h
+```
+
+
+
+

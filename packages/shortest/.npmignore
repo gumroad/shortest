@@ -45,3 +45,7 @@ CHANGELOG.md
 
 # Build artifacts
 dist/meta-cli.json 
+
+# tarball
+*.tar.gz
+*.tgz
