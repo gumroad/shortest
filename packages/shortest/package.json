@@ -1,6 +1,6 @@
 {
   "name": "@antiwork/shortest",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "AI-powered natural language end-to-end testing framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,13 +18,14 @@
   },
   "files": [
     "dist",
+    "dist/cli",
     "index.d.ts"
   ],
   "scripts": {
     "build": "rm -rf dist && pnpm build:types && pnpm build:js && pnpm build:cli",
     "prepare": "pnpm build",
-    "prepublishOnly": "pnpm build && chmod +x dist/cli/bin.js",
-    "postprepare": "node ./dist/cli/setup.js",
+    "prepublishOnly": "pnpm build",
+    "postinstall": "node ./dist/cli/setup.js && (chmod +x ./dist/cli/bin.js || true)",
     "build:types": "tsc --emitDeclarationOnly --outDir dist/types && cp index.d.ts dist/",
     "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
     "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
@@ -75,5 +76,9 @@
   "bugs": {
     "url": "https://github.com/anti-work/shortest/issues"
   },
-  "homepage": "https://github.com/anti-work/shortest#readme"
+  "homepage": "https://github.com/anti-work/shortest#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }
