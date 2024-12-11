@@ -10,11 +10,11 @@ AI-powered natural language end-to-end testing framework.
 
 ## Installation
 ```bash
-npm install @antiwork/shortest
+npm install -g @antiwork/shortest
 # or
-pnpm add @antiwork/shortest
+pnpm add -g @antiwork/shortest
 # or
-yarn add @antiwork/shortest
+yarn add -g @antiwork/shortest
 ```
 
 ## Quick Start
@@ -109,6 +109,13 @@ test.afterAll(async ({ page }) => {
 shortest                    # Run all tests
 shortest login.test.ts     # Run specific test
 shortest --headless        # Run in headless mode using cli
+```
+
+### If you installed shortest without `-g` flag, you can run tests as follows:
+```bash
+npx shortest    # for npm
+pnpm shortest   # for pnpm
+yarn shortest   # for yarn
 ```
 
 ## GitHub 2FA Login Setup
