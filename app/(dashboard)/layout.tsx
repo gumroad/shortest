@@ -7,9 +7,11 @@ import {
 } from "@clerk/nextjs";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/toaster";
+import { Logo as LogoIcon } from "@/components/logo";
 
 const Logo = () => (
   <span className="ml-2 font-semibold text-gray-900 flex items-center">
+    <LogoIcon className="text-orange-500 mr-2 h-8" />
     <span className="text-2xl transform scale-y-75">S</span>
     <span className="text-xl">hortest</span>
   </span>
