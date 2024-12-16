@@ -84,6 +84,7 @@ export type TestRegistry = {
   afterAllFns: TestHookFunction[];
   beforeEachFns: TestHookFunction[];
   afterEachFns: TestHookFunction[];
+  directTestCounter: number;
 };
 
 export type { Page } from 'playwright';

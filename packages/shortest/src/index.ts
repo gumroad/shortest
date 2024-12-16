@@ -30,7 +30,8 @@ if (!global.__shortest__) {
       beforeAllFns: [],
       afterAllFns: [],
       beforeEachFns: [],
-      afterEachFns: []
+      afterEachFns: [],
+      directTestCounter: 0
     }
   };
 
@@ -117,12 +118,13 @@ function createTestChain(
 
   // Handle direct execution
   if (typeof nameOrFn === 'function') {
+    registry.directTestCounter++;
     const test: TestFunction = {
+      name: `Direct Test #${registry.directTestCounter}`,
       directExecution: true,
       fn: nameOrFn
     };
     registry.currentFileTests.push(test);
-    // Return empty chain for type compatibility
     return {
       expect: () => {
         throw new Error('expect() cannot be called on direct execution test');
