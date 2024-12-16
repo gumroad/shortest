@@ -91,7 +91,10 @@ export class BrowserManager {
   }
 
   async close(): Promise<void> {
-    await this.closeContext();
+    if (this.context) {
+      await this.context.close();
+      this.context = null;
+    }
     if (this.browser) {
       await this.browser.close();
       this.browser = null;
@@ -100,5 +103,9 @@ export class BrowserManager {
 
   getContext(): BrowserContext | null {
     return this.context;
+  }
+
+  getBrowser(): Browser | null {
+    return this.browser;
   }
 } 

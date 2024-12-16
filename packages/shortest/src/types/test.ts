@@ -1,4 +1,5 @@
-import type { Page } from 'playwright';
+import type { Page, Browser, APIRequest, APIRequestContext } from 'playwright';
+import type * as playwright from 'playwright';
 
 export interface AssertionError extends Error {
   matcherResult?: {
@@ -25,30 +26,42 @@ export class AssertionCallbackError extends CallbackError {
 
 export type TestContext = {
   page: Page;
+  browser: Browser;
+  playwright: typeof playwright & {
+    request: APIRequest & {
+      newContext: (options?: { extraHTTPHeaders?: Record<string, string> }) => Promise<APIRequestContext>;
+    };
+  };
   currentTest?: TestFunction;
   currentStepIndex?: number;
 };
 
 export type TestHookFunction = (context: TestContext) => Promise<void>;
 
-export type TestFunction = {
-  name: string;
+export interface TestFunction {
+  name?: string;
   payload?: any;
   fn?: (context: TestContext) => Promise<void>;
   expectations?: {
-    description: string;
+    description?: string;
     payload?: any;
     fn?: (context: TestContext) => Promise<void>;
+    directExecution?: boolean;
   }[];
-};
+  directExecution?: boolean;
+  afterFn?: (context: TestContext) => void | Promise<void>;
+}
 
 export type TestChain = {
+  expect(fn: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string): TestChain;
   expect(description: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
+  after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
 
 export type TestAPI = {
+  (fn: (context: TestContext) => Promise<void>): TestChain;
   (name: string): TestChain;
   (name: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
@@ -73,6 +86,7 @@ export type TestRegistry = {
   afterAllFns: TestHookFunction[];
   beforeEachFns: TestHookFunction[];
   afterEachFns: TestHookFunction[];
+  directTestCounter: number;
 };
 
 export type { Page } from 'playwright';

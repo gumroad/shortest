@@ -19,15 +19,18 @@ export class Logger {
     console.log(pc.blue(`\n📄 ${pc.bold(this.currentFile)}`));
   }
 
-  reportTest(name: string, status: TestStatus = 'passed', error?: Error) {
-    const icon = this.getStatusIcon(status);
-    console.log(`    ${icon} ${name}`);
+  reportTest(name: string | undefined, status: 'passed' | 'failed', error?: Error) {
+    const testName = name || 'Unnamed Test';
+    const symbol = status === 'passed' ? '✓' : '✗';
+    const color = status === 'passed' ? pc.green : pc.red;
+
+    console.log(`  ${color(symbol)} ${testName}`);
     
-    if (status === 'failed' && error?.message) {
-      console.log(pc.red(`        Reason: ${error.message}`));
+    if (error) {
+      console.log(pc.red(`    ${error.message}`));
     }
-    
-    this.testResults.push({ name, status, error });
+
+    this.testResults.push({ name: testName, status, error });
   }
 
   private getStatusIcon(status: TestStatus): string {

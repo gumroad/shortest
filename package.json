@@ -18,6 +18,8 @@
     "prepare": "cd packages/shortest && pnpm build"
   },
   "dependencies": {
+    "@playwright/test": "^1.48.1",
+    "@faker-js/faker": "^8.4.1",
     "@ai-sdk/anthropic": "^0.0.50",
     "@ai-sdk/openai": "^0.0.61",
     "@clerk/nextjs": "^5.6.0",
