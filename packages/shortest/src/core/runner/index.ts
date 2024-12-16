@@ -9,7 +9,9 @@ import { TestFunction, TestContext, ShortestConfig } from '../../types';
 import { Logger } from '../../utils/logger';
 import { TestBuilder } from '../builder';
 import Anthropic from '@anthropic-ai/sdk';
-import { BrowserContext } from 'playwright';
+import { APIRequest, BrowserContext } from 'playwright';
+import * as playwright from 'playwright';
+import { request, chromium, APIRequestContext } from 'playwright';
 
 interface TestResult {
   result: 'pass' | 'fail';
@@ -26,6 +28,7 @@ export class TestRunner {
   private browserManager!: BrowserManager;
   private logger: Logger;
   private debugAI: boolean;
+  private testContext: TestContext | null = null;
 
   constructor(
     cwd: string, 
@@ -102,13 +105,44 @@ export class TestRunner {
     return files;
   }
 
+  private async createTestContext(context: BrowserContext): Promise<TestContext> {
+    if (!this.testContext) {
+      // Create a properly typed playwright object
+      const playwrightObj = {
+        ...playwright,
+        request: {
+          ...request,
+          newContext: async (options?: { extraHTTPHeaders?: Record<string, string> }) => {
+            const requestContext = await request.newContext({
+              baseURL: this.config.baseUrl,
+              ...options
+            });
+            return requestContext;
+          }
+        }
+      } as typeof playwright & {
+        request: APIRequest & {
+          newContext: (options?: { extraHTTPHeaders?: Record<string, string> }) => Promise<APIRequestContext>;
+        };
+      };
+
+      this.testContext = {
+        page: context.pages()[0],
+        browser: this.browserManager.getBrowser()!,
+        playwright: playwrightObj
+      };
+    }
+    return this.testContext;
+  }
+
   private async executeTest(test: TestFunction, context: BrowserContext) {
-    const page = context.pages()[0];
-    const browserTool = new BrowserTool(page, this.browserManager, {
+    // Use the shared context
+    const testContext = await this.createTestContext(context);
+    const browserTool = new BrowserTool(testContext.page, this.browserManager, {
       width: 1920,
       height: 1080,
       testContext: {
-        page,
+        ...testContext,
         currentTest: test,
         currentStepIndex: 0
       }
@@ -121,91 +155,84 @@ export class TestRunner {
       debug: this.debugAI
     }, this.debugAI);
 
-    try {
-      // First get page state
-      const initialState = await browserTool.execute({ 
-        action: 'screenshot' 
-      });
+    // First get page state
+    const initialState = await browserTool.execute({ 
+      action: 'screenshot' 
+    });
 
-      // Build prompt with initial state and screenshot
-      const prompt = [
-        `Test: "${test.name}"`,
-        test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
-        `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
-        
-        // Add expectations if they exist
-        ...(test.expectations?.length ? [
-          '\nExpect:',
-          ...test.expectations.map((exp, i) => 
-            `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
-          )
-        ] : []),
-        
-        '\nCurrent Page State:',
-        `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
-        `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
-      ].filter(Boolean).join('\n');
+    // Build prompt with initial state and screenshot
+    const prompt = [
+      `Test: "${test.name}"`,
+      test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
+      `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
+      
+      // Add expectations if they exist
+      ...(test.expectations?.length ? [
+        '\nExpect:',
+        ...test.expectations.map((exp, i) => 
+          `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
+        )
+      ] : []),
+      
+      '\nCurrent Page State:',
+      `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
+      `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
+    ].filter(Boolean).join('\n');
 
-      // Execute test with enhanced prompt
-      const result = await aiClient.processAction(prompt, browserTool, (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
-        if (content.type === 'text') {
-          // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
-        }
-      });
-
-      if (!result) {
-        throw new Error('AI processing failed: no result returned');
+    // Execute test with enhanced prompt
+    const result = await aiClient.processAction(prompt, browserTool, (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
+      if (content.type === 'text') {
+        // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
       }
+    });
 
-      const finalMessage = result.finalResponse.content.find(block => 
-        block.type === 'text' && 
-        (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
-      );
-
-      if (finalMessage && finalMessage.type === 'text') {
-        const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
-        if (jsonMatch) {
-          const testResult = JSON.parse(jsonMatch[0]) as TestResult;
-          return testResult;
-        }
-      }
-
-      throw new Error('No test result found in AI response');
-    } catch (error) {
-      return {
-        result: 'fail' as const,
-        reason: error instanceof Error ? error.message : 'Unknown error'
-      };
+    if (!result) {
+      throw new Error('AI processing failed: no result returned');
     }
+
+    const finalMessage = result.finalResponse.content.find(block => 
+      block.type === 'text' && 
+      (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
+    );
+
+    if (finalMessage && finalMessage.type === 'text') {
+      const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
+      if (jsonMatch) {
+        const testResult = JSON.parse(jsonMatch[0]) as TestResult;
+        return testResult;
+      }
+    }
+
+    throw new Error('No test result found in AI response');
   }
 
   private async executeTestFile(file: string) {
     try {
       const registry = (global as any).__shortest__.registry;
+
       registry.tests.clear();
       registry.currentFileTests = [];
       
       this.logger.startFile(file);
       const compiledPath = await this.compiler.compileFile(file);
       await import(compiledPath);
-      
+
       const context = await this.browserManager.launch();
-      const testContext: TestContext = { page: context.pages()[0] };
+      const testContext = await this.createTestContext(context);
 
       try {
-        // Execute beforeAll hooks
+        // Execute beforeAll hooks with shared context
         for (const hook of registry.beforeAllFns) {
           await hook(testContext);
         }
 
         // Execute tests in order they were defined
         for (const test of registry.currentFileTests) {
-          // Execute beforeEach hooks
+          // Execute beforeEach hooks with shared context
           for (const hook of registry.beforeEachFns) {
             await hook(testContext);
           }
 
-          // Execute test and report result
           const result = await this.executeTest(test, context);
           this.logger.reportTest(
             test.name, 
@@ -213,20 +240,20 @@ export class TestRunner {
             result.result === 'fail' ? new Error(result.reason) : undefined
           );
 
-          // Execute afterEach hooks
+          // Execute afterEach hooks with shared context
           for (const hook of registry.afterEachFns) {
             await hook(testContext);
           }
         }
 
-        // Execute afterAll hooks
+        // Execute afterAll hooks with shared context
         for (const hook of registry.afterAllFns) {
           await hook(testContext);
         }
 
       } finally {
         await this.browserManager.close();
-        // reset all hooks
+        this.testContext = null;  // Reset the context
         registry.beforeAllFns = [];
         registry.afterAllFns = [];
         registry.beforeEachFns = [];
@@ -234,6 +261,7 @@ export class TestRunner {
       }
 
     } catch (error) {
+      this.testContext = null;  // Reset on error
       if (error instanceof Error) {
         this.logger.reportError('Test Execution', error.message);
       }

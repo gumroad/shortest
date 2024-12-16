@@ -109,10 +109,20 @@ export function getConfig(): ShortestConfig {
 }
 
 // New Test API Implementation
-function createTestChain(name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain {
+function createTestChain(
+  name: string, 
+  payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
+  fn?: (context: TestContext) => Promise<void>
+): TestChain {
+  // If second argument is a function, it's the callback
+  if (typeof payloadOrFn === 'function') {
+    fn = payloadOrFn;
+    payloadOrFn = undefined;
+  }
+
   const test: TestFunction = {
     name,
-    payload,
+    payload: payloadOrFn,
     fn,
     expectations: []
   };

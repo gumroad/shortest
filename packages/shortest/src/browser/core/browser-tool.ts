@@ -6,7 +6,7 @@ declare global {
   }
 }
 
-import { Page } from 'playwright';
+import { Page, Browser } from 'playwright';
 import { BaseBrowserTool, ToolError } from './index';
 import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
 import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
@@ -228,27 +228,21 @@ export class BrowserTool extends BaseBrowserTool {
 
           const testContext = this.testContext;
           const currentTest = testContext.currentTest as TestFunction;
+          
           const currentStepIndex = testContext.currentStepIndex ?? 0;
 
           try {
-            if (currentStepIndex === 0) {
-              if (currentTest.fn) {
-                await currentTest.fn({ page: this.page });
-                testContext.currentStepIndex = 1;
-                return {
-                  output: 'Test function executed successfully'
-                };
-              }
-              return {
-                output: 'Skipping callback execution: No callback function defined for this test'
-              };
+            if (currentStepIndex === 0 && currentTest.fn) {
+              await currentTest.fn(testContext);
+              testContext.currentStepIndex = 1;
+              return { output: 'Test function executed successfully' };
             } else {
               // Handle expectations
               const expectationIndex = currentStepIndex - 1;
               const expectation = currentTest.expectations?.[expectationIndex];
               
               if (expectation?.fn) {
-                await expectation.fn({ page: this.page });
+                await expectation.fn(this.testContext);
                 testContext.currentStepIndex = currentStepIndex + 1;
                 return {
                   output: `Callback function for "${expectation.description}" passed successfully`

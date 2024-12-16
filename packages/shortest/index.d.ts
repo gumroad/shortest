@@ -1,5 +1,6 @@
 import type { Expect } from 'expect';
-import type { Page } from 'playwright';
+import type { Page, Browser, APIRequest, APIRequestContext } from 'playwright';
+import type * as playwright from 'playwright';
 import type { TestAPI, TestContext } from './dist/types/test';
 import type { ShortestConfig } from './dist/types/config';
 
@@ -10,6 +11,12 @@ declare global {
 declare module '@antiwork/shortest' {
   export type TestContextProps = {
     page: Page;
+    browser: Browser;
+    playwright: typeof playwright & {
+      request: APIRequest & {
+        newContext: (options?: { extraHTTPHeaders?: Record<string, string> }) => Promise<APIRequestContext>;
+      };
+    };
   };
 
   export type TestChain = {

@@ -36,7 +36,8 @@ seen the github login page. If you call the tool before, it will not work as exp
 5.IMPORTANT! There is a feature provided to you by tools api called "run_callback" that allows you to run callback functions for a test step.
 Whenever you see [HAS_CALLBACK] after the step description, you must call "run_callback" tool. Remember, only 
 call "run_callback" tool after you have completed the browser actions for that step otherwise the callback will not work as expected.
-When done, you can continue with the next step. If result of the callback is failed, you must fail the test case.
+When done, you can continue with the next step. If the result of the callback is failed, you get an output like this:
+  output: "Callback execution failed: details')" in which case you MUST FAIL THE TEST CASE. Otherwise, you can continue with the next step.
 
 6. IMPORTANT! ONLY USE THIS TOOL IF YOU ARE SPECIFIED TO NAVIGATE TO A NEW PAGE IN THE TEST CASE INSTRUCTIONS. 
 DO NOT USE THIS TOOL BASED ON YOUR INTUITION! If you need to navigate to a new page, you must use the "navigate" tool. 
