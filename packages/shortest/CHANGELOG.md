@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for playwright's browser and playwright object model 
 - Rename test namespace to shortest 
 - Added new lifecycle method called .after() that will only run after the specific test case
+- Improve system prompt to be more robust and structured
 
 ## [0.0.7] - 2024-12-12
 
