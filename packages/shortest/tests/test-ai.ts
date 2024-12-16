@@ -4,6 +4,8 @@ import { BrowserManager } from '../src/browser/manager';
 import { getConfig, initialize } from '../src/index';
 import type { TestFunction } from '../src/types/test';
 import pc from 'picocolors';
+import * as playwright from 'playwright';
+import { request } from 'playwright';
 
 async function testAI() {
   console.log(pc.cyan('\n🧪 Testing AI Integration'));
@@ -16,6 +18,21 @@ async function testAI() {
     console.log('🚀 Launching browser...');
     const context = await browserManager.launch();
     const page = context.pages()[0];
+
+    // Create playwright object with request context
+    const playwrightObj = {
+      ...playwright,
+      request: {
+        ...request,
+        newContext: async (options?: { extraHTTPHeaders?: Record<string, string> }) => {
+          const requestContext = await request.newContext({
+            baseURL: getConfig().baseUrl,
+            ...options
+          });
+          return requestContext;
+        }
+      }
+    };
 
     // Mock test data with callback
     const mockTest: TestFunction = {
@@ -38,6 +55,8 @@ async function testAI() {
       height: 1080,
       testContext: {
         page,
+        browser: browserManager.getBrowser()!,
+        playwright: playwrightObj,
         currentTest: mockTest,
         currentStepIndex: 0
       }
@@ -53,6 +72,8 @@ async function testAI() {
     // Update test context for expectation callback
     browserTool.updateTestContext({
       page,
+      browser: browserManager.getBrowser()!,
+      playwright: playwrightObj,
       currentTest: mockTest,
       currentStepIndex: 1
     });
