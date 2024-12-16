@@ -49,9 +49,9 @@ import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-shortest('Login to the app using Github login', {
-  username: process.env.GITHUB_USERNAME,
-  password: process.env.GITHUB_PASSWORD
+shortest('Login to the app using username and password', {
+  username: process.env.USERNAME,
+  password: process.env.PASSWORD
 }).after(async ({ page }) => {    
   // Get current user's clerk ID from the page
   const clerkId = await page.evaluate(() => {
