@@ -203,4 +203,6 @@ export const test: TestAPI = Object.assign(
   }
 );
 
+export const shortest: TestAPI = test;
+
 export type { ShortestConfig };

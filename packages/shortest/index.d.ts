@@ -46,6 +46,6 @@ declare module '@antiwork/shortest' {
     afterEach(name: string, fn: (context: TestContextProps) => Promise<void>): void;
   };
 
-  export const test: TestAPI;
+  export const shortest: TestAPI;
   export type { TestContext, ShortestConfig };
 } 

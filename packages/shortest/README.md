@@ -10,11 +10,11 @@ AI-powered natural language end-to-end testing framework.
 
 ## Installation
 ```bash
-npm install -g @antiwork/shortest
+npm install @antiwork/shortest
 # or
-pnpm add -g @antiwork/shortest
+pnpm add @antiwork/shortest
 # or
-yarn add -g @antiwork/shortest
+yarn add @antiwork/shortest
 ```
 
 ## Quick Start
@@ -52,7 +52,7 @@ import { eq } from 'drizzle-orm';
 test('Login to the app using Github login', {
   username: process.env.GITHUB_USERNAME,
   password: process.env.GITHUB_PASSWORD
-}, async ({ page }) => {    
+}).after(async ({ page }) => {    
   // Get current user's clerk ID from the page
   const clerkId = await page.evaluate(() => {
     return window.localStorage.getItem('clerk-user');
@@ -70,7 +70,7 @@ test('Login to the app using Github login', {
     .limit(1);
 
   expect(user).toBeDefined();
-});
+})
 ```
 
 ## Lifecycle hooks
