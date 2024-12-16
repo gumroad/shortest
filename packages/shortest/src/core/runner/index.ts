@@ -194,30 +194,44 @@ export class TestRunner {
     ].filter(Boolean).join('\n');
 
     // Execute test with enhanced prompt
-    const result = await aiClient.processAction(prompt, browserTool, (content: Anthropic.Beta.Messages.BetaContentBlockParam) => {
-      if (content.type === 'text') {
-        // this.logger.reportStatus(`🤖 ${(content as Anthropic.Beta.Messages.BetaTextBlock).text}`);
-      }
-    });
+    const result = await aiClient.processAction(prompt, browserTool);
 
     if (!result) {
       throw new Error('AI processing failed: no result returned');
     }
 
+    // Parse AI result first
     const finalMessage = result.finalResponse.content.find(block => 
       block.type === 'text' && 
       (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
     );
 
-    if (finalMessage && finalMessage.type === 'text') {
-      const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
-      if (jsonMatch) {
-        const testResult = JSON.parse(jsonMatch[0]) as TestResult;
-        return testResult;
+    if (!finalMessage || finalMessage.type !== 'text') {
+      throw new Error('No test result found in AI response');
+    }
+
+    const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
+    if (!jsonMatch) {
+      throw new Error('Invalid test result format');
+    }
+
+    const aiResult = JSON.parse(jsonMatch[0]) as TestResult;
+
+    // Execute after function if present
+    if (test.afterFn) {
+      try {
+        await test.afterFn(testContext);
+      } catch (error) {
+        return {
+          result: 'fail' as const,
+          reason: aiResult.result === 'fail'
+            ? `AI: ${aiResult.reason}, After: ${error instanceof Error ? error.message : String(error)}`
+            : error instanceof Error ? error.message : String(error)
+        };
       }
     }
 
-    throw new Error('No test result found in AI response');
+    return aiResult;
   }
 
   private async executeTestFile(file: string) {

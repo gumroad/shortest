@@ -49,6 +49,7 @@ export interface TestFunction {
     directExecution?: boolean;
   }[];
   directExecution?: boolean;
+  afterFn?: (context: TestContext) => void | Promise<void>;
 }
 
 export type TestChain = {
@@ -56,6 +57,7 @@ export type TestChain = {
   expect(description: string): TestChain;
   expect(description: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
+  after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
 
 export type TestAPI = {

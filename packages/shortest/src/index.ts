@@ -128,6 +128,9 @@ function createTestChain(
     return {
       expect: () => {
         throw new Error('expect() cannot be called on direct execution test');
+      },
+      after: () => {
+        throw new Error('after() cannot be called on direct execution test');
       }
     };
   }
@@ -166,6 +169,10 @@ function createTestChain(
         payload: typeof payloadOrFn === 'function' ? undefined : payloadOrFn,
         fn: typeof payloadOrFn === 'function' ? payloadOrFn : fn
       });
+      return chain;
+    },
+    after(fn: (context: TestContext) => void | Promise<void>) {
+      test.afterFn = (context) => Promise.resolve(fn(context));
       return chain;
     }
   };
