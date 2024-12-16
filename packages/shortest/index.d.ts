@@ -1,5 +1,6 @@
 import type { Expect } from 'expect';
-import type { Page } from 'playwright';
+import type { Page, Browser, APIRequest, APIRequestContext } from 'playwright';
+import type * as playwright from 'playwright';
 import type { TestAPI, TestContext } from './dist/types/test';
 import type { ShortestConfig } from './dist/types/config';
 
@@ -10,15 +11,24 @@ declare global {
 declare module '@antiwork/shortest' {
   export type TestContextProps = {
     page: Page;
+    browser: Browser;
+    playwright: typeof playwright & {
+      request: APIRequest & {
+        newContext: (options?: { extraHTTPHeaders?: Record<string, string> }) => Promise<APIRequestContext>;
+      };
+    };
   };
 
   export type TestChain = {
+    expect(fn: (context: TestContextProps) => Promise<void>): TestChain;
     expect(description: string): TestChain;
     expect(description: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     expect(description: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;
+    after(fn: (context: TestContextProps) => void | Promise<void>): TestChain;
   };
 
   export type TestAPI = {
+    (fn: (context: TestContextProps) => Promise<void>): void;
     (name: string): TestChain;
     (name: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     (name: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;
@@ -36,6 +46,6 @@ declare module '@antiwork/shortest' {
     afterEach(name: string, fn: (context: TestContextProps) => Promise<void>): void;
   };
 
-  export const test: TestAPI;
+  export const shortest: TestAPI;
   export type { TestContext, ShortestConfig };
 } 

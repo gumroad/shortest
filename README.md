@@ -11,11 +11,11 @@ AI-powered natural language end-to-end testing framework.
 
 ## Installation
 ```bash
-npm install -g @antiwork/shortest
+npm install @antiwork/shortest
 # or
-pnpm add -g @antiwork/shortest
+pnpm add @antiwork/shortest
 # or
-yarn add -g @antiwork/shortest
+yarn add @antiwork/shortest
 ```
 
 ### If you installed shortest without `-g` flag, you can run tests as follows:
@@ -43,9 +43,9 @@ export default {
 2. Write your test in your test directory: `app/__tests__/login.test.ts`
 
 ```typescript
-import { test } from '@antiwork/shortest'
+import { shortest } from '@antiwork/shortest'
 
-test('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
+shortest('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
 ```
 
 ## Using callback functions
@@ -53,15 +53,15 @@ You can also use callback functions to add additoinal assertions and other logic
 execution in browser is completed.
 
 ```typescript
-import { test } from '@antiwork/shortest';
+import { shortest } from '@antiwork/shortest';
 import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-test('Login to the app using Github login', {
-  username: process.env.GITHUB_USERNAME,
-  password: process.env.GITHUB_PASSWORD
-}, async ({ page }) => {    
+shortest('Login to the app using username and password', {
+  username: process.env.USERNAME,
+  password: process.env.PASSWORD
+}).after(async ({ page }) => {    
   // Get current user's clerk ID from the page
   const clerkId = await page.evaluate(() => {
     return window.localStorage.getItem('clerk-user');
@@ -86,15 +86,15 @@ test('Login to the app using Github login', {
 You can use lifecycle hooks to run code before and after the test.
 
 ```typescript
-import { test } from '@antiwork/shortest';
+import { shortest } from '@antiwork/shortest';
 
-test.beforeAll(async ({ page }) => {
+shortest.beforeAll(async ({ page }) => {
   await clerkSetup({
     frontendApiUrl: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000",
   });
 });
 
-test.beforeEach(async ({ page }) => {
+shortest.beforeEach(async ({ page }) => {
   await clerk.signIn({
     page,
     signInParams: { 
@@ -104,11 +104,11 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test.afterEach(async ({ page }) => {
+shortest.afterEach(async ({ page }) => {
   await page.close();
 });
 
-test.afterAll(async ({ page }) => {
+shortest.afterAll(async ({ page }) => {
   await clerk.signOut({ page });
 });
 ```
