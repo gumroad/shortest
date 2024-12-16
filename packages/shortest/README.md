@@ -34,9 +34,9 @@ export default {
 
 2. Write your test in the test directory: `app/__tests__/login.test.ts`
 ```typescript
-import { test } from '@antiwork/shortest'
+import { shortest } from '@antiwork/shortest'
 
-test('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
+shortest('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
 ```
 
 ## Using callback functions
@@ -44,12 +44,12 @@ You can also use callback functions to add additoinal assertions and other logic
 execution in browser is completed.
 
 ```typescript
-import { test } from '@antiwork/shortest';
+import { shortest } from '@antiwork/shortest';
 import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-test('Login to the app using Github login', {
+shortest('Login to the app using Github login', {
   username: process.env.GITHUB_USERNAME,
   password: process.env.GITHUB_PASSWORD
 }).after(async ({ page }) => {    
@@ -70,22 +70,22 @@ test('Login to the app using Github login', {
     .limit(1);
 
   expect(user).toBeDefined();
-})
+});
 ```
 
 ## Lifecycle hooks
 You can use lifecycle hooks to run code before and after the test.
 
 ```typescript
-import { test } from '@antiwork/shortest';
+import { shrotest } from '@antiwork/shortest';
 
-test.beforeAll(async ({ page }) => {
+shortest.beforeAll(async ({ page }) => {
   await clerkSetup({
     frontendApiUrl: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000",
   });
 });
 
-test.beforeEach(async ({ page }) => {
+shortest.beforeEach(async ({ page }) => {
   await clerk.signIn({
     page,
     signInParams: { 
@@ -95,11 +95,11 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test.afterEach(async ({ page }) => {
+shortest.afterEach(async ({ page }) => {
   await page.close();
 });
 
-test.afterAll(async ({ page }) => {
+shortest.afterAll(async ({ page }) => {
   await clerk.signOut({ page });
 });
 ```
