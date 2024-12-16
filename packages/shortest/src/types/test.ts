@@ -38,24 +38,28 @@ export type TestContext = {
 
 export type TestHookFunction = (context: TestContext) => Promise<void>;
 
-export type TestFunction = {
-  name: string;
+export interface TestFunction {
+  name?: string;
   payload?: any;
   fn?: (context: TestContext) => Promise<void>;
   expectations?: {
-    description: string;
+    description?: string;
     payload?: any;
     fn?: (context: TestContext) => Promise<void>;
+    directExecution?: boolean;
   }[];
-};
+  directExecution?: boolean;
+}
 
 export type TestChain = {
+  expect(fn: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string): TestChain;
   expect(description: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
 };
 
 export type TestAPI = {
+  (fn: (context: TestContext) => Promise<void>): TestChain;
   (name: string): TestChain;
   (name: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;

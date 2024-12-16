@@ -20,12 +20,14 @@ declare module '@antiwork/shortest' {
   };
 
   export type TestChain = {
+    expect(fn: (context: TestContextProps) => Promise<void>): TestChain;
     expect(description: string): TestChain;
     expect(description: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     expect(description: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;
   };
 
   export type TestAPI = {
+    (fn: (context: TestContextProps) => Promise<void>): void;
     (name: string): TestChain;
     (name: string, fn?: (context: TestContextProps) => Promise<void>): TestChain;
     (name: string, payload?: any, fn?: (context: TestContextProps) => Promise<void>): TestChain;

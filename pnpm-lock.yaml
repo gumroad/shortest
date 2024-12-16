@@ -3260,8 +3260,8 @@ packages:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
 
-  magic-string@0.30.15:
-    resolution: {integrity: sha512-zXeaYRgZ6ldS1RJJUrMrYgNJ4fdwnyI6tVqoiIhyCyv5IVTK9BU8Ic2l253GGETQHxI4HNUwhJ3fjDhKqEoaAw==}
+  magic-string@0.30.16:
+    resolution: {integrity: sha512-GOWufviMYkLKe5PYGHutkqYlntF0qDMlrZLObkQGbdmkcQAxwe7KDLlX8MKlLXQc8GwFqINYp29HpKw2t3iRoQ==}
 
   map-obj@4.3.0:
     resolution: {integrity: sha512-hdN1wVrZbb29eBGiGjJbeP8JbKjq1urkHJ/LIP/NY48MZ1QVXUsQBV1G1zvYFHn1XE06cwjBsOI2K3Ulnj1YXQ==}
@@ -5985,7 +5985,7 @@ snapshots:
     dependencies:
       '@vitest/spy': 2.1.8
       estree-walker: 3.0.3
-      magic-string: 0.30.15
+      magic-string: 0.30.16
     optionalDependencies:
       vite: 5.4.11(@types/node@22.10.2)
 
@@ -6001,7 +6001,7 @@ snapshots:
   '@vitest/snapshot@2.1.8':
     dependencies:
       '@vitest/pretty-format': 2.1.8
-      magic-string: 0.30.15
+      magic-string: 0.30.16
       pathe: 1.1.2
 
   '@vitest/spy@2.1.8':
@@ -6035,7 +6035,7 @@ snapshots:
       '@vue/compiler-ssr': 3.5.13
       '@vue/shared': 3.5.13
       estree-walker: 2.0.2
-      magic-string: 0.30.15
+      magic-string: 0.30.16
       postcss: 8.4.49
       source-map-js: 1.2.1
 
@@ -6947,7 +6947,7 @@ snapshots:
 
   lz-string@1.5.0: {}
 
-  magic-string@0.30.15:
+  magic-string@0.30.16:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
@@ -7564,7 +7564,7 @@ snapshots:
       esrap: 1.2.3
       is-reference: 3.0.3
       locate-character: 3.0.0
-      magic-string: 0.30.15
+      magic-string: 0.30.16
       zimmerframe: 1.1.2
 
   swr@2.2.5(react@19.0.0-rc-7771d3a7-20240827):
@@ -7785,7 +7785,7 @@ snapshots:
       chai: 5.1.2
       debug: 4.4.0
       expect-type: 1.1.0
-      magic-string: 0.30.15
+      magic-string: 0.30.16
       pathe: 1.1.2
       std-env: 3.8.0
       tinybench: 2.9.0

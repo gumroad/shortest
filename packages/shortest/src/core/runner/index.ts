@@ -136,6 +136,20 @@ export class TestRunner {
   }
 
   private async executeTest(test: TestFunction, context: BrowserContext) {
+    // If it's direct execution, skip AI
+    if (test.directExecution) {
+      try {
+        const testContext = await this.createTestContext(context);
+        await test.fn?.(testContext);
+        return { result: 'pass' as const, reason: 'Direct execution successful' };
+      } catch (error) {
+        return { 
+          result: 'fail' as const, 
+          reason: error instanceof Error ? error.message : 'Direct execution failed' 
+        };
+      }
+    }
+
     // Use the shared context
     const testContext = await this.createTestContext(context);
     const browserTool = new BrowserTool(testContext.page, this.browserManager, {

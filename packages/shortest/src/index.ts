@@ -108,45 +108,61 @@ export function getConfig(): ShortestConfig {
   return globalConfig;
 }
 
-// New Test API Implementation
 function createTestChain(
-  name: string, 
+  nameOrFn: string | ((context: TestContext) => Promise<void>),
   payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
   fn?: (context: TestContext) => Promise<void>
 ): TestChain {
-  // If second argument is a function, it's the callback
-  if (typeof payloadOrFn === 'function') {
-    fn = payloadOrFn;
-    payloadOrFn = undefined;
+  const registry = global.__shortest__.registry;
+
+  // Handle direct execution
+  if (typeof nameOrFn === 'function') {
+    const test: TestFunction = {
+      directExecution: true,
+      fn: nameOrFn
+    };
+    registry.currentFileTests.push(test);
+    // Return empty chain for type compatibility
+    return {
+      expect: () => {
+        throw new Error('expect() cannot be called on direct execution test');
+      }
+    };
   }
 
+  // Rest of existing createTestChain implementation...
   const test: TestFunction = {
-    name,
-    payload: payloadOrFn,
-    fn,
+    name: nameOrFn,
+    payload: typeof payloadOrFn === 'function' ? undefined : payloadOrFn,
+    fn: typeof payloadOrFn === 'function' ? payloadOrFn : fn,
     expectations: []
   };
 
-  global.__shortest__.registry.tests.set(name, 
-    [...(global.__shortest__.registry.tests.get(name) || []), test]
-  );
-  
-  global.__shortest__.registry.currentFileTests.push(test);
+  registry.tests.set(nameOrFn, [...(registry.tests.get(nameOrFn) || []), test]);
+  registry.currentFileTests.push(test);
 
   const chain: TestChain = {
-    expect(description: string, payloadOrFn?: any, fn?: (context: TestContext) => Promise<void>) {
-      test.expectations = test.expectations || [];
-      
-      // Handle different overloads
-      if (typeof payloadOrFn === 'function') {
-        fn = payloadOrFn;
-        payloadOrFn = undefined;
+    expect(
+      descriptionOrFn: string | ((context: TestContext) => Promise<void>),
+      payloadOrFn?: any,
+      fn?: (context: TestContext) => Promise<void>
+    ) {
+      // Handle direct execution for expect
+      if (typeof descriptionOrFn === 'function') {
+        test.expectations = test.expectations || [];
+        test.expectations.push({
+          directExecution: true,
+          fn: descriptionOrFn
+        });
+        return chain;
       }
-      
+
+      // Existing expect implementation...
+      test.expectations = test.expectations || [];
       test.expectations.push({
-        description,
-        payload: payloadOrFn,
-        fn
+        description: descriptionOrFn,
+        payload: typeof payloadOrFn === 'function' ? undefined : payloadOrFn,
+        fn: typeof payloadOrFn === 'function' ? payloadOrFn : fn
       });
       return chain;
     }
@@ -156,8 +172,8 @@ function createTestChain(
 }
 
 export const test: TestAPI = Object.assign(
-  (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>) => 
-    createTestChain(name, payload, fn),
+  (nameOrFn: string | ((context: TestContext) => Promise<void>), payloadOrFn?: ((context: TestContext) => Promise<void>) | any, fn?: (context: TestContext) => Promise<void>) => 
+    createTestChain(nameOrFn, payloadOrFn, fn),
   {
     beforeAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
       const hook = typeof nameOrFn === 'function' ? nameOrFn : undefined;
