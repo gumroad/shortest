@@ -17,7 +17,9 @@ export const keyboardShortcuts: Record<string, string | string[]> = {
   'arrowup': ['ArrowUp'],
   'arrowdown': ['ArrowDown'],
   'arrowleft': ['ArrowLeft'],
-  'arrowright': ['ArrowRight']
+  'arrowright': ['ArrowRight'],
+  'page_down': ['PageDown'],
+  'page_up': ['PageUp']
 };
 
 export const scaleRatio = {
