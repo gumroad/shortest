@@ -1,6 +1,6 @@
 {
   "name": "@antiwork/shortest",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "AI-powered natural language end-to-end testing framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -35,7 +35,8 @@
     "test:browser": "tsx tests/test-browser.ts",
     "test:coordinates": "tsx tests/test-coordinates.ts",
     "test:github": "tsx tests/test-github.ts",
-    "test:assertion": "tsx tests/test-assertion.ts"
+    "test:assertion": "tsx tests/test-assertion.ts",
+    "test:keyboard": "tsx tests/test-keyboard.ts"
   },
   "dependencies": {
     "glob": "^10.3.10",
