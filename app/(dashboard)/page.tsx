@@ -10,8 +10,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 tracking-tight sm:text-5xl md:text-6xl">
-              AI-Powered Natural Language
-              <span className="block text-orange-500">End-to-End Testing</span>
+              QA via natural language
+              <span className="block text-orange-500">AI tests</span>
             </h1>
             <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl max-w-2xl mx-auto">
               Write tests in plain English and let AI handle the execution. Built on Playwright
@@ -63,10 +63,10 @@ export default function HomePage() {
               </div>
               <div className="mt-5">
                 <h2 className="text-lg font-medium text-gray-900">
-                  AI-Powered Execution
+                  AI-Powered QA
                 </h2>
                 <p className="mt-2 text-base text-gray-500">
-                  Powered by Anthropic's Claude API to understand and execute your natural language tests
+                  Powered by Anthropic's Claude API to understand and execute your QA tests
                   <span className="font-bold text-green-500"> with high reliability</span>.
                 </p>
               </div>

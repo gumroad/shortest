@@ -31,7 +31,7 @@ describe("Homepage", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "AI-Powered Natural Language"
+      "QA via natural language"
     );
   });
 });
