@@ -33,14 +33,22 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install
 
-      - name: Wait for Vercel preview deployment
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
-        id: waitFor
+      - name: Get Vercel preview URL
+        id: vercel_preview
+        uses: actions/github-script@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 300
+          script: |
+            const deployments = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha
+            });
+            if (deployments.data.length > 0) {
+              return deployments.data[0].payload.url;
+            }
+            throw new Error('No deployment found');
 
       - name: Run Shortest tests
         env:
-          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.waitFor.outputs.url }}
-        run: pnpm exec shortest --headless --target=${{ steps.waitFor.outputs.url }}
+          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.vercel_preview.outputs.result }}
+        run: pnpm exec shortest --headless --target=${{ steps.vercel_preview.outputs.result }}
