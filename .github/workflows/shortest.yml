@@ -28,12 +28,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: |
-          if [ ! -f "pnpm-lock.yaml" ]; then
-            pnpm install
-          else
-            pnpm install --frozen-lockfile
-          fi
+        run: pnpm install --no-frozen-lockfile
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install
