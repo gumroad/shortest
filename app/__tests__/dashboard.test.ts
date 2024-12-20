@@ -18,4 +18,4 @@ shortest.beforeAll(async ({ page }) => {
   await page.goto(frontendUrl + "/dashboard");
 });
 
-shortest('clicking write new test button should initiate test generation');
+shortest('Verify that the dashboard is loaded');
