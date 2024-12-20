@@ -92,36 +92,16 @@ export default function HomePage() {
 
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-            <div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Write tests in plain English</h3>
-              <pre className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                <code>{`import { shortest } from '@antiwork/shortest'
+          <div>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-4">Write tests in plain English</h3>
+            <pre className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
+              <code>{`import { shortest } from '@antiwork/shortest'
 
 shortest('Login to the app using email and password', {
   username: process.env.GITHUB_USERNAME,
   password: process.env.GITHUB_PASSWORD
 })`}</code>
-              </pre>
-              <h3 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">Simple configuration</h3>
-              <pre className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                <code>{`import type { ShortestConfig } from '@antiwork/shortest';
-
-export default {
-  headless: false,
-  baseUrl: 'http://localhost:3000',
-  testDir: 'app/__tests__',
-  anthropicKey: process.env.ANTHROPIC_API_KEY
-} satisfies ShortestConfig;`}</code>
-              </pre>
-            </div>
-            <div className="mt-8 lg:mt-0">
-              <h2 className="text-3xl font-bold text-gray-900">Ready to simplify your testing?</h2>
-              <p className="mt-3 text-lg text-gray-500">
-                Write tests in natural language, powered by AI. Focus on describing your test cases
-                while Shortest handles the execution details.
-              </p>
-            </div>
+            </pre>
           </div>
         </div>
       </section>
