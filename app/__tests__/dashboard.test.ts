@@ -18,4 +18,4 @@ shortest.beforeAll(async ({ page }) => {
   await page.goto(frontendUrl + "/dashboard");
 });
 
-shortest('Verify that the dashboard is loaded');
+shortest('Verify that the user can access the /dashboard page');
