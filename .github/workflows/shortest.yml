@@ -45,5 +45,5 @@ jobs:
 
       - name: Run Shortest tests
         env:
-          PLAYWRIGHT_TEST_BASE_URL: ${{ steps.waitFor.outputs.url }}
+          SHORTEST_TEST_BASE_URL: ${{ steps.waitFor.outputs.url }}
         run: pnpm shortest --headless --target=${{ steps.waitFor.outputs.url }}
