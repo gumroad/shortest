@@ -18,7 +18,7 @@ pnpm add -D @antiwork/shortest
 yarn add -D @antiwork/shortest
 ```
 
-Add `.shortest/` to your `.gitignore`:
+Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
 ```bash
 echo ".shortest/" >> .gitignore
 ```
