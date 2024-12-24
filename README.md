@@ -1,17 +1,6 @@
 
 <p align="center">
-  <svg width="200" height="320" viewBox="0 0 200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g clip-path="url(#clip0_78_28)">
-      <path d="M0 165.2V130L200 207.6V242.8L0 320V284.8L160.832 225.19L0 165.2Z" fill="#F97316"/>
-      <path d="M200 35.2L39.1674 95.1896L200 154.8V190L0 112.8V77.6L200 0V35.2Z" fill="#F97316"/>
-    </g>
-    <defs>
-      <clipPath id="clip0_78_28">
-        <rect width="200" height="320" fill="white"/>
-      </clipPath>
-    </defs>
-  </svg>
-
+  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest Logo" width="200" />
 </p>
 
 <h1 align="center"><a href="https://shortest.com">Shortest</a></h1>
