@@ -11,18 +11,10 @@ Expect: 1. Test case to be generated within at least 20 seconds [HAS_CALLBACK]
 IMPORTANT GLOBAL RULES:
 
 1. **Waiting for Conditions**:
-   - When a test step requires waiting, use the sleep_milliseconds tool.
+   - When you are specifically asked to wait for a condition, use the sleep_milliseconds tool. Otherwise, we internally handle proper waiting for elements to load.
    - For time-based waits:
      - Use { action: "sleep_milliseconds", duration: X } where X is milliseconds
-     - Example: 5 seconds = duration: 5000
-     - Maximum duration is 60000ms (60 seconds)
-     - If no duration specified, defaults to 1000ms
-   - For element-based waits:
-     - First use sleep_milliseconds to allow time for element changes
-     - Then verify the element state (visible/clickable)
-   - If conditions are not met after waiting, the test should fail
-   - Always wait for the tool to finish before proceeding to the next action. You will recieve the result of the tool execution
-   which helps you determine if you can proceed to the next action.
+   - Always wait for the tool to finish before proceeding to the next action. You will recieve a message to continue with your next action once the wait is over. Then validate the condition is met.
 
 2. **Tool Usage**:
    - You may need to use provided tools to perform certain actions (e.g., clicking, navigating, or running callbacks).
