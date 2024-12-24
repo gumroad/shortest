@@ -1,6 +1,11 @@
 # Shortest
 **[shortest.com](https://shortest.com)**
 
+![GitHub Repo stars](https://img.shields.io/github/stars/anti-work/shortest?style=social)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![npm version](https://img.shields.io/npm/v/@antiwork/shortest)](https://www.npmjs.com/package/@antiwork/shortest)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[![Downloads](https://img.shields.io/npm/dm/@antiwork/shortest)](https://www.npmjs.com/package/@antiwork/shortest)
+
+![Shortest demo](https://github.com/user-attachments/assets/d443279e-7364-452b-9f50-0c8dd0cf55fc)
+
+
 AI-powered natural language end-to-end testing framework.
 
 ## Features
