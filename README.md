@@ -1,13 +1,13 @@
 
-<div style="text-align: center;">
-  <svg viewBox="0 0 500 800" fill="red" xmlns="http://www.w3.org/2000/svg" width="200" height="320" style="display: block; margin: 0 auto;">
-      <path d="M0 413V325L500 519V607L0 800V712L402.081 562.974L0 413Z" fill="red"/>
-      <path d="M500 88L97.9186 237.974L500 387V475L0 282V194L500 0V88Z" fill="red"/>
-  </svg>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0adf7c5d-296f-46a5-8071-57c408f02d43" alt="Shortest Logo" width="200" />
+</p>
 
-  # [Shortest](https://shortest.com)
+<h1 align="center"><a href="https://shortest.com">Shortest</a></h1>
+
+<p align="center">
   AI-powered natural language end-to-end testing framework.
-</div>
+</p>
 
 
 <video src="https://github.com/user-attachments/assets/d443279e-7364-452b-9f50-0c8dd0cf55fc" controls autoplay loop muted>
