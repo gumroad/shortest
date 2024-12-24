@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, PenTool, Zap, Clock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -17,75 +17,6 @@ export default function HomePage() {
               Write tests in plain English and let AI handle the execution. Built on Playwright
               with seamless GitHub integration.
             </p>
-            <div className="mt-8 flex justify-center">
-              <SignedOut>
-                <a href="https://github.com/anti-work/shortest" target="_blank">
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
-                    View on GitHub
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </a>
-              </SignedOut>
-              <SignedIn>
-                <a href="/dashboard">
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
-                    View Dashboard
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </a>
-              </SignedIn>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-white w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-            <div>
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
-                <PenTool className="h-6 w-6" />
-              </div>
-              <div className="mt-5">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Natural Language Testing
-                </h2>
-                <p className="mt-2 text-base text-gray-500">
-                  Write tests in plain English - no need to learn complex testing frameworks or APIs.
-                  <span className="font-bold text-green-500"> Simple and intuitive</span>.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-10 lg:mt-0">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
-                <Clock className="h-6 w-6" />
-              </div>
-              <div className="mt-5">
-                <h2 className="text-lg font-medium text-gray-900">
-                  AI-Powered QA
-                </h2>
-                <p className="mt-2 text-base text-gray-500">
-                  Powered by Anthropic's Claude API to understand and execute your QA tests
-                  <span className="font-bold text-green-500"> with high reliability</span>.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-10 lg:mt-0">
-              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
-                <Zap className="h-6 w-6" />
-              </div>
-              <div className="mt-5">
-                <h2 className="text-lg font-medium text-gray-900">
-                  Built on Playwright
-                </h2>
-                <p className="mt-2 text-base text-gray-500">
-                  Leverages Playwright's robust testing engine
-                  <span className="font-bold text-green-500"> with GitHub integration</span>.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -126,7 +57,7 @@ shortest('Login to the app using email and password', {
                   rel="noopener noreferrer"
                 >
                   <Button className="bg-white hover:bg-gray-100 text-black border border-gray-200 rounded-full text-xl px-12 py-6 inline-flex items-center justify-center">
-                    Get started
+                    View on GitHub
                     <ArrowRight className="ml-3 h-6 w-6" />
                   </Button>
                 </a>
