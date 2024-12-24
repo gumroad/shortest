@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed installation of playwright browser in setup script
+- Add more robust error handling for playwright browser installation
 
 ## [0.1.0] - 2024-12-19
 
