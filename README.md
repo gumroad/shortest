@@ -1,13 +1,19 @@
-# Shortest
-**[shortest.com](https://shortest.com)**
+
+<div style="text-align: center;">
+  <svg viewBox="0 0 500 800" fill="red" xmlns="http://www.w3.org/2000/svg" width="200" height="320" style="display: block; margin: 0 auto;">
+      <path d="M0 413V325L500 519V607L0 800V712L402.081 562.974L0 413Z" fill="red"/>
+      <path d="M500 88L97.9186 237.974L500 387V475L0 282V194L500 0V88Z" fill="red"/>
+  </svg>
+
+  # [Shortest](https://shortest.com)
+  AI-powered natural language end-to-end testing framework.
+</div>
 
 
 <video src="https://github.com/user-attachments/assets/d443279e-7364-452b-9f50-0c8dd0cf55fc" controls autoplay loop muted>
 Your browser does not support the video tag.
 </video>
 
-
-AI-powered natural language end-to-end testing framework.
 
 ## Features
 - Natural language E2E testing framework
