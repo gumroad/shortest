@@ -30,6 +30,27 @@ export const AITools = [
     }
   },
   {
+    name: "sleep_milliseconds",
+    description: "Pause test execution for specified duration",
+    input_schema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: ["sleep_milliseconds"],
+          description: "The action to perform"
+        },
+        duration: {
+          type: "number",
+          description: "Duration to sleep in milliseconds (e.g. 5000 for 5 seconds)",
+          minimum: 0,
+          maximum: 60000
+        }
+      },
+      required: ["action", "duration"]
+    }
+  },
+  {
     name: "run_callback",
     description: "Run callback function for current test step",
     input_schema: {
