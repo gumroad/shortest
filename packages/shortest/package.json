@@ -36,7 +36,8 @@
     "test:coordinates": "tsx tests/test-coordinates.ts",
     "test:github": "tsx tests/test-github.ts",
     "test:assertion": "tsx tests/test-assertion.ts",
-    "test:keyboard": "tsx tests/test-keyboard.ts"
+    "test:keyboard": "tsx tests/test-keyboard.ts",
+    "test:email": "tsx tests/test-email.ts"
   },
   "dependencies": {
     "chromium-bidi": "^0.5.2",
