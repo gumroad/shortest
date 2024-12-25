@@ -8,5 +8,6 @@ export default {
   mailosaur: {
     apiKey: process.env.MAILOSAUR_API_KEY,
     serverId: process.env.MAILOSAUR_SERVER_ID,
+    emailAddress: process.env.MAILOSAUR_EMAIL_ADDRESS,
   },
 } satisfies ShortestConfig; 

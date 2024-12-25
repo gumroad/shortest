@@ -9,5 +9,6 @@ export interface ShortestConfig {
   mailosaur?: {
     apiKey: string;
     serverId: string;
+    emailAddress: string;
   };
 }
