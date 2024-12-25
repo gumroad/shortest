@@ -7,17 +7,8 @@ import { TestContext } from '../types/test';
 import Anthropic from '@anthropic-ai/sdk';
 import { sleep } from '@anthropic-ai/sdk/core';
 import pc from 'picocolors';
+import { JUGDEMENT_SYSTEM_PROMPT } from './prompts';
 
-const JUDGMENT_PROMPT = `You are a test result validator. Your task is to evaluate if a test passed or failed based on the final state.
-You must return a JSON response in this exact format: { "result": "pass" | "fail", "reason": "one sentence explanation" }
-
-Consider:
-1. The test's intended goal
-2. The current page state
-3. Whether all required actions were completed
-4. If the final state matches expectations
-
-Be strict in your evaluation - if there's any doubt, mark it as failed.`;
 
 export class SnapshotAIClient {
   private client: Anthropic;
@@ -61,8 +52,11 @@ export class SnapshotAIClient {
       
       // Execute each recorded action
       for (const action of actions) {
+        if (action.action === 'screenshot') {
+          continue;
+        }
         await browserTool.execute(action);
-        await sleep(1000);
+        await sleep(500);
       }
 
       // Get final state
@@ -86,7 +80,7 @@ export class SnapshotAIClient {
           role: 'user',
           content: judgmentPrompt
         }],
-        system: JUDGMENT_PROMPT
+        system: JUGDEMENT_SYSTEM_PROMPT
       });
 
       return {
