@@ -25,7 +25,8 @@ export type BrowserAction =
   | "key"
   | "run_callback"
   | "navigate"
-  | "sleep_milliseconds";
+  | "sleep_milliseconds"
+  | "render_email";
 
 export interface BrowserToolOptions {
   width: number;

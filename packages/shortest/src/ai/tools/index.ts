@@ -30,21 +30,6 @@ export const AITools = [
     }
   },
   {
-    name: "generate_email",
-    description: "Generate temporary email address for testing",
-    input_schema: {
-      type: "object",
-      properties: {
-        action: {
-          type: "string",
-          enum: ["generate_email"],
-          description: "Generate a temporary email address"
-        }
-      },
-      required: ["action"]
-    }
-  },
-  {
     name: "render_email",
     description: "Fetch, decode and render received email in browser",
     input_schema: {
