@@ -14,11 +14,13 @@ import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs'
 import { join } from 'path';
 import { GitHubTool } from '../integrations/github';
 import { BrowserManager } from '../manager';
-import { TestContext, BrowserToolConfig, TestFunction } from '../../types';
+import { TestContext, BrowserToolConfig, TestFunction, ShortestConfig } from '../../types';
 import * as actions from '../actions';
 import pc from 'picocolors';
 import { CallbackError } from '../../types/test';
 import { AssertionCallbackError } from '../../types/test';
+import { MailosaurTool } from '../integrations/mailosaur';
+import { initialize, getConfig } from '../../index';
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -33,6 +35,8 @@ export class BrowserTool extends BaseBrowserTool {
   private testContext?: TestContext;
   private readonly MAX_SCREENSHOTS = 10;
   private readonly MAX_AGE_HOURS = 5;
+  private mailosaurTool?: MailosaurTool;
+  private config!: ShortestConfig;
 
   constructor(
     page: Page, 
@@ -52,7 +56,9 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async initialize(): Promise<void> {
-    // Initial setup with retry
+    await initialize();
+    this.config = getConfig();
+
     const initWithRetry = async () => {
       for (let i = 0; i < 3; i++) {
         try {
@@ -407,6 +413,49 @@ export class BrowserTool extends BaseBrowserTool {
           await this.page.waitForTimeout(duration);
           output = `Finished waiting for ${seconds} second${seconds !== 1 ? 's' : ''}`;
           break;
+        }
+
+        case 'render_email': {
+          if (!this.mailosaurTool) {
+            if (!this.config.mailosaur) {
+              throw new ToolError('Mailosaur configuration required');
+            }
+            this.mailosaurTool = new MailosaurTool(this.config.mailosaur);
+          }
+
+          const newPage = await this.page.context().newPage();
+
+          try {
+            const email = await this.mailosaurTool.getLatestEmail();
+
+            // Render email in new tab
+            await newPage.setContent(email.html, {
+              waitUntil: 'domcontentloaded'
+            });
+
+            await newPage.waitForLoadState('load', {
+              timeout: 5000
+            }).catch(e => {
+              console.log('⚠️ Load timeout, continuing anyway');
+            });
+
+            // Switch focus
+            this.page = newPage;
+
+            output = `Email received successfully. Navigated to new tab to display email: ${email.subject}`;
+            metadata = {
+              window_info: {
+                title: email.subject,
+                content: email.html,
+                size: this.page.viewportSize() || { width: this.width, height: this.height }
+              }
+            };
+
+            break;
+          } catch (error) {
+            await newPage.close();
+            throw new ToolError(`Failed to render email: ${error}`);
+          }
         }
 
         default:
