@@ -47,6 +47,8 @@ IMPORTANT GLOBAL RULES:
    - If you need to test a condition that involves seeing the contents of an email, use the "render_email" tool.
    - This tool will grab the latest email from the email address given to you and will render it in a new tab for you to see.
    - Once you are done with validating the email, navigate back to the original tab.
+   - You MUST pass the email address that is given to you to the tool as a parameter otherwise it will fail.
+   - If no email address is given to you for this test, you should fail the test.
 
 Your task is to:
 1. Execute browser actions to validate test cases
