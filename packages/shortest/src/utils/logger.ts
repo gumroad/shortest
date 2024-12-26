@@ -1,7 +1,7 @@
-import pc from 'picocolors';
-import { AssertionError } from '../types';
+import pc from "picocolors";
+import { AssertionError } from "../types";
 
-export type TestStatus = 'pending' | 'running' | 'passed' | 'failed';
+export type TestStatus = "pending" | "running" | "passed" | "failed";
 
 interface TestResult {
   name: string;
@@ -10,22 +10,26 @@ interface TestResult {
 }
 
 export class Logger {
-  private currentFile: string = '';
+  private currentFile: string = "";
   private testResults: TestResult[] = [];
   private startTime: number = Date.now();
 
   startFile(file: string) {
-    this.currentFile = file.split('/').pop() || file;
+    this.currentFile = file.split("/").pop() || file;
     console.log(pc.blue(`\n📄 ${pc.bold(this.currentFile)}`));
   }
 
-  reportTest(name: string | undefined, status: 'passed' | 'failed', error?: Error) {
-    const testName = name || 'Unnamed Test';
-    const symbol = status === 'passed' ? '✓' : '✗';
-    const color = status === 'passed' ? pc.green : pc.red;
+  reportTest(
+    name: string | undefined,
+    status: "passed" | "failed",
+    error?: Error,
+  ) {
+    const testName = name || "Unnamed Test";
+    const symbol = status === "passed" ? "✓" : "✗";
+    const color = status === "passed" ? pc.green : pc.red;
 
     console.log(`  ${color(symbol)} ${testName}`);
-    
+
     if (error) {
       console.log(pc.red(`    ${error.message}`));
     }
@@ -35,39 +39,45 @@ export class Logger {
 
   private getStatusIcon(status: TestStatus): string {
     switch (status) {
-      case 'pending':
-        return pc.yellow('○');
-      case 'running':
-        return pc.blue('●');
-      case 'passed':
-        return pc.green('✓');
-      case 'failed':
-        return pc.red('✗');
+      case "pending":
+        return pc.yellow("○");
+      case "running":
+        return pc.blue("●");
+      case "passed":
+        return pc.green("✓");
+      case "failed":
+        return pc.red("✗");
     }
   }
 
   summary() {
     const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
     const totalTests = this.testResults.length;
-    const failedTests = this.testResults.filter(t => t.status === 'failed').length;
+    const failedTests = this.testResults.filter(
+      (t) => t.status === "failed",
+    ).length;
     const passedTests = totalTests - failedTests;
 
-    console.log(pc.dim('⎯'.repeat(50)));
-    
-    console.log(pc.bold('\n Tests '), 
-      failedTests ? pc.red(`${failedTests} failed`) : '',
-      failedTests && passedTests ? ' | ' : '',
+    console.log(pc.dim("⎯".repeat(50)));
+
+    console.log(
+      pc.bold("\n Tests "),
+      failedTests ? pc.red(`${failedTests} failed`) : "",
+      failedTests && passedTests ? " | " : "",
       pc.green(`${passedTests} passed`),
-      pc.dim(`(${totalTests})`)
+      pc.dim(`(${totalTests})`),
     );
 
-    console.log(pc.bold(' Duration  '), pc.dim(`${duration}s`));
-    console.log(pc.bold(' Start at  '), pc.dim(new Date(this.startTime).toLocaleTimeString()));
-    console.log(pc.dim('\n' + '⎯'.repeat(50)));
+    console.log(pc.bold(" Duration  "), pc.dim(`${duration}s`));
+    console.log(
+      pc.bold(" Start at  "),
+      pc.dim(new Date(this.startTime).toLocaleTimeString()),
+    );
+    console.log(pc.dim("\n" + "⎯".repeat(50)));
   }
 
   allTestsPassed(): boolean {
-    return !this.testResults.some(test => test.status === 'failed');
+    return !this.testResults.some((test) => test.status === "failed");
   }
 
   reportStatus(message: string) {
@@ -83,16 +93,16 @@ export class Logger {
   }
 
   reportAssertion(
-    step: string, 
-    status: 'passed' | 'failed', 
-    error?: AssertionError
+    step: string,
+    status: "passed" | "failed",
+    error?: AssertionError,
   ): void {
-    const icon = status === 'passed' ? '✓' : '✗';
-    const color = status === 'passed' ? 'green' : 'red';
-    
+    const icon = status === "passed" ? "✓" : "✗";
+    const color = status === "passed" ? "green" : "red";
+
     console.log(pc[color](`${icon} ${step}`));
-    
-    if (error && status === 'failed') {
+
+    if (error && status === "failed") {
       console.log(pc.red(`  Expected: ${error.matcherResult?.expected}`));
       console.log(pc.red(`  Received: ${error.matcherResult?.actual}`));
       console.log(pc.red(`  Message: ${error.message}`));

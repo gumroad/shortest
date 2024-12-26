@@ -1,10 +1,14 @@
-import { BrowserToolOptions, ActionInput, ToolResult } from '../../types/browser';
-import { BetaToolType } from '../../types/browser';
+import {
+  BrowserToolOptions,
+  ActionInput,
+  ToolResult,
+} from "../../types/browser";
+import { BetaToolType } from "../../types/browser";
 
 export class ToolError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'ToolError';
+    this.name = "ToolError";
   }
 }
 
@@ -43,13 +47,13 @@ export abstract class BaseBrowserTool {
     output?: string,
     error?: string,
     base64_image?: string,
-    metadata?: ToolResult['metadata']
+    metadata?: ToolResult["metadata"],
   ): ToolResult {
     return {
       output,
       error,
       base64_image,
-      metadata
+      metadata,
     };
   }
 }
