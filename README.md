@@ -1,14 +1,10 @@
-
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest Logo" width="200" />
+  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest Logo" width="128" />
 </p>
 
-<h1 align="center"><a href="https://shortest.com">Shortest</a></h1>
+# Shortest
 
-<p align="center">
-  AI-powered natural language end-to-end testing framework.
-</p>
-
+AI-powered natural language end-to-end testing framework.
 
 <video src="https://github.com/user-attachments/assets/d443279e-7364-452b-9f50-0c8dd0cf55fc" controls autoplay loop muted>
 Your browser does not support the video tag.
