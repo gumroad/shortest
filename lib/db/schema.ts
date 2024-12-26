@@ -25,7 +25,7 @@ export const users = pgTable(
   },
   (users) => ({
     uniqueClerkId: uniqueIndex("unique_clerk_id").on(users.clerkId),
-  })
+  }),
 );
 
 export const pullRequests = pgTable(
@@ -45,9 +45,9 @@ export const pullRequests = pgTable(
   (table) => ({
     userGithubIdIdx: uniqueIndex("user_github_id_idx").on(
       table.userId,
-      table.githubId
+      table.githubId,
     ),
-  })
+  }),
 );
 
 export type User = typeof users.$inferSelect;

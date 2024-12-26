@@ -1,8 +1,8 @@
 "use server";
 
+import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
-import { currentUser } from "@clerk/nextjs/server";
 import { getUserByClerkId } from "@/lib/db/queries";
 import { User } from "@/lib/db/schema";
 

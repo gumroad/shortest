@@ -1,12 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
 import { experimental_useObject as useObject } from "ai/react";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { cn } from "@/lib/utils";
-import useSWR from "swr";
-import { TestFileSchema } from "@/app/api/generate-tests/schema";
 import {
   GitPullRequestDraft,
   GitPullRequest,
@@ -19,9 +13,17 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useState, useCallback, useEffect } from "react";
+import useSWR from "swr";
+import { LogView } from "./log-view";
+import { PullRequest, TestFile, LogGroup } from "./types";
+import { TestFileSchema } from "@/app/api/generate-tests/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useLogGroups } from "@/hooks/use-log-groups";
 import { useToast } from "@/hooks/use-toast";
 import {
   commitChangesToPullRequest,
@@ -29,11 +31,9 @@ import {
   getFailingTests,
   getLatestRunId,
   fetchBuildStatus,
-  getWorkflowLogs
+  getWorkflowLogs,
 } from "@/lib/github";
-import { LogView } from "./log-view";
-import { PullRequest, TestFile, LogGroup } from "./types";
-import { useLogGroups } from "@/hooks/use-log-groups";
+import { cn } from "@/lib/utils";
 
 const ReactDiffViewer = dynamic(() => import("react-diff-viewer"), {
   ssr: false,
@@ -50,8 +50,12 @@ export function PullRequestItem({
   const [showLogs, setShowLogs] = useState(false);
   const [testFiles, setTestFiles] = useState<TestFile[]>([]);
   const [oldTestFiles, setOldTestFiles] = useState<TestFile[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>({});
-  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>(
+    {},
+  );
   const [analyzing, setAnalyzing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +68,7 @@ export function PullRequestItem({
       fetchBuildStatus(
         initialPullRequest.repository.owner.login,
         initialPullRequest.repository.name,
-        initialPullRequest.number
+        initialPullRequest.number,
       ),
     {
       fallbackData: initialPullRequest,
@@ -74,9 +78,9 @@ export function PullRequestItem({
           setOptimisticRunning(false);
         }
       },
-    }
+    },
   );
-  
+
   const { data: latestRunId, error: latestRunIdError } = useSWR(
     pullRequest.buildStatus === "success" ||
       pullRequest.buildStatus === "failure"
@@ -87,13 +91,14 @@ export function PullRequestItem({
           pullRequest.branchName,
         ]
       : null,
-    () => getLatestRunId(
-      pullRequest.repository.owner.login,
-      pullRequest.repository.name,
-      pullRequest.branchName
-    )
+    () =>
+      getLatestRunId(
+        pullRequest.repository.owner.login,
+        pullRequest.repository.name,
+        pullRequest.branchName,
+      ),
   );
-  
+
   useEffect(() => {
     if (latestRunId === null && !latestRunIdError) {
       toast({
@@ -106,42 +111,57 @@ export function PullRequestItem({
 
   const { data: logs, error: logsError } = useSWR(
     showLogs || latestRunId
-      ? ['workflowLogs', pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId]
+      ? [
+          "workflowLogs",
+          pullRequest.repository.owner.login,
+          pullRequest.repository.name,
+          latestRunId,
+        ]
       : null,
-    () => getWorkflowLogs(pullRequest.repository.owner.login, pullRequest.repository.name, latestRunId!),
+    () =>
+      getWorkflowLogs(
+        pullRequest.repository.owner.login,
+        pullRequest.repository.name,
+        latestRunId!,
+      ),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-    }
+    },
   );
 
   const parsedLogs = useLogGroups(logs);
 
   const filterTestLogs = useCallback((parsedLogs: LogGroup[]) => {
-    const relevantKeywords = ['error', 'typeerror', 'fail'];
-    const filteredLogs = parsedLogs.filter((group: LogGroup) => 
-      group.name.toLowerCase().includes('test')
-    ).map(group => {
-      const relevantLogs = [];
-      let isRelevantSection = false;
-      for (const log of group.logs) {
-        if (relevantKeywords.some(keyword => log.toLowerCase().includes(keyword))) {
-          isRelevantSection = true;
+    const relevantKeywords = ["error", "typeerror", "fail"];
+    const filteredLogs = parsedLogs
+      .filter((group: LogGroup) => group.name.toLowerCase().includes("test"))
+      .map((group) => {
+        const relevantLogs = [];
+        let isRelevantSection = false;
+        for (const log of group.logs) {
+          if (
+            relevantKeywords.some((keyword) =>
+              log.toLowerCase().includes(keyword),
+            )
+          ) {
+            isRelevantSection = true;
+          }
+          if (isRelevantSection) {
+            relevantLogs.push(log);
+          }
+          if (log.trim() === "" || log.startsWith("✓")) {
+            isRelevantSection = false;
+          }
         }
-        if (isRelevantSection) {
-          relevantLogs.push(log);
-        }
-        if (log.trim() === '' || log.startsWith('✓')) {
-          isRelevantSection = false;
-        }
-      }
-      return { ...group, logs: relevantLogs };
-    }).filter(group => group.logs.length > 0);
+        return { ...group, logs: relevantLogs };
+      })
+      .filter((group) => group.logs.length > 0);
 
     // TODO: Uncomment this when we implement token counting
-    // const tokenCount = filteredLogs.reduce((count, group) => 
+    // const tokenCount = filteredLogs.reduce((count, group) =>
     //   count + group.name.length + group.logs.join(' ').length, 0);
-    
+
     // console.log(`Filtered log token count: ${tokenCount}`);
 
     return filteredLogs;
@@ -161,7 +181,7 @@ export function PullRequestItem({
       const { testFiles: oldTestFiles } = await getPullRequestInfo(
         pullRequest.repository.owner.login,
         pullRequest.repository.name,
-        pullRequest.number
+        pullRequest.number,
       );
       const { filteredTestFiles, newSelectedFiles, newExpandedFiles } =
         handleTestFilesUpdate(oldTestFiles, result.object?.tests);
@@ -188,7 +208,7 @@ export function PullRequestItem({
       const { diff, testFiles: oldTestFiles } = await getPullRequestInfo(
         pullRequest.repository.owner.login,
         pullRequest.repository.name,
-        pullRequest.number
+        pullRequest.number,
       );
 
       let testFilesToUpdate = oldTestFiles;
@@ -198,10 +218,10 @@ export function PullRequestItem({
         const failingTests = await getFailingTests(
           pr.repository.owner.login,
           pr.repository.name,
-          pr.number
+          pr.number,
         );
         testFilesToUpdate = oldTestFiles.filter((file) =>
-          failingTests.some((failingFile) => failingFile.name === file.name)
+          failingTests.some((failingFile) => failingFile.name === file.name),
         );
 
         // Filter and include relevant test logs
@@ -226,14 +246,14 @@ export function PullRequestItem({
 
   const handleTestFilesUpdate = (
     oldTestFiles: TestFile[],
-    newTestFiles?: (Partial<TestFile> | undefined)[]
+    newTestFiles?: (Partial<TestFile> | undefined)[],
   ) => {
     if (newTestFiles && newTestFiles.length > 0) {
       const filteredTestFiles = newTestFiles
         .filter((file): file is TestFile => file !== undefined)
         .map((file) => {
           const oldFile = oldTestFiles?.find(
-            (oldFile) => oldFile.name === file.name
+            (oldFile) => oldFile.name === file.name,
           );
           return {
             ...file,
@@ -277,7 +297,7 @@ export function PullRequestItem({
         pullRequest.repository.name,
         pullRequest.number,
         filesToCommit,
-        commitMessage
+        commitMessage,
       );
 
       toast({
@@ -375,8 +395,8 @@ export function PullRequestItem({
             {isRunning
               ? "Running"
               : isPending
-              ? "Pending"
-              : pullRequest.buildStatus}
+                ? "Pending"
+                : pullRequest.buildStatus}
           </Link>
           {(pullRequest.buildStatus === "success" ||
             pullRequest.buildStatus === "failure") &&
@@ -390,13 +410,13 @@ export function PullRequestItem({
                   <ChevronUp
                     className={cn(
                       "absolute inset-0 h-4 w-4 transition-opacity duration-100",
-                      showLogs ? "opacity-100" : "opacity-0"
+                      showLogs ? "opacity-100" : "opacity-0",
                     )}
                   />
                   <ChevronDown
                     className={cn(
                       "absolute inset-0 h-4 w-4 transition-opacity duration-100",
-                      showLogs ? "opacity-0" : "opacity-100"
+                      showLogs ? "opacity-0" : "opacity-100",
                     )}
                   />
                 </span>
@@ -427,8 +447,8 @@ export function PullRequestItem({
             {loading
               ? "Loading..."
               : isRunning
-              ? "Running..."
-              : "Write new tests"}
+                ? "Running..."
+                : "Write new tests"}
           </Button>
         ) : (
           <Button
@@ -445,10 +465,10 @@ export function PullRequestItem({
             {loading
               ? "Loading..."
               : isRunning
-              ? "Running..."
-              : parsedLogs.length === 0
-              ? "Preparing logs..."
-              : "Update tests to fix"}
+                ? "Running..."
+                : parsedLogs.length === 0
+                  ? "Preparing logs..."
+                  : "Update tests to fix"}
           </Button>
         )}
       </div>
@@ -506,7 +526,7 @@ export function PullRequestItem({
                   onClick={commitChanges}
                   disabled={
                     Object.values(selectedFilesToShow).every(
-                      (value) => !value
+                      (value) => !value,
                     ) ||
                     loading ||
                     !commitMessage.trim()
