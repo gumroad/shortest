@@ -10,7 +10,6 @@ AI-powered natural language end-to-end testing framework.
 Your browser does not support the video tag.
 </video>
 
-
 ## Features
 - Natural language E2E testing framework
 - AI-powered test execution using Anthropic Claude API
