@@ -31,14 +31,14 @@ export const AITools = [
     },
   },
   {
-    name: "render_email",
+    name: "check_email",
     description: "Fetch, decode and render received email in browser",
     input_schema: {
       type: "object",
       properties: {
         action: {
           type: "string",
-          enum: ["render_email"],
+          enum: ["check_email"],
           description: "Render the received email in a new tab"
         }
       },
@@ -46,14 +46,14 @@ export const AITools = [
     }
   },
   {
-    name: "sleep_milliseconds",
+    name: "sleep",
     description: "Pause test execution for specified duration",
     input_schema: {
       type: "object",
       properties: {
         action: {
           type: "string",
-          enum: ["sleep_milliseconds"],
+          enum: ["sleep"],
           description: "The action to perform"
         },
         duration: {

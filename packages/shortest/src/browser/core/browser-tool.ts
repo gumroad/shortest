@@ -395,7 +395,7 @@ export class BrowserTool extends BaseBrowserTool {
           }
         }
 
-        case 'sleep_milliseconds': {
+        case 'sleep': {
           const defaultDuration = 1000;
           const maxDuration = 60000;
           let duration = input.duration ?? defaultDuration;
@@ -415,7 +415,7 @@ export class BrowserTool extends BaseBrowserTool {
           break;
         }
 
-        case 'render_email': {
+        case 'check_email': {
           if (!this.mailosaurTool) {
             if (!this.config.mailosaur) {
               throw new ToolError('Mailosaur configuration required');

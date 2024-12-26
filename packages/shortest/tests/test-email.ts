@@ -48,7 +48,7 @@ async function testEmailRendering() {
     // 3. Test render_email tool
     console.log('Testing email rendering...');
     const result = await browserTool.execute({
-      action: 'render_email'
+      action: 'check_email'
     });
 
     // 4. Validate
