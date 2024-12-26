@@ -14,7 +14,7 @@ export default [
       parser: typescriptEslintParser,
       parserOptions: {
         ecmaFeatures: {
-          jsx: true,
+          jsx: false,
         },
         ecmaVersion: "latest",
         sourceType: "module",
