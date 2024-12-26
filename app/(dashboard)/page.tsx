@@ -2,6 +2,7 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Code } from "bright";
 
 export default function HomePage() {
   return (
@@ -27,13 +28,13 @@ export default function HomePage() {
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">
               Write tests in plain English
             </h3>
-            <pre className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
-              <code>{`import { shortest } from '@antiwork/shortest'
+            <pre className="overflow-x-auto">
+              <Code lang="js">{`import { shortest } from '@antiwork/shortest'
 
 shortest('Login to the app using email and password', {
   username: process.env.GITHUB_USERNAME,
   password: process.env.GITHUB_PASSWORD
-})`}</code>
+})`}</Code>
             </pre>
           </div>
         </div>
