@@ -172,35 +172,36 @@ export class TestRunner {
     }, this.debugAI);
 
     let aiClient: IAIClient;
+    let prompt: string;
     if (!browserTool.shouldRecord) {
       aiClient = new SnapshotAIClient(baseAiClient);
+      prompt = '';
     } else {
       aiClient = baseAiClient;
+      // First get page state
+      const initialState = await browserTool.execute({ 
+        action: 'screenshot' 
+      });
+
+      // Build prompt with initial state and screenshot
+      prompt = [
+        `Test: "${test.name}"`,
+        test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
+        `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
+        
+        // Add expectations if they exist
+        ...(test.expectations?.length ? [
+          '\nExpect:',
+          ...test.expectations.map((exp, i) => 
+            `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
+          )
+        ] : []),
+        
+        '\nCurrent Page State:',
+        `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
+        `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
+      ].filter(Boolean).join('\n');
     }
-
-    // First get page state
-    const initialState = await browserTool.execute({ 
-      action: 'screenshot' 
-    });
-
-    // Build prompt with initial state and screenshot
-    const prompt = [
-      `Test: "${test.name}"`,
-      test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
-      `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
-      
-      // Add expectations if they exist
-      ...(test.expectations?.length ? [
-        '\nExpect:',
-        ...test.expectations.map((exp, i) => 
-          `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
-        )
-      ] : []),
-      
-      '\nCurrent Page State:',
-      `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
-      `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
-    ].filter(Boolean).join('\n');
 
     // Execute test with enhanced prompt
     const result = await aiClient.processAction(prompt, browserTool);

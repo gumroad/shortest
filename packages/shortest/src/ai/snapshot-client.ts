@@ -35,7 +35,8 @@ export class SnapshotAIClient implements IAIClient {
       return this.aiClient.processAction(prompt, browserTool) as any;
     }
 
-    const snapshotPath = join(this.snapshotDir, `${testName}.test.snapshot.jsonl`);
+    const sanitizedTestName = testName.replace(/\//g, '_');
+    const snapshotPath = join(this.snapshotDir, `${sanitizedTestName}.test.snapshot.jsonl`);
 
     if (!existsSync(snapshotPath)) {
       return this.aiClient.processAction(prompt, browserTool) as any;
@@ -56,7 +57,7 @@ export class SnapshotAIClient implements IAIClient {
           continue;
         }
         await browserTool.execute(action);
-        await sleep(500);
+        await sleep(1000);
       }
 
       // Get final state

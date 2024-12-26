@@ -23,7 +23,8 @@ export class SnapshotBrowserTool extends BrowserTool {
   }
 
   private initializeSnapshotFile(testName: string): void {
-    this.snapshotFile = join(this.snapshotDir, `${testName}.test.snapshot.jsonl`);
+    const sanitizedTestName = testName.replace(/\//g, '_');
+    this.snapshotFile = join(this.snapshotDir, `${sanitizedTestName}.test.snapshot.jsonl`);
     // Only set up recording if snapshot doesn't exist
     this.shouldRecord = !existsSync(this.snapshotFile);
     
