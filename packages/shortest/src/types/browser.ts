@@ -43,6 +43,7 @@ export interface ActionInput {
   password?: string;
   url?: string;
   duration?: number;
+  email?: string;
 }
 
 export interface ToolResult {

@@ -41,7 +41,7 @@ export const AITools = [
           description: "Render the received email in a new tab"
         }
       },
-      required: ["action"]
+      required: ["action", "email"]
     }
   },
   {
