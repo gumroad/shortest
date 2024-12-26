@@ -420,7 +420,11 @@ export class BrowserTool extends BaseBrowserTool {
             if (!this.config.mailosaur) {
               throw new ToolError('Mailosaur configuration required');
             }
-            this.mailosaurTool = new MailosaurTool(this.config.mailosaur);
+            this.mailosaurTool = new MailosaurTool({
+              apiKey: this.config.mailosaur.apiKey,
+              serverId: this.config.mailosaur.serverId,
+              emailAddress: input.email 
+            });          
           }
 
           const newPage = await this.page.context().newPage();
