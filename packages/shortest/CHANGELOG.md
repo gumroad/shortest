@@ -13,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added sleep_milliseconds tool to add delays in the test execution
 - Added more robust error handling for Mailosaur email validation
 
-
 ## [0.1.1] - 2024-12-24
 
 ### Fixed
