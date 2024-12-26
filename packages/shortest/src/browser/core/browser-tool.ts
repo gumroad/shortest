@@ -456,11 +456,35 @@ export class BrowserTool extends BaseBrowserTool {
             };
 
             break;
-          } catch (error) {
-            await newPage.close();
+          } catch (error: unknown) {
+            await newPage.close();            
+            const errorMessage = error instanceof Error ? error.message : String(error);
+
+            if (errorMessage.includes('Email content missing')) {
+              return {
+                output: `Email was found but content is missing. This might be due to malformed email. Moving to next test.`,
+                error: 'EMAIL_CONTENT_MISSING'
+              };
+            }
+
+            if (errorMessage.includes('Mailosaur email address is required')) {
+              return {
+                output: `Email address is required but was not provided.`,
+                error: 'EMAIL_ADDRESS_MISSING'
+              };
+            }
+
+            if (errorMessage.includes('No matching messages found')) {
+              return {
+                output: `No email found for ${input.email}. The email might not have been sent yet or is older than 1 hour. Moving to next test.`,
+                error: 'EMAIL_NOT_FOUND'
+              };
+            }
+
+            // Generic error case
             return {
-              output: `No email found for ${input.email}. There was a failure in recieving or sending the email. Moving to next test.`,
-              error: `${error}`
+              output: `Failed to fetch or render email: ${errorMessage}. Moving to next test.`,
+              error: 'EMAIL_OPERATION_FAILED'
             };
           }
         }
