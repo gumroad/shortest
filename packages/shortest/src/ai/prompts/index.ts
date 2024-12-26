@@ -49,6 +49,7 @@ IMPORTANT GLOBAL RULES:
    - Once you are done with validating the email, navigate back to the original tab.
    - You MUST pass the email address that is given to you to the tool as a parameter otherwise it will fail.
    - If no email address is given to you for this test, you should fail the test.
+   - For email validation, you MUST always use 'Click' and 'Mouse' action instead of using keyboard shortcuts.
 
 Your task is to:
 1. Execute browser actions to validate test cases
