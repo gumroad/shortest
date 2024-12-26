@@ -17,7 +17,7 @@
     "test": "shortest",
     "prepare": "cd packages/shortest && pnpm build",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint --fix"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
