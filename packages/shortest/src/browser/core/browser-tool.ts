@@ -458,7 +458,10 @@ export class BrowserTool extends BaseBrowserTool {
             break;
           } catch (error) {
             await newPage.close();
-            throw new ToolError(`Failed to render email: ${error}`);
+            return {
+              output: `No email found for ${input.email}. There was a failure in recieving or sending the email. Moving to next test.`,
+              error: `${error}`
+            };
           }
         }
 
