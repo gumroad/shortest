@@ -57,3 +57,6 @@ screenshots/
 # tarball
 *.tar.gz
 *.tgz
+
+# cache directories
+.cache/

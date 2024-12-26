@@ -5,13 +5,20 @@ import { BrowserManager } from '../../browser/manager';
 import { BrowserTool } from '../../browser/core/browser-tool';
 import { AIClient } from '../../ai/client';
 import { initialize, getConfig } from '../../index';
-import { TestFunction, TestContext, ShortestConfig } from '../../types';
+import {
+  TestFunction,
+  TestContext,
+  ShortestConfig,
+  BrowserActionEnum,
+} from '../../types';
 import { Logger } from '../../utils/logger';
 import { TestBuilder } from '../builder';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIRequest, BrowserContext } from 'playwright';
 import * as playwright from 'playwright';
 import { request, chromium, APIRequestContext } from 'playwright';
+import { BaseCache } from '../../cache/cache';
+import { CacheEntry } from '../../types/cache';
 
 interface TestResult {
   result: 'pass' | 'fail';
@@ -28,22 +35,27 @@ export class TestRunner {
   private browserManager!: BrowserManager;
   private logger: Logger;
   private debugAI: boolean;
+  private noCache: boolean;
   private testContext: TestContext | null = null;
+  private cache: BaseCache<CacheEntry>;
 
   constructor(
-    cwd: string, 
-    exitOnSuccess = true, 
-    forceHeadless = false, 
+    cwd: string,
+    exitOnSuccess = true,
+    forceHeadless = false,
     targetUrl?: string,
-    debugAI = false
+    debugAI = false,
+    noCache = false
   ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
     this.targetUrl = targetUrl;
     this.debugAI = debugAI;
+    this.noCache = noCache;
     this.compiler = new TestCompiler();
     this.logger = new Logger();
+    this.cache = new BaseCache();
   }
 
   async initialize() {
@@ -55,14 +67,14 @@ export class TestRunner {
     if (this.forceHeadless) {
       this.config = {
         ...this.config,
-        headless: true
+        headless: true,
       };
     }
 
     if (this.targetUrl) {
       this.config = {
         ...this.config,
-        baseUrl: this.targetUrl
+        baseUrl: this.targetUrl,
       };
     }
 
@@ -70,8 +82,8 @@ export class TestRunner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    const testDirs = Array.isArray(this.config.testDir) 
-      ? this.config.testDir 
+    const testDirs = Array.isArray(this.config.testDir)
+      ? this.config.testDir
       : [this.config.testDir || '__tests__'];
 
     const files = [];
@@ -82,70 +94,87 @@ export class TestRunner {
           .replace(/\.test$/, '')
           .split('/')
           .pop();
-        
+
         const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-        const matches = await glob(globPattern, { 
+        const matches = await glob(globPattern, {
           cwd: this.cwd,
-          absolute: true
+          absolute: true,
         });
-        
+
         files.push(...matches);
       } else {
         const globPattern = `${dir}/**/*.test.ts`;
         const matches = await glob(globPattern, { cwd: this.cwd });
-        files.push(...matches.map(f => resolve(this.cwd, f)));
+        files.push(...matches.map((f) => resolve(this.cwd, f)));
       }
     }
 
     if (files.length === 0) {
-      this.logger.error('Test Discovery', `No test files found in directories: ${testDirs.join(', ')}`);
+      this.logger.error(
+        'Test Discovery',
+        `No test files found in directories: ${testDirs.join(', ')}`
+      );
       process.exit(1);
     }
 
     return files;
   }
 
-  private async createTestContext(context: BrowserContext): Promise<TestContext> {
+  private async createTestContext(
+    context: BrowserContext
+  ): Promise<TestContext> {
     if (!this.testContext) {
       // Create a properly typed playwright object
       const playwrightObj = {
         ...playwright,
         request: {
           ...request,
-          newContext: async (options?: { extraHTTPHeaders?: Record<string, string> }) => {
+          newContext: async (options?: {
+            extraHTTPHeaders?: Record<string, string>;
+          }) => {
             const requestContext = await request.newContext({
               baseURL: this.config.baseUrl,
-              ...options
+              ...options,
             });
             return requestContext;
-          }
-        }
+          },
+        },
       } as typeof playwright & {
         request: APIRequest & {
-          newContext: (options?: { extraHTTPHeaders?: Record<string, string> }) => Promise<APIRequestContext>;
+          newContext: (options?: {
+            extraHTTPHeaders?: Record<string, string>;
+          }) => Promise<APIRequestContext>;
         };
       };
 
       this.testContext = {
         page: context.pages()[0],
         browser: this.browserManager.getBrowser()!,
-        playwright: playwrightObj
+        playwright: playwrightObj,
       };
     }
     return this.testContext;
   }
 
-  private async executeTest(test: TestFunction, context: BrowserContext) {
+  private async executeTest(
+    test: TestFunction,
+    context: BrowserContext,
+    config: { noCache: boolean } = { noCache: false }
+  ) {
     // If it's direct execution, skip AI
     if (test.directExecution) {
       try {
         const testContext = await this.createTestContext(context);
         await test.fn?.(testContext);
-        return { result: 'pass' as const, reason: 'Direct execution successful' };
+        return {
+          result: 'pass' as const,
+          reason: 'Direct execution successful',
+        };
       } catch (error) {
-        return { 
-          result: 'fail' as const, 
-          reason: error instanceof Error ? error.message : 'Direct execution failed' 
+        return {
+          result: 'fail' as const,
+          reason:
+            error instanceof Error ? error.message : 'Direct execution failed',
         };
       }
     }
@@ -158,20 +187,23 @@ export class TestRunner {
       testContext: {
         ...testContext,
         currentTest: test,
-        currentStepIndex: 0
-      }
+        currentStepIndex: 0,
+      },
     });
 
-    const aiClient = new AIClient({
-      apiKey: this.config.anthropicKey,
-      model: 'claude-3-5-sonnet-20241022',
-      maxMessages: 10,
-      debug: this.debugAI
-    }, this.debugAI);
+    const aiClient = new AIClient(
+      {
+        apiKey: this.config.anthropicKey,
+        model: 'claude-3-5-sonnet-20241022',
+        maxMessages: 10,
+        debug: this.debugAI,
+      },
+      this.debugAI
+    );
 
     // First get page state
-    const initialState = await browserTool.execute({ 
-      action: 'screenshot' 
+    const initialState = await browserTool.execute({
+      action: 'screenshot',
     });
 
     // Build prompt with initial state and screenshot
@@ -179,38 +211,88 @@ export class TestRunner {
       `Test: "${test.name}"`,
       test.payload ? `Context: ${JSON.stringify(test.payload)}` : '',
       `Callback function: ${test.fn ? ' [HAS_CALLBACK]' : ' [NO_CALLBACK]'}`,
-      
+
       // Add expectations if they exist
-      ...(test.expectations?.length ? [
-        '\nExpect:',
-        ...test.expectations.map((exp, i) => 
-          `${i + 1}. ${exp.description}${exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'}`
-        )
-      ] : []),
-      
+      ...(test.expectations?.length
+        ? [
+            '\nExpect:',
+            ...test.expectations.map(
+              (exp, i) =>
+                `${i + 1}. ${exp.description}${
+                  exp.fn ? ' [HAS_CALLBACK]' : '[NO_CALLBACK]'
+                }`
+            ),
+          ]
+        : []),
+
       '\nCurrent Page State:',
       `URL: ${initialState.metadata?.window_info?.url || 'unknown'}`,
-      `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`
-    ].filter(Boolean).join('\n');
+      `Title: ${initialState.metadata?.window_info?.title || 'unknown'}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    // check if CLI option is not specified
+    if (!this.noCache && !config?.noCache) {
+      // if test hasn't changed and is already in cache, replay steps from cache
+      if (await this.cache.get(test)) {
+        try {
+          const result = await this.runCachedTest(test, browserTool);
+
+          if (test.afterFn) {
+            try {
+              await test.afterFn(testContext);
+            } catch (error) {
+              return {
+                result: 'fail' as const,
+                reason:
+                  result?.result === 'fail'
+                    ? `AI: ${result.reason}, After: ${
+                        error instanceof Error ? error.message : String(error)
+                      }`
+                    : error instanceof Error
+                    ? error.message
+                    : String(error),
+              };
+            }
+          }
+          return result;
+        } catch (error) {
+          this.executeTest(test, context, {
+            noCache: true,
+          });
+        }
+      }
+    }
 
     // Execute test with enhanced prompt
-    const result = await aiClient.processAction(prompt, browserTool);
+    const result = await aiClient.processAction(
+      prompt,
+      browserTool,
+      this.cache,
+      test
+    );
 
     if (!result) {
       throw new Error('AI processing failed: no result returned');
     }
 
     // Parse AI result first
-    const finalMessage = result.finalResponse.content.find(block => 
-      block.type === 'text' && 
-      (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes('"result":')
+    const finalMessage = result.finalResponse.content.find(
+      (block: any) =>
+        block.type === 'text' &&
+        (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
+          '"result":'
+        )
     );
 
     if (!finalMessage || finalMessage.type !== 'text') {
       throw new Error('No test result found in AI response');
     }
 
-    const jsonMatch = (finalMessage as Anthropic.Beta.Messages.BetaTextBlock).text.match(/{[\s\S]*}/);
+    const jsonMatch = (
+      finalMessage as Anthropic.Beta.Messages.BetaTextBlock
+    ).text.match(/{[\s\S]*}/);
     if (!jsonMatch) {
       throw new Error('Invalid test result format');
     }
@@ -224,9 +306,14 @@ export class TestRunner {
       } catch (error) {
         return {
           result: 'fail' as const,
-          reason: aiResult.result === 'fail'
-            ? `AI: ${aiResult.reason}, After: ${error instanceof Error ? error.message : String(error)}`
-            : error instanceof Error ? error.message : String(error)
+          reason:
+            aiResult.result === 'fail'
+              ? `AI: ${aiResult.reason}, After: ${
+                  error instanceof Error ? error.message : String(error)
+                }`
+              : error instanceof Error
+              ? error.message
+              : String(error),
         };
       }
     }
@@ -240,7 +327,7 @@ export class TestRunner {
 
       registry.tests.clear();
       registry.currentFileTests = [];
-      
+
       this.logger.startFile(file);
       const compiledPath = await this.compiler.compileFile(file);
       await import(compiledPath);
@@ -263,7 +350,7 @@ export class TestRunner {
 
           const result = await this.executeTest(test, context);
           this.logger.reportTest(
-            test.name, 
+            test.name,
             result.result === 'pass' ? 'passed' : 'failed',
             result.result === 'fail' ? new Error(result.reason) : undefined
           );
@@ -278,18 +365,16 @@ export class TestRunner {
         for (const hook of registry.afterAllFns) {
           await hook(testContext);
         }
-
       } finally {
         await this.browserManager.close();
-        this.testContext = null;  // Reset the context
+        this.testContext = null; // Reset the context
         registry.beforeAllFns = [];
         registry.afterAllFns = [];
         registry.beforeEachFns = [];
         registry.afterEachFns = [];
       }
-
     } catch (error) {
-      this.testContext = null;  // Reset on error
+      this.testContext = null; // Reset on error
       if (error instanceof Error) {
         this.logger.reportError('Test Execution', error.message);
       }
@@ -299,16 +384,19 @@ export class TestRunner {
   async runFile(pattern: string) {
     await this.initialize();
     const files = await this.findTestFiles(pattern);
-    
+
     if (files.length === 0) {
-      this.logger.error('Test Discovery', `No test files found matching: ${pattern}`);
+      this.logger.error(
+        'Test Discovery',
+        `No test files found matching: ${pattern}`
+      );
       process.exit(1);
     }
 
     for (const file of files) {
       await this.executeTestFile(file);
     }
-    
+
     this.logger.summary();
 
     if (this.exitOnSuccess && this.logger.allTestsPassed()) {
@@ -321,11 +409,11 @@ export class TestRunner {
   async runAll() {
     await this.initialize();
     const files = await this.findTestFiles();
-    
+
     for (const file of files) {
       await this.executeTestFile(file);
     }
-    
+
     this.logger.summary();
 
     if (this.exitOnSuccess && this.logger.allTestsPassed()) {
@@ -333,5 +421,55 @@ export class TestRunner {
     } else {
       process.exit(1);
     }
+  }
+
+  private async runCachedTest(
+    test: TestFunction,
+    browserTool: BrowserTool
+  ): Promise<TestResult> {
+    const cachedTest = await this.cache.get(test);
+
+    const steps = cachedTest?.data.steps
+      // do not take screenshots in cached mode
+      ?.filter(
+        (step) => step.action?.input.action !== BrowserActionEnum.Screenshot
+      );
+
+    if (!steps)
+      throw new Error('No steps to executem running test in a normal mode');
+    for (const step of steps) {
+      if (
+        step.action?.input.action === BrowserActionEnum.MouseMove &&
+        // @ts-expect-error Interface and actual values differ
+        step.action.input.coordinate
+      ) {
+        // @ts-expect-error
+        const [x, y] = step.action.input.coordinate;
+        const componentStr = await browserTool.getComponentStringByCoords(x, y);
+
+        if (componentStr !== step.extras.componentStr) {
+          throw new Error(
+            'Componnet UI are different, running test in a normal mode'
+          );
+        } else {
+          // fallback
+        }
+      }
+      if (step.action?.input) {
+        try {
+          await browserTool.execute(step.action.input);
+        } catch (error) {
+          console.error(
+            `Failed to execute step with input ${step.action.input}`,
+            error
+          );
+        }
+      }
+    }
+
+    return {
+      result: 'pass',
+      reason: 'All actions successfully replayed from cache',
+    };
   }
 }

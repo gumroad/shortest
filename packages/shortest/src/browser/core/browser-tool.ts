@@ -10,7 +10,13 @@ declare global {
 import { Page, Browser } from 'playwright';
 import { BaseBrowserTool, ToolError } from './index';
 import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
-import { writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs';
+import {
+  writeFileSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  unlinkSync,
+} from 'fs';
 import { join } from 'path';
 import { GitHubTool } from '../integrations/github';
 import { BrowserManager } from '../manager';
@@ -23,8 +29,8 @@ import { AssertionCallbackError } from '../../types/test';
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
   private browserManager: BrowserManager;
-  protected readonly toolType: BetaToolType = "computer_20241022";
-  protected readonly toolName: string = "computer";
+  protected readonly toolType: BetaToolType = 'computer_20241022';
+  protected readonly toolName: string = 'computer';
   private screenshotDir: string;
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
@@ -35,7 +41,7 @@ export class BrowserTool extends BaseBrowserTool {
   private readonly MAX_AGE_HOURS = 5;
 
   constructor(
-    page: Page, 
+    page: Page,
     browserManager: BrowserManager,
     config: BrowserToolConfig
   ) {
@@ -46,7 +52,7 @@ export class BrowserTool extends BaseBrowserTool {
     mkdirSync(this.screenshotDir, { recursive: true });
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
-    
+
     this.initialize();
     this.cleanupScreenshots();
   }
@@ -59,13 +65,13 @@ export class BrowserTool extends BaseBrowserTool {
           await this.initializeCursor();
           break;
         } catch (error) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
     };
 
     await initWithRetry();
-    
+
     // Re-initialize on navigation
     this.page.on('load', async () => {
       await initWithRetry();
@@ -75,13 +81,16 @@ export class BrowserTool extends BaseBrowserTool {
   private async initializeCursor(): Promise<void> {
     try {
       // Simpler check for page readiness
-      await this.page.waitForLoadState('domcontentloaded', { timeout: 1000 })
+      await this.page
+        .waitForLoadState('domcontentloaded', { timeout: 1000 })
         .catch(() => {});
 
       // Add styles only if they don't exist
-      const hasStyles = await this.page.evaluate(() => {
-        return !!document.querySelector('style[data-shortest-cursor]');
-      }).catch(() => false);
+      const hasStyles = await this.page
+        .evaluate(() => {
+          return !!document.querySelector('style[data-shortest-cursor]');
+        })
+        .catch(() => false);
 
       if (!hasStyles) {
         // Create style element directly in evaluate
@@ -147,7 +156,7 @@ export class BrowserTool extends BaseBrowserTool {
             window.cursorPosition = { x, y };
             cursor.style.left = `${x}px`;
             cursor.style.top = `${y}px`;
-            
+
             requestAnimationFrame(() => {
               trail.style.left = `${x}px`;
               trail.style.top = `${y}px`;
@@ -160,11 +169,12 @@ export class BrowserTool extends BaseBrowserTool {
           });
         }
       });
-
     } catch (error) {
-      if (error instanceof Error && 
-          !error.message.includes('context was destroyed') && 
-          !error.message.includes('Target closed')) {
+      if (
+        error instanceof Error &&
+        !error.message.includes('context was destroyed') &&
+        !error.message.includes('Target closed')
+      ) {
         console.warn('Cursor initialization failed:', error);
       }
     }
@@ -191,17 +201,23 @@ export class BrowserTool extends BaseBrowserTool {
           const clickCoords = input.coordinates || this.lastMousePosition;
           await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
           output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
-          
+
           // Get initial metadata before potential navigation
           metadata = await this.getMetadata();
-          
+
           // Wait briefly for navigation to start
           await this.page.waitForTimeout(100);
-          
+
           // If navigation started, get updated metadata
-          if (await this.page.evaluate(() => document.readyState !== 'complete').catch(() => true)) {
+          if (
+            await this.page
+              .evaluate(() => document.readyState !== 'complete')
+              .catch(() => true)
+          ) {
             try {
-              await this.page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+              await this.page.waitForLoadState('domcontentloaded', {
+                timeout: 5000,
+              });
               metadata = await this.getMetadata();
             } catch {
               // Keep the initial metadata if navigation timeout
@@ -224,7 +240,11 @@ export class BrowserTool extends BaseBrowserTool {
           if (!input.coordinates) {
             throw new ToolError('Coordinates required for left_click_drag');
           }
-          await actions.dragMouse(this.page, input.coordinates[0], input.coordinates[1]);
+          await actions.dragMouse(
+            this.page,
+            input.coordinates[0],
+            input.coordinates[1]
+          );
           output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
           break;
 
@@ -250,13 +270,13 @@ export class BrowserTool extends BaseBrowserTool {
           if (!input.text) {
             throw new ToolError('Key required for key action');
           }
-          
+
           await this.page.waitForTimeout(100);
-          
+
           const keyText = input.text.toLowerCase();
-          const keys = Array.isArray(actions.keyboardShortcuts[keyText]) ? 
-            actions.keyboardShortcuts[keyText] : 
-            [actions.keyboardShortcuts[keyText] || input.text];
+          const keys = Array.isArray(actions.keyboardShortcuts[keyText])
+            ? actions.keyboardShortcuts[keyText]
+            : [actions.keyboardShortcuts[keyText] || input.text];
 
           if (Array.isArray(keys)) {
             for (const key of keys) {
@@ -268,7 +288,7 @@ export class BrowserTool extends BaseBrowserTool {
           } else {
             await this.page.keyboard.press(keys);
           }
-          
+
           await this.page.waitForTimeout(100);
           output = `Pressed key: ${input.text}`;
           break;
@@ -280,18 +300,18 @@ export class BrowserTool extends BaseBrowserTool {
           }
           const loginResult = await this.githubTool.GithubLogin(this, {
             username: input.username as string,
-            password: input.password as string
+            password: input.password as string,
           });
 
-          output = loginResult.success ? 
-              'GitHub login was successfully completed' : 
-              `GitHub login failed: ${loginResult.error}`;
+          output = loginResult.success
+            ? 'GitHub login was successfully completed'
+            : `GitHub login failed: ${loginResult.error}`;
           break;
         }
 
         case 'clear_session':
           const newContext = await this.browserManager.recreateContext();
-          this.page = newContext.pages()[0] || await newContext.newPage();
+          this.page = newContext.pages()[0] || (await newContext.newPage());
           await this.page.evaluate(() => {
             localStorage.clear();
             sessionStorage.clear();
@@ -299,17 +319,19 @@ export class BrowserTool extends BaseBrowserTool {
 
           return {
             output: 'Successfully cleared browser data and created new context',
-            metadata: {}
+            metadata: {},
           };
 
         case 'run_callback': {
           if (!this.testContext?.currentTest) {
-            throw new ToolError('No test context available for callback execution');
+            throw new ToolError(
+              'No test context available for callback execution'
+            );
           }
 
           const testContext = this.testContext;
           const currentTest = testContext.currentTest as TestFunction;
-          
+
           const currentStepIndex = testContext.currentStepIndex ?? 0;
 
           try {
@@ -321,16 +343,16 @@ export class BrowserTool extends BaseBrowserTool {
               // Handle expectations
               const expectationIndex = currentStepIndex - 1;
               const expectation = currentTest.expectations?.[expectationIndex];
-              
+
               if (expectation?.fn) {
                 await expectation.fn(this.testContext);
                 testContext.currentStepIndex = currentStepIndex + 1;
                 return {
-                  output: `Callback function for "${expectation.description}" passed successfully`
+                  output: `Callback function for "${expectation.description}" passed successfully`,
                 };
               } else {
                 return {
-                  output: `Skipping callback execution: No callback function defined for expectation "${expectation?.description}"`
+                  output: `Skipping callback execution: No callback function defined for expectation "${expectation?.description}"`,
                 };
               }
             }
@@ -344,32 +366,36 @@ export class BrowserTool extends BaseBrowserTool {
                 assertionError.matcherResult.expected
               );
             }
-            throw new CallbackError(error instanceof Error ? error.message : String(error));
+            throw new CallbackError(
+              error instanceof Error ? error.message : String(error)
+            );
           }
         }
 
-        case 'navigate': {          
+        case 'navigate': {
           if (!input.url) {
             throw new ToolError('URL required for navigation');
           }
 
           // Create new tab
           const newPage = await this.page.context().newPage();
-          
+
           try {
             const navigationTimeout = 30000;
-            
+
             await newPage.goto(input.url, {
               timeout: navigationTimeout,
-              waitUntil: 'domcontentloaded'
+              waitUntil: 'domcontentloaded',
             });
 
-            await newPage.waitForLoadState('load', {
-              timeout: 5000
-            }).catch(e => {
-              console.log('⚠️ Load timeout, continuing anyway');
-            });
-            
+            await newPage
+              .waitForLoadState('load', {
+                timeout: 5000,
+              })
+              .catch((e) => {
+                console.log('⚠️ Load timeout, continuing anyway');
+              });
+
             // Switch focus
             this.page = newPage;
 
@@ -378,10 +404,13 @@ export class BrowserTool extends BaseBrowserTool {
               window_info: {
                 url: input.url,
                 title: await newPage.title(),
-                size: this.page.viewportSize() || { width: this.width, height: this.height }
-              }
+                size: this.page.viewportSize() || {
+                  width: this.width,
+                  height: this.height,
+                },
+              },
             };
-            
+
             break;
           } catch (error) {
             await newPage.close();
@@ -401,27 +430,26 @@ export class BrowserTool extends BaseBrowserTool {
         console.warn('Failed to get metadata:', metadataError);
         metadata = {};
       }
-      
+
       return {
         output,
-        metadata
+        metadata,
       };
-
     } catch (error) {
       console.error(pc.red('\n❌ Browser Action Failed:'), error);
-      
+
       if (error instanceof AssertionCallbackError) {
         return {
           output: `Assertion failed: ${error.message}${
-            error.actual !== undefined ? 
-            `\nExpected: ${error.expected}\nReceived: ${error.actual}` : 
-            ''
-          }`
+            error.actual !== undefined
+              ? `\nExpected: ${error.expected}\nReceived: ${error.actual}`
+              : ''
+          }`,
         };
       }
       if (error instanceof CallbackError) {
         return {
-          output: `Callback execution failed: ${error.message}`
+          output: `Callback execution failed: ${error.message}`,
         };
       }
       throw new ToolError(`Action failed: ${error}`);
@@ -431,14 +459,14 @@ export class BrowserTool extends BaseBrowserTool {
   private async getMetadata(): Promise<any> {
     const metadata: any = {
       window_info: {},
-      cursor_info: { position: [0, 0], visible: true }
+      cursor_info: { position: [0, 0], visible: true },
     };
 
     try {
       // Try to get basic page info first
       let url: string;
       let title: string;
-      
+
       try {
         url = await this.page.url();
       } catch {
@@ -454,7 +482,10 @@ export class BrowserTool extends BaseBrowserTool {
       metadata.window_info = {
         url,
         title,
-        size: this.page.viewportSize() || { width: this.width, height: this.height }
+        size: this.page.viewportSize() || {
+          width: this.width,
+          height: this.height,
+        },
       };
 
       // Only try to get cursor position if page is stable
@@ -462,12 +493,11 @@ export class BrowserTool extends BaseBrowserTool {
         const position = await actions.getCursorPosition(this.page);
         metadata.cursor_info = {
           position,
-          visible: this.cursorVisible
+          visible: this.cursorVisible,
         };
       }
 
       return metadata;
-
     } catch (error) {
       // Return whatever metadata we collected
       return metadata;
@@ -477,11 +507,15 @@ export class BrowserTool extends BaseBrowserTool {
   private async isPageStable(): Promise<boolean> {
     try {
       // Quick check if page is in a stable state
-      return await this.page.evaluate(() => {
-        return document.readyState === 'complete' && 
-               !document.querySelector('.loading') && 
-               !document.querySelector('.cl-loading');
-      }).catch(() => false);
+      return await this.page
+        .evaluate(() => {
+          return (
+            document.readyState === 'complete' &&
+            !document.querySelector('.loading') &&
+            !document.querySelector('.cl-loading')
+          );
+        })
+        .catch(() => false);
     } catch {
       return false;
     }
@@ -490,21 +524,21 @@ export class BrowserTool extends BaseBrowserTool {
   private async takeScreenshotWithMetadata(): Promise<ToolResult> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filePath = join(this.screenshotDir, `screenshot-${timestamp}.png`);
-    
+
     const buffer = await this.page.screenshot({
       type: 'jpeg',
       quality: 50,
       scale: 'device',
-      fullPage: false
+      fullPage: false,
     });
 
     writeFileSync(filePath, buffer);
     console.log(`Screenshot saved to: ${filePath}`);
-    
+
     return {
       output: 'Screenshot taken',
       base64_image: buffer.toString('base64'),
-      metadata: await this.getMetadata()
+      metadata: await this.getMetadata(),
     };
   }
 
@@ -514,12 +548,15 @@ export class BrowserTool extends BaseBrowserTool {
       name: this.toolName,
       display_width_px: this.width,
       display_height_px: this.height,
-      display_number: this.displayNum
+      display_number: this.displayNum,
     };
   }
 
   // Selector-based methods
-  public async waitForSelector(selector: string, options?: { timeout: number }): Promise<void> {
+  public async waitForSelector(
+    selector: string,
+    options?: { timeout: number }
+  ): Promise<void> {
     await this.page.waitForSelector(selector, options);
   }
 
@@ -550,11 +587,11 @@ export class BrowserTool extends BaseBrowserTool {
   private cleanupScreenshots(): void {
     try {
       const files = readdirSync(this.screenshotDir)
-        .filter(file => file.endsWith('.png') || file.endsWith('.jpg'))
-        .map(file => ({
+        .filter((file) => file.endsWith('.png') || file.endsWith('.jpg'))
+        .map((file) => ({
           name: file,
           path: join(this.screenshotDir, file),
-          time: statSync(join(this.screenshotDir, file)).mtime.getTime()
+          time: statSync(join(this.screenshotDir, file)).mtime.getTime(),
         }))
         .sort((a, b) => b.time - a.time); // newest first
 
@@ -562,7 +599,7 @@ export class BrowserTool extends BaseBrowserTool {
       const fiveHoursMs = this.MAX_AGE_HOURS * 60 * 60 * 1000;
 
       files.forEach((file, index) => {
-        const isOld = (now - file.time) > fiveHoursMs;
+        const isOld = now - file.time > fiveHoursMs;
         const isBeyondLimit = index >= this.MAX_SCREENSHOTS;
 
         if (isOld || isBeyondLimit) {
@@ -596,5 +633,15 @@ export class BrowserTool extends BaseBrowserTool {
       if (cursor) cursor.style.display = 'none';
       if (trail) trail.style.display = 'none';
     });
+  }
+
+  async getComponentStringByCoords(x: number, y: number) {
+    return await this.getPage().evaluate(
+      ([x, y]) => {
+        const elem = document.elementFromPoint(x, y);
+        return elem?.outerHTML.trim().replace(/\s+/g, ' ');
+      },
+      [x, y]
+    );
   }
 }

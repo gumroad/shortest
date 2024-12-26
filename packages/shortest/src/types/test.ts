@@ -29,7 +29,9 @@ export type TestContext = {
   browser: Browser;
   playwright: typeof playwright & {
     request: APIRequest & {
-      newContext: (options?: { extraHTTPHeaders?: Record<string, string> }) => Promise<APIRequestContext>;
+      newContext: (options?: {
+        extraHTTPHeaders?: Record<string, string>;
+      }) => Promise<APIRequestContext>;
     };
   };
   currentTest?: TestFunction;
@@ -55,8 +57,15 @@ export interface TestFunction {
 export type TestChain = {
   expect(fn: (context: TestContext) => Promise<void>): TestChain;
   expect(description: string): TestChain;
-  expect(description: string, fn?: (context: TestContext) => Promise<void>): TestChain;
-  expect(description: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
+  expect(
+    description: string,
+    fn?: (context: TestContext) => Promise<void>
+  ): TestChain;
+  expect(
+    description: string,
+    payload?: any,
+    fn?: (context: TestContext) => Promise<void>
+  ): TestChain;
   after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
 
@@ -64,17 +73,21 @@ export type TestAPI = {
   (fn: (context: TestContext) => Promise<void>): TestChain;
   (name: string): TestChain;
   (name: string, fn?: (context: TestContext) => Promise<void>): TestChain;
-  (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
-  
+  (
+    name: string,
+    payload?: any,
+    fn?: (context: TestContext) => Promise<void>
+  ): TestChain;
+
   beforeAll(fn: (context: TestContext) => Promise<void>): void;
   beforeAll(name: string, fn: (context: TestContext) => Promise<void>): void;
-  
+
   afterAll(fn: (context: TestContext) => Promise<void>): void;
   afterAll(name: string, fn: (context: TestContext) => Promise<void>): void;
-  
+
   beforeEach(fn: (context: TestContext) => Promise<void>): void;
   beforeEach(name: string, fn: (context: TestContext) => Promise<void>): void;
-  
+
   afterEach(fn: (context: TestContext) => Promise<void>): void;
   afterEach(name: string, fn: (context: TestContext) => Promise<void>): void;
 };
@@ -90,4 +103,3 @@ export type TestRegistry = {
 };
 
 export type { Page } from 'playwright';
- 

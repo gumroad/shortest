@@ -1,7 +1,10 @@
-import { TestContext, Page } from "./test";
+import { TestContext, Page } from './test';
 
 export interface BrowserToolInterface {
-  waitForSelector(selector: string, options?: { timeout: number }): Promise<void>;
+  waitForSelector(
+    selector: string,
+    options?: { timeout: number }
+  ): Promise<void>;
   fill(selector: string, value: string): Promise<void>;
   press(selector: string, key: string): Promise<void>;
   findElement(selector: string): Promise<any>;
@@ -10,21 +13,24 @@ export interface BrowserToolInterface {
   getPage(): Page;
 }
 
-export type BrowserAction = 
-  | "mouse_move"
-  | "left_click"
-  | "left_click_drag"
-  | "right_click"
-  | "middle_click"
-  | "double_click"
-  | "screenshot"
-  | "cursor_position"
-  | "github_login"
-  | "clear_session"
-  | "type"
-  | "key"
-  | "run_callback"
-  | "navigate";
+export enum BrowserActionEnum {
+  MouseMove = 'mouse_move',
+  LeftClick = 'left_click',
+  LeftClickDrag = 'left_click_drag',
+  RightClick = 'right_click',
+  MiddleClick = 'middle_click',
+  DoubleClick = 'double_click',
+  Screenshot = 'screenshot',
+  CursorPosition = 'cursor_position',
+  GithubLogin = 'github_login',
+  ClearSession = 'clear_session',
+  Type = 'type',
+  Key = 'key',
+  RunCallback = 'run_callback',
+  Navigate = 'navigate',
+}
+
+export type BrowserAction = `${BrowserActionEnum}`;
 
 export interface BrowserToolOptions {
   width: number;
@@ -50,7 +56,7 @@ export interface ToolResult {
     window_info?: {
       url: string;
       title: string;
-      size: { width: number; height: number }
+      size: { width: number; height: number };
     };
     cursor_info?: {
       position: [number, number];
@@ -73,10 +79,10 @@ export interface BrowserToolConfig {
   testContext?: TestContext;
 }
 
-export type BetaToolType = 
-  | "computer_20241022"
-  | "text_editor_20241022"
-  | "bash_20241022";
+export type BetaToolType =
+  | 'computer_20241022'
+  | 'text_editor_20241022'
+  | 'bash_20241022';
 
 export interface BetaToolParams {
   type: BetaToolType;
