@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { AIClient } from './client';
+import { AIClient, IAIClient } from './client';
 import { BrowserTool } from '../browser/core/browser-tool';
 import { ActionInput } from '../types/browser';
 import { TestContext } from '../types/test';
@@ -10,7 +10,7 @@ import pc from 'picocolors';
 import { JUGDEMENT_SYSTEM_PROMPT } from './prompts';
 
 
-export class SnapshotAIClient {
+export class SnapshotAIClient implements IAIClient {
   private client: Anthropic;
   private aiClient: AIClient;
   private snapshotDir: string;
@@ -25,7 +25,7 @@ export class SnapshotAIClient {
 
   async processAction(prompt: string, browserTool: BrowserTool): Promise<{
     finalResponse: Anthropic.Beta.Messages.BetaMessage;
-    allResponses: Anthropic.Beta.Messages.BetaMessage[];
+    messages: Anthropic.Beta.Messages.BetaMessageParam[];
   } | null> {
     // Try to get test context and name
     const testContext = (browserTool as any).testContext as TestContext;
@@ -84,9 +84,9 @@ export class SnapshotAIClient {
       });
 
       return {
-        finalResponse: response,
-        allResponses: [response]
-      } as any;
+        messages: [response],
+        finalResponse: response
+      };
 
     } catch (error) {
       console.warn(`Failed to replay snapshot for ${testName}, falling back to AI:`, error);

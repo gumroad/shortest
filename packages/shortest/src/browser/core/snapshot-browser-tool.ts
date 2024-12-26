@@ -7,7 +7,7 @@ import { TestContext } from '../../types/test';
 export class SnapshotBrowserTool extends BrowserTool {
   private snapshotDir: string;
   private snapshotFile?: string;
-  private shouldRecord: boolean = false;
+  public shouldRecord: boolean = false;
 
   constructor(...args: ConstructorParameters<typeof BrowserTool>) {
     super(...args);

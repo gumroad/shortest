@@ -5,14 +5,24 @@ import { BrowserTool } from '../browser/core/browser-tool';
 import { AITools } from './tools';
 import pc from 'picocolors';
 
-export class AIClient {
+export interface IAIClient {
+  processAction(prompt: string, browserTool: BrowserTool,
+    outputCallback?: (content: Anthropic.Beta.Messages.BetaContentBlockParam) => void,
+    toolOutputCallback?: (name: string, input: any) => void
+  ): Promise<{
+    messages: Anthropic.Beta.Messages.BetaMessageParam[];
+    finalResponse: Anthropic.Beta.Messages.BetaMessage;
+  } | null>;
+}
+
+export class AIClient implements IAIClient {
   private client: Anthropic;
   private model: string;
   private maxMessages: number;
   private debugMode: boolean;
   public basePrompt: string;
 
-  constructor(config: AIConfig, debugMode: boolean = true) {
+  constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error('Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var');
     }
@@ -22,7 +32,7 @@ export class AIClient {
     });
     this.model = 'claude-3-5-sonnet-20241022';
     this.maxMessages = 10;
-    this.debugMode = true;
+    this.debugMode = debugMode;
     this.basePrompt = SYSTEM_PROMPT;
   }
 
@@ -46,6 +56,7 @@ export class AIClient {
         await new Promise(r => setTimeout(r, 5000 * attempts));
       }
     }
+    return null;
   }
 
   async makeRequest(

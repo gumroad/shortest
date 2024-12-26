@@ -4,7 +4,7 @@ import { TestCompiler } from '../compiler';
 import { BrowserManager } from '../../browser/manager';
 import { BrowserTool } from '../../browser/core/browser-tool';
 import { SnapshotBrowserTool } from '../../browser/core/snapshot-browser-tool';
-import { AIClient } from '../../ai/client';
+import { AIClient, IAIClient } from '../../ai/client';
 import { initialize, getConfig } from '../../index';
 import { TestFunction, TestContext, ShortestConfig } from '../../types';
 import { Logger } from '../../utils/logger';
@@ -171,7 +171,12 @@ export class TestRunner {
       debug: this.debugAI
     }, this.debugAI);
 
-    const aiClient = new SnapshotAIClient(baseAiClient);
+    let aiClient: IAIClient;
+    if (!browserTool.shouldRecord) {
+      aiClient = new SnapshotAIClient(baseAiClient);
+    } else {
+      aiClient = baseAiClient;
+    }
 
     // First get page state
     const initialState = await browserTool.execute({ 
