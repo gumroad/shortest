@@ -12,7 +12,7 @@ async function testEmailRendering() {
   await initialize();
   const config = getConfig();
   
-  if (!config.mailosaur?.apiKey || !config.mailosaur?.serverId || !config.mailosaur?.emailAddress) {
+  if (!config.mailosaur?.apiKey || !config.mailosaur?.serverId) {
     throw new Error('Mailosaur config missing');
   }
 
@@ -23,7 +23,7 @@ async function testEmailRendering() {
     // 1. Send a test email
     console.log('Sending test email...');
     await mailosaur.messages.create(config.mailosaur.serverId, {
-      to: config.mailosaur.emailAddress,
+      to: 'test@example.com',
       subject: 'Test Email Rendering',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
