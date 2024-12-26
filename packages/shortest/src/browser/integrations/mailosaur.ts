@@ -9,7 +9,7 @@ export class MailosaurTool {
   constructor(config: {
     apiKey: string;
     serverId: string;
-    emailAddress: string;
+    emailAddress?: string;
   }) {
     if (!config.apiKey || !config.serverId || !config.emailAddress) {
       throw new ToolError('Mailosaur configuration missing required fields');
