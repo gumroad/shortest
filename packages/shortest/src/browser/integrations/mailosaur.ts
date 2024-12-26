@@ -11,8 +11,10 @@ export class MailosaurTool {
     serverId: string;
     emailAddress?: string;
   }) {
-    if (!config.apiKey || !config.serverId || !config.emailAddress) {
+    if (!config.apiKey || !config.serverId) {
       throw new ToolError('Mailosaur configuration missing required fields');
+    } else if (!config.emailAddress) {
+      throw new ToolError('Mailosaur email address is required');
     }
 
     this.client = new Mailosaur(config.apiKey);
