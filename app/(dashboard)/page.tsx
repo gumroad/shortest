@@ -29,7 +29,7 @@ export default function HomePage() {
               Write tests in plain English
             </h3>
             <pre className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
-              <Code language="js">{`import { shortest } from '@antiwork/shortest'
+              <Code lang="js">{`import { shortest } from '@antiwork/shortest'
 
 shortest('Login to the app using email and password', {
   username: process.env.GITHUB_USERNAME,
