@@ -6,8 +6,8 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import Link from "next/link";
-import { Toaster } from "@/components/ui/toaster";
 import { Logo as LogoIcon } from "@/components/logo";
+import { Toaster } from "@/components/ui/toaster";
 
 const Logo = () => (
   <span className="ml-2 font-semibold text-gray-900 flex items-center">

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { getOctokit } from "@/lib/github";
 import { revalidateTag } from "next/cache";
+import { NextResponse } from "next/server";
 import { type NextRequest } from "next/server";
+import { getOctokit } from "@/lib/github";
 
 export async function POST(request: NextRequest) {
   const octokit = await getOctokit();
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     console.error("Failed to parse webhook payload:", error);
     return NextResponse.json(
       { error: "Failed to parse webhook payload" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (!githubEvent) {
     return NextResponse.json(
       { error: "No GitHub event specified" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     console.error(`Error processing ${githubEvent} webhook:`, error);
     return NextResponse.json(
       { error: "Failed to process webhook" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

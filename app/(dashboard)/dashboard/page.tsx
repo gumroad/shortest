@@ -1,11 +1,11 @@
 "use client";
 
-import { getAssignedPullRequests } from "@/lib/github";
 import { AlertCircle, GitPullRequest, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PullRequestItem } from "./pull-request";
 import { PullRequestFilter } from "./pull-request-filter";
 import type { PullRequest } from "./types";
+import { getAssignedPullRequests } from "@/lib/github";
 
 export default function DashboardPage() {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const uniqueRepositories = useMemo(
     () =>
       Array.from(new Set(pullRequests.map((pr) => pr.repository.full_name))),
-    [pullRequests]
+    [pullRequests],
   );
 
   const filteredPullRequests = useMemo(() => {
@@ -38,7 +38,7 @@ export default function DashboardPage() {
     setSelectedRepoFilters((prev) =>
       prev.includes(value)
         ? prev.filter((filter) => filter !== value)
-        : [...prev, value]
+        : [...prev, value],
     );
   };
 
@@ -46,7 +46,7 @@ export default function DashboardPage() {
     setBuildStatusFilter((prev) =>
       prev.includes(value)
         ? prev.filter((filter) => filter !== value)
-        : [...prev, value]
+        : [...prev, value],
     );
   };
 
@@ -69,7 +69,7 @@ export default function DashboardPage() {
                   login: pr.owner,
                 },
               },
-            }))
+            })),
           );
           setError(null);
         }
@@ -78,7 +78,7 @@ export default function DashboardPage() {
         console.error("Error fetching pull requests:", error);
         setLoading(false);
         setError(
-          "Failed to fetch pull requests. Please reconnect your GitHub account."
+          "Failed to fetch pull requests. Please reconnect your GitHub account.",
         );
         setPullRequests([]);
       }

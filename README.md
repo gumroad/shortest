@@ -62,7 +62,7 @@ shortest('Login to the app using email and password', { username: process.env.GI
 ```
 
 ## Using callback functions
-You can also use callback functions to add additoinal assertions and other logic. AI will execute the callback function after the test
+You can also use callback functions to add additional assertions and other logic. AI will execute the callback function after the test
 execution in browser is completed.
 
 ```typescript

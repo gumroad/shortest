@@ -4,7 +4,7 @@ export const AITools = [
     name: "computer",
     display_width_px: 1920,
     display_height_px: 1080,
-    display_number: 1
+    display_number: 1,
   },
   {
     name: "github_login",
@@ -15,19 +15,20 @@ export const AITools = [
         action: {
           type: "string",
           enum: ["github_login"],
-          description: "The action to perform. It's always equal to 'github_login'"
+          description:
+            "The action to perform. It's always equal to 'github_login'",
         },
         username: {
           type: "string",
-          description: "GitHub username or email"
+          description: "GitHub username or email",
         },
         password: {
           type: "string",
-          description: "GitHub password"
-        }
+          description: "GitHub password",
+        },
       },
-      required: ["action", "username", "password"]
-    }
+      required: ["action", "username", "password"],
+    },
   },
   {
     name: "run_callback",
@@ -38,11 +39,11 @@ export const AITools = [
         action: {
           type: "string",
           enum: ["run_callback"],
-          description: "Execute callback for current step"
-        }
+          description: "Execute callback for current step",
+        },
       },
-      required: ["action"]
-    }
+      required: ["action"],
+    },
   },
   {
     name: "navigate",
@@ -53,16 +54,16 @@ export const AITools = [
         action: {
           type: "string",
           enum: ["navigate"],
-          description: "The action to perform"
+          description: "The action to perform",
         },
         url: {
           type: "string",
-          description: "The URL to navigate to"
-        }
+          description: "The URL to navigate to",
+        },
       },
-      required: ["action", "url"]
-    }
-  }
+      required: ["action", "url"],
+    },
+  },
 ] as const;
 
-export type AITool = typeof AITools[number]['name'];
+export type AITool = (typeof AITools)[number]["name"];
