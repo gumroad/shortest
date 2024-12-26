@@ -1,5 +1,5 @@
-import { BrowserConfig } from './browser';
-import { AIConfig } from './ai';
+import { AIConfig } from "./ai";
+import { BrowserConfig } from "./browser";
 
 export interface ShortestConfig {
   headless: boolean;

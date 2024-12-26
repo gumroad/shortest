@@ -14,3 +14,4 @@ shortest('Verify that the user can access the /dashboard page');
 shortest("Verify that users can generate test cases")
 .expect("It takes up to 20 seconds for the tests to be generated")
 .expect("You should validate that the vitest tests are generated and shown in the UI")
+shortest("Verify that the user can access the /dashboard page");

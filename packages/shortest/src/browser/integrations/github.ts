@@ -1,34 +1,38 @@
-import { authenticator } from 'otplib';
-import dotenv from 'dotenv';
-import { BrowserToolInterface } from '../../types/browser';
+import dotenv from "dotenv";
+import { authenticator } from "otplib";
+import { BrowserToolInterface } from "../../types/browser";
 
 export class GitHubTool {
   private totpSecret: string;
   private readonly selectors = {
-    loginForm: '#login form',
-    usernameInput: '#login_field',
-    passwordInput: '#password',
+    loginForm: "#login form",
+    usernameInput: "#login_field",
+    passwordInput: "#password",
     submitButton: '[type="submit"]',
     useAuthenticatorButton: 'button:has-text("Use authenticator")',
     useAuthenticatorLink: '[data-test-selector="totp-app-link"]',
-    otpInput: '#app_totp',
-    errorMessage: '.flash-error'
+    otpInput: "#app_totp",
+    errorMessage: ".flash-error",
   };
 
   constructor(secret?: string) {
-    dotenv.config({ path: '.env.local' });
-    dotenv.config({ path: '.env' });
-    
-    this.totpSecret = secret || process.env.GITHUB_TOTP_SECRET || '';
-    
+    dotenv.config({ path: ".env.local" });
+    dotenv.config({ path: ".env" });
+
+    this.totpSecret = secret || process.env.GITHUB_TOTP_SECRET || "";
+
     if (!this.totpSecret) {
-      throw new Error('GITHUB_TOTP_SECRET is required in .env file or via --secret flag');
+      throw new Error(
+        "GITHUB_TOTP_SECRET is required in .env file or via --secret flag",
+      );
     }
   }
 
   private validateSecret() {
     if (!this.totpSecret) {
-      throw new Error('GITHUB_TOTP_SECRET is required in .env file or via --secret flag');
+      throw new Error(
+        "GITHUB_TOTP_SECRET is required in .env file or via --secret flag",
+      );
     }
   }
 
@@ -43,66 +47,89 @@ export class GitHubTool {
     }
   }
 
-  async GithubLogin(browserTool: BrowserToolInterface, credentials: { username: string; password: string }): Promise<{ success: boolean; error?: string }> {
+  async GithubLogin(
+    browserTool: BrowserToolInterface,
+    credentials: { username: string; password: string },
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // Wait for login form
-      await browserTool.waitForSelector(this.selectors.loginForm, { timeout: 10000 });
-      
+      await browserTool.waitForSelector(this.selectors.loginForm, {
+        timeout: 10000,
+      });
+
       // Fill credentials
-      await browserTool.fill(this.selectors.usernameInput, credentials.username);
-      await browserTool.fill(this.selectors.passwordInput, credentials.password);
-      
+      await browserTool.fill(
+        this.selectors.usernameInput,
+        credentials.username,
+      );
+      await browserTool.fill(
+        this.selectors.passwordInput,
+        credentials.password,
+      );
+
       // Submit form
       await browserTool.click(this.selectors.submitButton);
-      
+
       try {
-        await browserTool.waitForSelector(this.selectors.useAuthenticatorButton, { timeout: 5000 });
+        await browserTool.waitForSelector(
+          this.selectors.useAuthenticatorButton,
+          { timeout: 5000 },
+        );
         await browserTool.click(this.selectors.useAuthenticatorButton);
       } catch {
         // If button not found, try the link
-        await browserTool.waitForSelector(this.selectors.useAuthenticatorLink, { timeout: 5000 });
+        await browserTool.waitForSelector(this.selectors.useAuthenticatorLink, {
+          timeout: 5000,
+        });
         await browserTool.click(this.selectors.useAuthenticatorLink);
       }
-      
+
       // Wait for OTP input to be visible
-      await browserTool.waitForSelector(this.selectors.otpInput, { timeout: 1000 });
-      
+      await browserTool.waitForSelector(this.selectors.otpInput, {
+        timeout: 1000,
+      });
+
       // Generate and enter TOTP code
       const { code } = this.generateTOTPCode();
       await browserTool.fill(this.selectors.otpInput, code);
-      
+
       // Start navigation promise before pressing Enter
-      const navigationPromise = browserTool.waitForNavigation({ timeout: 3000 });
-      
+      const navigationPromise = browserTool.waitForNavigation({
+        timeout: 3000,
+      });
+
       // Press Enter and wait for navigation
-      await browserTool.press(this.selectors.otpInput, 'Enter');
+      await browserTool.press(this.selectors.otpInput, "Enter");
       await navigationPromise;
-      
+
       // Get current URL to verify login success
       const currentUrl = await browserTool.getPage().url();
-      const isLoggedIn = await browserTool.findElement(this.selectors.loginForm) === null;
-      
-      return { 
+      const isLoggedIn =
+        (await browserTool.findElement(this.selectors.loginForm)) === null;
+
+      return {
         success: isLoggedIn,
-        error: isLoggedIn ? undefined : 'Failed to verify login success'
+        error: isLoggedIn ? undefined : "Failed to verify login success",
       };
-      
     } catch (error) {
       // Check if we're actually logged in despite the error
       try {
         const currentUrl = await browserTool.getPage().url();
-        if (!currentUrl.includes('github.com')) {
-          return { 
-            success: true 
+        if (!currentUrl.includes("github.com")) {
+          return {
+            success: true,
           };
         }
       } catch {
         // Ignore URL check errors
       }
 
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error during GitHub login'
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown error during GitHub login",
       };
     }
   }

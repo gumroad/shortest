@@ -1,8 +1,8 @@
-import type { ShortestConfig } from '@antiwork/shortest';
+import type { ShortestConfig } from "@antiwork/shortest";
 
 export default {
   headless: false,
-  baseUrl: 'https://helper.ai/',
+  baseUrl: 'http://localhost:3000',
   testDir: 'app/__tests__',
   anthropicKey: process.env.ANTHROPIC_API_KEY,
   mailosaur: {
