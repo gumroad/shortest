@@ -1,5 +1,3 @@
-import { GitHubTool } from './github';
+import { GitHubTool } from "./github";
 
-export {
-  GitHubTool
-};
+export { GitHubTool };

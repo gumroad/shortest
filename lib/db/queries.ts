@@ -1,9 +1,9 @@
 "use server";
 
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "./drizzle";
 import { users, User, NewUser, pullRequests, PullRequest } from "./schema";
-import { auth, clerkClient } from "@clerk/nextjs/server";
 
 export async function updateUserSubscription(
   clerkId: string,
@@ -12,7 +12,7 @@ export async function updateUserSubscription(
     stripeProductId: string | null;
     planName: string | null;
     subscriptionStatus: string;
-  }
+  },
 ) {
   await db
     .update(users)

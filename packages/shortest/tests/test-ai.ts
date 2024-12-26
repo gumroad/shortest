@@ -1,21 +1,21 @@
-import { AIClient } from '../src/ai/client';
-import { BrowserTool } from '../src/browser/core/browser-tool';
-import { BrowserManager } from '../src/browser/manager';
-import { getConfig, initialize } from '../src/index';
-import type { TestFunction } from '../src/types/test';
-import pc from 'picocolors';
-import * as playwright from 'playwright';
-import { request } from 'playwright';
+import pc from "picocolors";
+import * as playwright from "playwright";
+import { request } from "playwright";
+import { AIClient } from "../src/ai/client";
+import { BrowserTool } from "../src/browser/core/browser-tool";
+import { BrowserManager } from "../src/browser/manager";
+import { getConfig, initialize } from "../src/index";
+import type { TestFunction } from "../src/types/test";
 
 async function testAI() {
-  console.log(pc.cyan('\n🧪 Testing AI Integration'));
-  console.log(pc.cyan('======================='));
+  console.log(pc.cyan("\n🧪 Testing AI Integration"));
+  console.log(pc.cyan("======================="));
 
   const browserManager = new BrowserManager(getConfig());
 
   try {
     await initialize();
-    console.log('🚀 Launching browser...');
+    console.log("🚀 Launching browser...");
     const context = await browserManager.launch();
     const page = context.pages()[0];
 
@@ -24,30 +24,32 @@ async function testAI() {
       ...playwright,
       request: {
         ...request,
-        newContext: async (options?: { extraHTTPHeaders?: Record<string, string> }) => {
+        newContext: async (options?: {
+          extraHTTPHeaders?: Record<string, string>;
+        }) => {
           const requestContext = await request.newContext({
             baseURL: getConfig().baseUrl,
-            ...options
+            ...options,
           });
           return requestContext;
-        }
-      }
+        },
+      },
     };
 
     // Mock test data with callback
     const mockTest: TestFunction = {
-      name: 'Test with callback',
+      name: "Test with callback",
       fn: async () => {
-        console.log('Callback executed: Main test');
+        console.log("Callback executed: Main test");
       },
       expectations: [
         {
-          description: 'action performed',
+          description: "action performed",
           fn: async () => {
-            console.log('Callback executed: Expectation');
-          }
-        }
-      ]
+            console.log("Callback executed: Expectation");
+          },
+        },
+      ],
     };
 
     const browserTool = new BrowserTool(page, browserManager, {
@@ -58,16 +60,16 @@ async function testAI() {
         browser: browserManager.getBrowser()!,
         playwright: playwrightObj,
         currentTest: mockTest,
-        currentStepIndex: 0
-      }
+        currentStepIndex: 0,
+      },
     });
 
     // Test first callback
-    console.log('\n🔍 Testing first callback:');
-    const result = await browserTool.execute({ 
-      action: 'run_callback' 
+    console.log("\n🔍 Testing first callback:");
+    const result = await browserTool.execute({
+      action: "run_callback",
     });
-    console.log('Result:', result);
+    console.log("Result:", result);
 
     // Update test context for expectation callback
     browserTool.updateTestContext({
@@ -75,24 +77,23 @@ async function testAI() {
       browser: browserManager.getBrowser()!,
       playwright: playwrightObj,
       currentTest: mockTest,
-      currentStepIndex: 1
+      currentStepIndex: 1,
     });
 
     // Test expectation callback
-    console.log('\n🔍 Testing expectation callback:');
-    const result2 = await browserTool.execute({ 
-      action: 'run_callback' 
+    console.log("\n🔍 Testing expectation callback:");
+    const result2 = await browserTool.execute({
+      action: "run_callback",
     });
-    console.log('Result:', result2);
-
+    console.log("Result:", result2);
   } catch (error) {
-    console.error(pc.red('❌ Test failed:'), error);
+    console.error(pc.red("❌ Test failed:"), error);
   } finally {
-    console.log('\n🧹 Cleaning up...');
+    console.log("\n🧹 Cleaning up...");
     await browserManager.close();
   }
 }
 
-console.log('🤖 AI Integration Test');
-console.log('=====================');
+console.log("🤖 AI Integration Test");
+console.log("=====================");
 testAI().catch(console.error);

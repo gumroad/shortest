@@ -8,7 +8,7 @@ export const generateTestsSchema = z.object({
     z.object({
       name: z.string(),
       content: z.string(),
-    })
+    }),
   ),
 });
 
@@ -16,7 +16,7 @@ export const generateTestsResponseSchema = z.array(
   z.object({
     name: z.string(),
     content: z.string(),
-  })
+  }),
 );
 
 export const TestFileSchema = z.object({
@@ -24,7 +24,7 @@ export const TestFileSchema = z.object({
     z.object({
       name: z.string(),
       content: z.string(),
-    })
+    }),
   ),
 });
 
@@ -36,15 +36,17 @@ export const GenerateTestsInput = z.object({
     z.object({
       name: z.string(),
       content: z.string(),
-    })
+    }),
   ),
-  test_logs: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      logs: z.array(z.string()),
-    })
-  ).optional(),
+  test_logs: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        logs: z.array(z.string()),
+      }),
+    )
+    .optional(),
 });
 
 export type GenerateTestsInput = z.infer<typeof GenerateTestsInput>;
