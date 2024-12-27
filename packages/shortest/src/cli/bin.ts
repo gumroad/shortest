@@ -158,7 +158,7 @@ async function main() {
         );
         console.error(pc.dim("  - headless: boolean"));
         console.error(pc.dim("  - baseUrl: string"));
-        console.error(pc.dim("  - testDir: string | string[]"));
+        console.error(pc.dim("  - testPattern: string"));
         console.error(pc.dim("  - anthropicKey: string"));
         console.error();
       } else {

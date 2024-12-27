@@ -69,41 +69,21 @@ export class TestRunner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    const testDirs = Array.isArray(this.config.testDir)
-      ? this.config.testDir
-      : [this.config.testDir || "__tests__"];
-
-    const files = [];
-    for (const dir of testDirs) {
-      if (pattern) {
-        const cleanPattern = pattern
-          .replace(/\.ts$/, "")
-          .replace(/\.test$/, "")
-          .split("/")
-          .pop();
-
-        const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-        const matches = await glob(globPattern, {
-          cwd: this.cwd,
-          absolute: true,
-        });
-
-        files.push(...matches);
-      } else {
-        const globPattern = `${dir}/**/*.test.ts`;
-        const matches = await glob(globPattern, { cwd: this.cwd });
-        files.push(...matches.map((f) => resolve(this.cwd, f)));
-      }
-    }
-
+    const testPattern = this.config.testPattern || "**/*.test.ts";
+  
+    const files = await glob(testPattern, {
+      cwd: this.cwd,
+      absolute: true,
+    });
+  
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found in directories: ${testDirs.join(", ")}`,
+        `No test files found matching: ${testPattern}`,
       );
       process.exit(1);
     }
-
+  
     return files;
   }
 
