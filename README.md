@@ -184,9 +184,15 @@ This guide will help you set up the Shortest web app for local development.
    pnpm install
    ```
 
-#### For Gumroad Vercel Team Members:
-1. Run `vercel env pull` to get the latest environment variables
-- https://vercel.com/docs/deployments/local-env#environment-variables-for-local-development
+#### For Anti-Work Team Members:
+
+Pull Vercel env vars:
+
+```bash
+pnpm i -g vercel
+vercel link
+vercel env pull
+```
 
 #### For Other Contributors:
 1. Run `pnpm run setup` to configure the environment variables.
