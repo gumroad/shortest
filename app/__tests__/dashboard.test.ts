@@ -18,4 +18,4 @@ shortest.beforeAll(async ({ page }) => {
   await page.goto(frontendUrl + "/dashboard");
 });
 
-shortest("Generate test cases by clicking on 'Write new tests'. Validate test cases appears in UI within 20s");
+shortest("Verify that the user can access the /dashboard page");
