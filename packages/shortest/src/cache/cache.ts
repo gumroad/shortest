@@ -173,7 +173,6 @@ export class BaseCache<T extends CacheEntry> {
     try {
       if (fs.existsSync(this.lockFile)) {
         fs.unlinkSync(this.lockFile);
-        this.logger.reportStatus("Cache lock released");
       }
       this.lockAcquired = false;
     } catch {

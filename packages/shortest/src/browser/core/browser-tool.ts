@@ -43,7 +43,7 @@ export class BrowserTool extends BaseBrowserTool {
   constructor(
     page: Page,
     browserManager: BrowserManager,
-    config: BrowserToolConfig,
+    config: BrowserToolConfig
   ) {
     super(config);
     this.page = page;
@@ -243,7 +243,7 @@ export class BrowserTool extends BaseBrowserTool {
           await actions.dragMouse(
             this.page,
             input.coordinates[0],
-            input.coordinates[1],
+            input.coordinates[1]
           );
           output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
           break;
@@ -325,7 +325,7 @@ export class BrowserTool extends BaseBrowserTool {
         case "run_callback": {
           if (!this.testContext?.currentTest) {
             throw new ToolError(
-              "No test context available for callback execution",
+              "No test context available for callback execution"
             );
           }
 
@@ -363,11 +363,11 @@ export class BrowserTool extends BaseBrowserTool {
               throw new AssertionCallbackError(
                 assertionError.message,
                 assertionError.matcherResult.actual,
-                assertionError.matcherResult.expected,
+                assertionError.matcherResult.expected
               );
             }
             throw new CallbackError(
-              error instanceof Error ? error.message : String(error),
+              error instanceof Error ? error.message : String(error)
             );
           }
         }
@@ -555,7 +555,7 @@ export class BrowserTool extends BaseBrowserTool {
   // Selector-based methods
   public async waitForSelector(
     selector: string,
-    options?: { timeout: number },
+    options?: { timeout: number }
   ): Promise<void> {
     await this.page.waitForSelector(selector, options);
   }
@@ -635,13 +635,95 @@ export class BrowserTool extends BaseBrowserTool {
     });
   }
 
-  async getComponentStringByCoords(x: number, y: number) {
+  /**
+   * Retrieves normalized component string by X and Y coordinates
+   * This is primarily used to determine change in UI
+   * Playwright currently does not support such functionality
+   * @see https://github.com/microsoft/playwright/issues/13273
+   */
+  async getNormalizedComponentStringByCoords(x: number, y: number) {
     return await this.getPage().evaluate(
-      ([x, y]) => {
+      ({ x, y, allowedAttr }) => {
         const elem = document.elementFromPoint(x, y);
-        return elem?.outerHTML.trim().replace(/\s+/g, " ");
+        if (elem) {
+          // todo: test func below
+          const clone = elem.cloneNode(true) as HTMLElement;
+
+          /**
+           * Gets deepest nested child node
+           * If several nodes are on the same depth, the first node would be returned
+           */
+          function getDeepestChildNode(element: Element): HTMLElement {
+            let deepestChild = element.cloneNode(true) as HTMLElement;
+            let maxDepth = 0;
+
+            function traverse(node: any, depth: number) {
+              if (depth > maxDepth) {
+                maxDepth = depth;
+                deepestChild = node;
+              }
+
+              Array.from(node.children).forEach((child) => {
+                traverse(child, depth + 1);
+              });
+            }
+
+            traverse(deepestChild, 0);
+            return deepestChild;
+          }
+
+          const deepestNode = getDeepestChildNode(clone);
+
+          // get several parents if present
+          const node = deepestNode.parentElement
+            ? deepestNode.parentElement.parentElement
+              ? deepestNode.parentElement.parentElement
+              : deepestNode.parentElement
+            : deepestNode;
+
+          /**
+           * Recursively delete attributes from Nodes
+           */
+          function cleanAttributesRecursively(
+            element: Element,
+            options: { exceptions: string[] }
+          ) {
+            Array.from(element.attributes).forEach((attr) => {
+              if (!options.exceptions.includes(attr.name)) {
+                element.removeAttribute(attr.name);
+              }
+            });
+
+            Array.from(element.children).forEach((child) => {
+              cleanAttributesRecursively(child, options);
+            });
+          }
+
+          cleanAttributesRecursively(node, {
+            exceptions: allowedAttr,
+          });
+
+          // trim and remove white spaces
+          return node.outerHTML.trim().replace(/\s+/g, " ");
+        } else {
+          return "";
+        }
       },
-      [x, y],
+      {
+        x,
+        y,
+        allowedAttr: [
+          "type",
+          "name",
+          "placeholder",
+          "aria-label",
+          "role",
+          "href",
+          "title",
+          "alt",
+          "d", // for <path> tags
+        ],
+      }
     );
   }
 }

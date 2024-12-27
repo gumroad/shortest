@@ -44,7 +44,7 @@ export class TestRunner {
     forceHeadless = false,
     targetUrl?: string,
     debugAI = false,
-    noCache = false,
+    noCache = false
   ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
@@ -111,7 +111,7 @@ export class TestRunner {
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found in directories: ${testDirs.join(", ")}`,
+        `No test files found in directories: ${testDirs.join(", ")}`
       );
       process.exit(1);
     }
@@ -120,7 +120,7 @@ export class TestRunner {
   }
 
   private async createTestContext(
-    context: BrowserContext,
+    context: BrowserContext
   ): Promise<TestContext> {
     if (!this.testContext) {
       // Create a properly typed playwright object
@@ -158,7 +158,7 @@ export class TestRunner {
   private async executeTest(
     test: TestFunction,
     context: BrowserContext,
-    config: { noCache: boolean } = { noCache: false },
+    config: { noCache: boolean } = { noCache: false }
   ) {
     // If it's direct execution, skip AI
     if (test.directExecution) {
@@ -197,7 +197,7 @@ export class TestRunner {
         maxMessages: 10,
         debug: this.debugAI,
       },
-      this.debugAI,
+      this.debugAI
     );
 
     // First get page state
@@ -219,7 +219,7 @@ export class TestRunner {
               (exp, i) =>
                 `${i + 1}. ${exp.description}${
                   exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"
-                }`,
+                }`
             ),
           ]
         : []),
@@ -269,7 +269,7 @@ export class TestRunner {
       prompt,
       browserTool,
       this.cache,
-      test,
+      test
     );
 
     if (!result) {
@@ -281,8 +281,8 @@ export class TestRunner {
       (block) =>
         block.type === "text" &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
-          '"result":',
-        ),
+          '"result":'
+        )
     );
 
     if (!finalMessage || finalMessage.type !== "text") {
@@ -351,7 +351,7 @@ export class TestRunner {
           this.logger.reportTest(
             test.name,
             result.result === "pass" ? "passed" : "failed",
-            result.result === "fail" ? new Error(result.reason) : undefined,
+            result.result === "fail" ? new Error(result.reason) : undefined
           );
 
           // Execute afterEach hooks with shared context
@@ -387,7 +387,7 @@ export class TestRunner {
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found matching: ${pattern}`,
+        `No test files found matching: ${pattern}`
       );
       process.exit(1);
     }
@@ -424,18 +424,19 @@ export class TestRunner {
 
   private async runCachedTest(
     test: TestFunction,
-    browserTool: BrowserTool,
+    browserTool: BrowserTool
   ): Promise<TestResult> {
     const cachedTest = await this.cache.get(test);
 
     const steps = cachedTest?.data.steps
       // do not take screenshots in cached mode
       ?.filter(
-        (step) => step.action?.input.action !== BrowserActionEnum.Screenshot,
+        (step) => step.action?.input.action !== BrowserActionEnum.Screenshot
       );
 
-    if (!steps)
+    if (!steps) {
       throw new Error("No steps to executem running test in a normal mode");
+    }
     for (const step of steps) {
       if (
         step.action?.input.action === BrowserActionEnum.MouseMove &&
@@ -444,11 +445,12 @@ export class TestRunner {
       ) {
         // @ts-expect-error
         const [x, y] = step.action.input.coordinate;
-        const componentStr = await browserTool.getComponentStringByCoords(x, y);
+        const componentStr =
+          await browserTool.getNormalizedComponentStringByCoords(x, y);
 
         if (componentStr !== step.extras.componentStr) {
           throw new Error(
-            "Componnet UI are different, running test in a normal mode",
+            "Componnet UI are different, running test in a normal mode"
           );
         } else {
           // fallback
@@ -460,7 +462,7 @@ export class TestRunner {
         } catch (error) {
           console.error(
             `Failed to execute step with input ${step.action.input}`,
-            error,
+            error
           );
         }
       }

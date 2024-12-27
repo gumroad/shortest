@@ -17,7 +17,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -35,9 +35,9 @@ export class AIClient {
     cache: BaseCache<CacheEntry>,
     test: TestFunction,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -50,7 +50,7 @@ export class AIClient {
           cache,
           test,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -69,9 +69,9 @@ export class AIClient {
     cache: BaseCache<CacheEntry>,
     test: TestFunction,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
@@ -126,19 +126,15 @@ export class AIClient {
 
         let extras = {};
         for (const block of response.content.filter(
-          (b) => b.type === "tool_use",
+          (b) => b.type === "tool_use"
         )) {
           // @ts-expect-error
           if (block.input.coordinate) {
             // @ts-expect-error
             const [x, y] = block.input.coordinate;
 
-            console.log({ x, y });
-
-            const componentStr = await browserTool.getComponentStringByCoords(
-              x,
-              y,
-            );
+            const componentStr =
+              await browserTool.getNormalizedComponentStringByCoords(x, y);
 
             extras = {
               componentStr,
@@ -160,7 +156,7 @@ export class AIClient {
                     ...(cachedSteps ?? []),
                     {
                       reasoning: response.content.map(
-                        (block) => (block as any).text,
+                        (block) => (block as any).text
                       )[0],
                       action: toolBlock as CacheAction,
                       timestamp: Date.now(),
