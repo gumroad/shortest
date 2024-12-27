@@ -58,10 +58,10 @@ export class AIClient {
   async makeRequest(
     prompt: string,
     browserTool: BrowserTool,
-    outputCallback?: (
+    _outputCallback?: (
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void,
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
@@ -127,8 +127,8 @@ export class AIClient {
 
           // Log tool results
           if (this.debugMode) {
-            results.forEach((result, i) => {
-              const { base64_image, ...logResult } = result;
+            results.forEach((result) => {
+              const { ...logResult } = result;
               console.log(pc.blue("\n🔧 Tool Result:"), logResult);
             });
           }

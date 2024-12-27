@@ -1,6 +1,4 @@
 import { stripe } from "../payments/stripe";
-import { db } from "./drizzle";
-import { users } from "./schema";
 
 async function createStripeProducts() {
   console.log("Creating Stripe products and prices...");

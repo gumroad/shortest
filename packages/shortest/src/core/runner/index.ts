@@ -3,14 +3,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
 import { APIRequest, BrowserContext } from "playwright";
 import * as playwright from "playwright";
-import { request, chromium, APIRequestContext } from "playwright";
+import { request, APIRequestContext } from "playwright";
 import { AIClient } from "../../ai/client";
 import { BrowserTool } from "../../browser/core/browser-tool";
 import { BrowserManager } from "../../browser/manager";
 import { initialize, getConfig } from "../../index";
 import { TestFunction, TestContext, ShortestConfig } from "../../types";
 import { Logger } from "../../utils/logger";
-import { TestBuilder } from "../builder";
 import { TestCompiler } from "../compiler";
 
 interface TestResult {

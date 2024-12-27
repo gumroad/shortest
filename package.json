@@ -17,8 +17,8 @@
     "test": "shortest",
     "prepare": "cd packages/shortest && pnpm build",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
-
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit --incremental"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",
