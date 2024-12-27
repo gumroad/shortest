@@ -1,7 +1,7 @@
 import { shortest } from "@antiwork/shortest";
 import { clerk, clerkSetup } from "@clerk/testing/playwright";
 
-let frontendUrl = process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000";
+let frontendUrl = process.env.SHORTEST_TEST_BASE_URL ?? "http://localhost:3000";
 
 shortest.beforeAll(async ({ page }) => {
   await clerkSetup({
