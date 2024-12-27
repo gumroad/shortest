@@ -1,8 +1,6 @@
 import { mkdirSync, existsSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import { build, BuildOptions } from "esbuild";
 
 export class TestCompiler {

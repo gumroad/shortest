@@ -397,13 +397,6 @@ export async function getWorkflowLogs(
   const octokit = await getOctokit();
 
   try {
-    // Get workflow run information
-    const { data: workflowRun } = await octokit.actions.getWorkflowRun({
-      owner,
-      repo,
-      run_id: parseInt(runId),
-    });
-
     // Download logs
     const response = await octokit.actions.downloadWorkflowRunLogs({
       owner,
