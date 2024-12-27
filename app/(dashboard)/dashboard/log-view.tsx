@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useRef, useState } from 'react'
-import { Loader2, ChevronRight, ChevronDown } from 'lucide-react'
-import { LogGroup } from './types'
+import { Loader2, ChevronRight, ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
+import { LogGroup } from "./types";
 
 interface LogViewProps {
   parsedLogs: LogGroup[] | undefined;
@@ -11,13 +11,15 @@ interface LogViewProps {
 }
 
 export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
-  const logContainerRef = useRef<HTMLDivElement>(null)
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
+  const logContainerRef = useRef<HTMLDivElement>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev => ({
+    setExpandedGroups((prev) => ({
       ...prev,
-      [groupId]: !prev[groupId]
+      [groupId]: !prev[groupId],
     }));
   };
 
@@ -27,15 +29,17 @@ export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
         <Loader2 className="w-6 h-6 animate-spin mr-2" />
         <span>Loading logs...</span>
       </div>
-    )
+    );
   }
 
   if (error) {
-    return <div className="text-red-500">Error loading logs: {error.message}</div>
+    return (
+      <div className="text-red-500">Error loading logs: {error.message}</div>
+    );
   }
 
   if (parsedLogs?.length === 0) {
-    return <div>No logs available</div>
+    return <div>No logs available</div>;
   }
 
   return (
@@ -43,7 +47,10 @@ export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
       <div className="flex items-center justify-between p-2 bg-gray-800">
         <h3 className="text-sm font-semibold">Logs</h3>
       </div>
-      <div ref={logContainerRef} className="h-96 overflow-y-auto p-4 font-mono text-sm">
+      <div
+        ref={logContainerRef}
+        className="h-96 overflow-y-auto p-4 font-mono text-sm"
+      >
         {parsedLogs?.map((group) => (
           <div key={group.id} className="mb-4">
             <button
@@ -59,12 +66,12 @@ export function LogView({ parsedLogs, error, isLoading }: LogViewProps) {
             </button>
             {expandedGroups[group.id] && (
               <pre className="whitespace-pre-wrap mt-2 pl-6 border-l-2 border-gray-700">
-                {group.logs.join('\n')}
+                {group.logs.join("\n")}
               </pre>
             )}
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,5 @@
-import type { Expect } from 'expect';
-import type { TestFunction, TestHookFunction } from './test';
+import type { Expect } from "expect";
+import type { TestFunction, TestHookFunction } from "./test";
 
 export interface ShortestGlobals {
   expect: Expect;
@@ -10,4 +10,4 @@ export interface ShortestGlobals {
     beforeEachFns: TestHookFunction[];
     afterEachFns: TestHookFunction[];
   };
-} 
+}

@@ -1,7 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Code } from "bright";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -14,8 +15,8 @@ export default function HomePage() {
               <span className="block text-orange-500">AI tests</span>
             </h1>
             <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl max-w-2xl mx-auto">
-              Write tests in plain English and let AI handle the execution. Built on Playwright
-              with seamless GitHub integration.
+              Write tests in plain English and let AI handle the execution.
+              Built on Playwright with seamless GitHub integration.
             </p>
           </div>
         </div>
@@ -24,14 +25,16 @@ export default function HomePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-4">Write tests in plain English</h3>
-            <pre className="bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto">
-              <code>{`import { shortest } from '@antiwork/shortest'
+            <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+              Write tests in plain English
+            </h3>
+            <pre className="overflow-x-auto">
+              <Code lang="js">{`import { shortest } from '@antiwork/shortest'
 
 shortest('Login to the app using email and password', {
   username: process.env.GITHUB_USERNAME,
   password: process.env.GITHUB_PASSWORD
-})`}</code>
+})`}</Code>
             </pre>
           </div>
         </div>
@@ -45,8 +48,9 @@ shortest('Login to the app using email and password', {
                 Ready to get started?
               </h2>
               <p className="mt-3 max-w-3xl text-lg text-gray-500">
-                Start writing natural language tests today and let AI handle the implementation.
-                Focus on describing your test scenarios while Shortest takes care of the rest.
+                Start writing natural language tests today and let AI handle the
+                implementation. Focus on describing your test scenarios while
+                Shortest takes care of the rest.
               </p>
             </div>
             <div className="mt-8 lg:mt-0 flex justify-center lg:justify-end">

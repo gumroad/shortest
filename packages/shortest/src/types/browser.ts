@@ -1,7 +1,10 @@
 import { TestContext, Page } from "./test";
 
 export interface BrowserToolInterface {
-  waitForSelector(selector: string, options?: { timeout: number }): Promise<void>;
+  waitForSelector(
+    selector: string,
+    options?: { timeout: number },
+  ): Promise<void>;
   fill(selector: string, value: string): Promise<void>;
   press(selector: string, key: string): Promise<void>;
   findElement(selector: string): Promise<any>;
@@ -10,7 +13,7 @@ export interface BrowserToolInterface {
   getPage(): Page;
 }
 
-export type BrowserAction = 
+export type BrowserAction =
   | "mouse_move"
   | "left_click"
   | "left_click_drag"
@@ -24,7 +27,9 @@ export type BrowserAction =
   | "type"
   | "key"
   | "run_callback"
-  | "navigate";
+  | "navigate"
+  | "sleep"
+  | "check_email";
 
 export interface BrowserToolOptions {
   width: number;
@@ -40,6 +45,8 @@ export interface ActionInput {
   username?: string;
   password?: string;
   url?: string;
+  duration?: number;
+  email?: string;
 }
 
 export interface ToolResult {
@@ -50,7 +57,7 @@ export interface ToolResult {
     window_info?: {
       url: string;
       title: string;
-      size: { width: number; height: number }
+      size: { width: number; height: number };
     };
     cursor_info?: {
       position: [number, number];
@@ -60,7 +67,7 @@ export interface ToolResult {
 }
 
 export interface BrowserConfig {
-  name: 'chrome' | 'firefox' | 'safari' | 'edge';
+  name: "chrome" | "firefox" | "safari" | "edge";
   headless?: boolean;
   width?: number;
   height?: number;
@@ -73,7 +80,7 @@ export interface BrowserToolConfig {
   testContext?: TestContext;
 }
 
-export type BetaToolType = 
+export type BetaToolType =
   | "computer_20241022"
   | "text_editor_20241022"
   | "bash_20241022";
