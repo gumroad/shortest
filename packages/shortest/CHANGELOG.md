@@ -7,11 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2] - 2024-12-26
 
-### Added  
-- Added support for Mailosaur email validation
-- Added email rendering feature in the browser
-- Added sleep_milliseconds tool to add delays in the test execution
-- Added more robust error handling for Mailosaur email validation
+## Added
+- Mailosaur integration with error handling for email validation 
+- Browser-based email preview functionality
+- Test execution delay utility (sleep_milliseconds)
 
 ## [0.1.1] - 2024-12-24
 
