@@ -1,6 +1,3 @@
-import { AIConfig } from "./ai";
-import { BrowserConfig } from "./browser";
-
 export interface ShortestConfig {
   headless: boolean;
   baseUrl: string;

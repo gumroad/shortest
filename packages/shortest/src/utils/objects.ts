@@ -1,5 +1,5 @@
 export function isObject(item: Record<string, any>) {
-  return item && typeof item === 'object' && !Array.isArray(item);
+  return item && typeof item === "object" && !Array.isArray(item);
 }
 
 export function mergeDeep(

@@ -1,7 +1,7 @@
-import { BrowserAction, ActionInput } from './browser';
+import { BrowserAction, ActionInput } from "./browser";
 
 export interface CacheAction {
-  type: 'tool_use' | 'text';
+  type: "tool_use" | "text";
   name: BrowserAction;
   input: ActionInput;
 }

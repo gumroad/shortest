@@ -1,9 +1,9 @@
-import { TestContext, Page } from './test';
+import { TestContext, Page } from "./test";
 
 export interface BrowserToolInterface {
   waitForSelector(
     selector: string,
-    options?: { timeout: number }
+    options?: { timeout: number },
   ): Promise<void>;
   fill(selector: string, value: string): Promise<void>;
   press(selector: string, key: string): Promise<void>;
@@ -14,20 +14,20 @@ export interface BrowserToolInterface {
 }
 
 export enum BrowserActionEnum {
-  MouseMove = 'mouse_move',
-  LeftClick = 'left_click',
-  LeftClickDrag = 'left_click_drag',
-  RightClick = 'right_click',
-  MiddleClick = 'middle_click',
-  DoubleClick = 'double_click',
-  Screenshot = 'screenshot',
-  CursorPosition = 'cursor_position',
-  GithubLogin = 'github_login',
-  ClearSession = 'clear_session',
-  Type = 'type',
-  Key = 'key',
-  RunCallback = 'run_callback',
-  Navigate = 'navigate',
+  MouseMove = "mouse_move",
+  LeftClick = "left_click",
+  LeftClickDrag = "left_click_drag",
+  RightClick = "right_click",
+  MiddleClick = "middle_click",
+  DoubleClick = "double_click",
+  Screenshot = "screenshot",
+  CursorPosition = "cursor_position",
+  GithubLogin = "github_login",
+  ClearSession = "clear_session",
+  Type = "type",
+  Key = "key",
+  RunCallback = "run_callback",
+  Navigate = "navigate",
 }
 
 export type BrowserAction = `${BrowserActionEnum}`;
@@ -66,7 +66,7 @@ export interface ToolResult {
 }
 
 export interface BrowserConfig {
-  name: 'chrome' | 'firefox' | 'safari' | 'edge';
+  name: "chrome" | "firefox" | "safari" | "edge";
   headless?: boolean;
   width?: number;
   height?: number;
@@ -80,9 +80,9 @@ export interface BrowserToolConfig {
 }
 
 export type BetaToolType =
-  | 'computer_20241022'
-  | 'text_editor_20241022'
-  | 'bash_20241022';
+  | "computer_20241022"
+  | "text_editor_20241022"
+  | "bash_20241022";
 
 export interface BetaToolParams {
   type: BetaToolType;

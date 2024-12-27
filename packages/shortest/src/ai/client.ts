@@ -1,12 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { AIConfig } from '../types/ai';
-import { SYSTEM_PROMPT } from './prompts';
-import { BrowserTool } from '../browser/core/browser-tool';
-import { AITools } from './tools';
-import pc from 'picocolors';
-import { BaseCache } from '../cache/cache';
-import { CacheAction, CacheEntry } from '../types/cache';
-import { TestFunction } from '../types';
+import Anthropic from "@anthropic-ai/sdk";
+import pc from "picocolors";
+import { BrowserTool } from "../browser/core/browser-tool";
+import { BaseCache } from "../cache/cache";
+import { TestFunction } from "../types";
+import { AIConfig } from "../types/ai";
+import { CacheAction, CacheEntry } from "../types/cache";
+import { SYSTEM_PROMPT } from "./prompts";
+import { AITools } from "./tools";
 
 export class AIClient {
   private client: Anthropic;
@@ -17,14 +17,14 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        'Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var'
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
       );
     }
 
     this.client = new Anthropic({
       apiKey: config.apiKey,
     });
-    this.model = 'claude-3-5-sonnet-20241022';
+    this.model = "claude-3-5-sonnet-20241022";
     this.maxMessages = 10;
     this.debugMode = debugMode;
   }
@@ -35,9 +35,9 @@ export class AIClient {
     cache: BaseCache<CacheEntry>,
     test: TestFunction,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam
+      content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void
+    toolOutputCallback?: (name: string, input: any) => void,
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -50,7 +50,7 @@ export class AIClient {
           cache,
           test,
           outputCallback,
-          toolOutputCallback
+          toolOutputCallback,
         );
       } catch (error: any) {
         attempts++;
@@ -69,19 +69,19 @@ export class AIClient {
     cache: BaseCache<CacheEntry>,
     test: TestFunction,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam
+      content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void
+    toolOutputCallback?: (name: string, input: any) => void,
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
 
     // Log the conversation
     if (this.debugMode) {
-      console.log(pc.cyan('\n🤖 Prompt:'), pc.dim(prompt));
+      console.log(pc.cyan("\n🤖 Prompt:"), pc.dim(prompt));
     }
 
     messages.push({
-      role: 'user',
+      role: "user",
       content: prompt,
     });
 
@@ -96,18 +96,18 @@ export class AIClient {
           messages,
           system: SYSTEM_PROMPT,
           tools: [...AITools],
-          betas: ['computer-use-2024-10-22'],
+          betas: ["computer-use-2024-10-22"],
         });
 
         // Log AI response and tool usage
         if (this.debugMode) {
           response.content.forEach((block) => {
-            if (block.type === 'text') {
-              console.log(pc.green('\n🤖 AI:'), pc.dim((block as any).text));
-            } else if (block.type === 'tool_use') {
+            if (block.type === "text") {
+              console.log(pc.green("\n🤖 AI:"), pc.dim((block as any).text));
+            } else if (block.type === "tool_use") {
               const toolBlock =
                 block as Anthropic.Beta.Messages.BetaToolUseBlock;
-              console.log(pc.yellow('\n🔧 Tool Request:'), {
+              console.log(pc.yellow("\n🔧 Tool Request:"), {
                 tool: toolBlock.name,
                 input: toolBlock.input,
               });
@@ -117,7 +117,7 @@ export class AIClient {
 
         // Add assistant's response to history
         messages.push({
-          role: 'assistant',
+          role: "assistant",
           content: response.content,
         });
 
@@ -126,7 +126,7 @@ export class AIClient {
 
         let extras = {};
         for (const block of response.content.filter(
-          (b) => b.type === 'tool_use'
+          (b) => b.type === "tool_use",
         )) {
           // @ts-expect-error
           if (block.input.coordinate) {
@@ -137,7 +137,7 @@ export class AIClient {
 
             const componentStr = await browserTool.getComponentStringByCoords(
               x,
-              y
+              y,
             );
 
             extras = {
@@ -147,9 +147,9 @@ export class AIClient {
         }
 
         // Check for tool use
-        if (response.stop_reason === 'tool_use') {
+        if (response.stop_reason === "tool_use") {
           const toolResults = response.content
-            .filter((block) => block.type === 'tool_use')
+            .filter((block) => block.type === "tool_use")
             .map((block) => {
               const toolBlock =
                 block as Anthropic.Beta.Messages.BetaToolUseBlock;
@@ -160,7 +160,7 @@ export class AIClient {
                     ...(cachedSteps ?? []),
                     {
                       reasoning: response.content.map(
-                        (block) => (block as any).text
+                        (block) => (block as any).text,
                       )[0],
                       action: toolBlock as CacheAction,
                       timestamp: Date.now(),
@@ -185,31 +185,31 @@ export class AIClient {
           if (this.debugMode) {
             results.forEach((result, i) => {
               const { base64_image, ...logResult } = result;
-              console.log(pc.blue('\n🔧 Tool Result:'), logResult);
+              console.log(pc.blue("\n🔧 Tool Result:"), logResult);
             });
           }
 
           // Add tool results to message history
           messages.push({
-            role: 'user',
+            role: "user",
             content: results.map((result, index) => ({
-              type: 'tool_result' as const,
+              type: "tool_result" as const,
               tool_use_id: toolResults[index].toolBlock.id,
               content: result.base64_image
                 ? [
                     {
-                      type: 'image' as const,
+                      type: "image" as const,
                       source: {
-                        type: 'base64' as const,
-                        media_type: 'image/jpeg' as const,
+                        type: "base64" as const,
+                        media_type: "image/jpeg" as const,
                         data: result.base64_image,
                       },
                     },
                   ]
                 : [
                     {
-                      type: 'text' as const,
-                      text: result.output || '',
+                      type: "text" as const,
+                      text: result.output || "",
                     },
                   ],
             })),
@@ -221,8 +221,8 @@ export class AIClient {
           };
         }
       } catch (error: any) {
-        if (error.message?.includes('rate_limit')) {
-          console.log('⏳ Rate limited, waiting 60s...');
+        if (error.message?.includes("rate_limit")) {
+          console.log("⏳ Rate limited, waiting 60s...");
           await new Promise((resolve) => setTimeout(resolve, 60000));
           continue;
         }

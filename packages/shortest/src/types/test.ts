@@ -1,5 +1,5 @@
-import type { Page, Browser, APIRequest, APIRequestContext } from 'playwright';
-import type * as playwright from 'playwright';
+import type { Page, Browser, APIRequest, APIRequestContext } from "playwright";
+import type * as playwright from "playwright";
 
 export interface AssertionError extends Error {
   matcherResult?: {
@@ -13,14 +13,18 @@ export interface AssertionError extends Error {
 export class CallbackError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'CallbackError';
+    this.name = "CallbackError";
   }
 }
 
 export class AssertionCallbackError extends CallbackError {
-  constructor(message: string, public actual?: any, public expected?: any) {
+  constructor(
+    message: string,
+    public actual?: any,
+    public expected?: any,
+  ) {
     super(message);
-    this.name = 'AssertionCallbackError';
+    this.name = "AssertionCallbackError";
   }
 }
 
@@ -59,12 +63,12 @@ export type TestChain = {
   expect(description: string): TestChain;
   expect(
     description: string,
-    fn?: (context: TestContext) => Promise<void>
+    fn?: (context: TestContext) => Promise<void>,
   ): TestChain;
   expect(
     description: string,
     payload?: any,
-    fn?: (context: TestContext) => Promise<void>
+    fn?: (context: TestContext) => Promise<void>,
   ): TestChain;
   after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
@@ -76,7 +80,7 @@ export type TestAPI = {
   (
     name: string,
     payload?: any,
-    fn?: (context: TestContext) => Promise<void>
+    fn?: (context: TestContext) => Promise<void>,
   ): TestChain;
 
   beforeAll(fn: (context: TestContext) => Promise<void>): void;
@@ -102,4 +106,4 @@ export type TestRegistry = {
   directTestCounter: number;
 };
 
-export type { Page } from 'playwright';
+export type { Page } from "playwright";

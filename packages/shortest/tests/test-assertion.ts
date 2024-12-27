@@ -33,7 +33,7 @@ async function testAssertions() {
 
       console.log(pc.red("❌ Failed: Async assertion should have thrown"));
       failedTests++;
-    } catch (error) {
+    } catch {
       console.log(pc.green("✅ Passed: Caught async failing assertion"));
       passedTests++;
     }

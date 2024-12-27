@@ -7,30 +7,30 @@ declare global {
   }
 }
 
-import { Page } from 'playwright';
-import { BaseBrowserTool, ToolError } from './index';
-import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
 import {
   writeFileSync,
   mkdirSync,
   readdirSync,
   statSync,
   unlinkSync,
-} from 'fs';
-import { join } from 'path';
-import { GitHubTool } from '../integrations/github';
-import { BrowserManager } from '../manager';
-import { TestContext, BrowserToolConfig, TestFunction } from '../../types';
-import * as actions from '../actions';
-import pc from 'picocolors';
-import { CallbackError } from '../../types/test';
-import { AssertionCallbackError } from '../../types/test';
+} from "fs";
+import { join } from "path";
+import pc from "picocolors";
+import { Page } from "playwright";
+import { TestContext, BrowserToolConfig, TestFunction } from "../../types";
+import { ActionInput, ToolResult, BetaToolType } from "../../types/browser";
+import { CallbackError } from "../../types/test";
+import { AssertionCallbackError } from "../../types/test";
+import * as actions from "../actions";
+import { GitHubTool } from "../integrations/github";
+import { BrowserManager } from "../manager";
+import { BaseBrowserTool, ToolError } from "./index";
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
   private browserManager: BrowserManager;
-  protected readonly toolType: BetaToolType = 'computer_20241022';
-  protected readonly toolName: string = 'computer';
+  protected readonly toolType: BetaToolType = "computer_20241022";
+  protected readonly toolName: string = "computer";
   private screenshotDir: string;
   private cursorVisible: boolean = true;
   private lastMousePosition: [number, number] = [0, 0];
@@ -82,21 +82,13 @@ export class BrowserTool extends BaseBrowserTool {
     try {
       // Simpler check for page readiness
       await this.page
-<<<<<<< HEAD
-        .waitForLoadState('domcontentloaded', { timeout: 1000 })
-=======
         .waitForLoadState("domcontentloaded", { timeout: 1000 })
->>>>>>> main
         .catch(() => {});
 
       // Add styles only if they don't exist
       const hasStyles = await this.page
         .evaluate(() => {
-<<<<<<< HEAD
-          return !!document.querySelector('style[data-shortest-cursor]');
-=======
           return !!document.querySelector("style[data-shortest-cursor]");
->>>>>>> main
         })
         .catch(() => false);
 
@@ -180,17 +172,10 @@ export class BrowserTool extends BaseBrowserTool {
     } catch (error) {
       if (
         error instanceof Error &&
-<<<<<<< HEAD
-        !error.message.includes('context was destroyed') &&
-        !error.message.includes('Target closed')
-      ) {
-        console.warn('Cursor initialization failed:', error);
-=======
         !error.message.includes("context was destroyed") &&
         !error.message.includes("Target closed")
       ) {
         console.warn("Cursor initialization failed:", error);
->>>>>>> main
       }
     }
   }
@@ -226,19 +211,11 @@ export class BrowserTool extends BaseBrowserTool {
           // If navigation started, get updated metadata
           if (
             await this.page
-<<<<<<< HEAD
-              .evaluate(() => document.readyState !== 'complete')
-              .catch(() => true)
-          ) {
-            try {
-              await this.page.waitForLoadState('domcontentloaded', {
-=======
               .evaluate(() => document.readyState !== "complete")
               .catch(() => true)
           ) {
             try {
               await this.page.waitForLoadState("domcontentloaded", {
->>>>>>> main
                 timeout: 5000,
               });
               metadata = await this.getMetadata();
@@ -266,11 +243,7 @@ export class BrowserTool extends BaseBrowserTool {
           await actions.dragMouse(
             this.page,
             input.coordinates[0],
-<<<<<<< HEAD
-            input.coordinates[1]
-=======
             input.coordinates[1],
->>>>>>> main
           );
           output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
           break;
@@ -331,11 +304,7 @@ export class BrowserTool extends BaseBrowserTool {
           });
 
           output = loginResult.success
-<<<<<<< HEAD
-            ? 'GitHub login was successfully completed'
-=======
             ? "GitHub login was successfully completed"
->>>>>>> main
             : `GitHub login failed: ${loginResult.error}`;
           break;
         }
@@ -349,22 +318,14 @@ export class BrowserTool extends BaseBrowserTool {
           });
 
           return {
-<<<<<<< HEAD
-            output: 'Successfully cleared browser data and created new context',
-=======
             output: "Successfully cleared browser data and created new context",
->>>>>>> main
             metadata: {},
           };
 
         case "run_callback": {
           if (!this.testContext?.currentTest) {
             throw new ToolError(
-<<<<<<< HEAD
-              'No test context available for callback execution'
-=======
               "No test context available for callback execution",
->>>>>>> main
             );
           }
 
@@ -406,20 +367,12 @@ export class BrowserTool extends BaseBrowserTool {
               );
             }
             throw new CallbackError(
-<<<<<<< HEAD
-              error instanceof Error ? error.message : String(error)
-=======
               error instanceof Error ? error.message : String(error),
->>>>>>> main
             );
           }
         }
 
-<<<<<<< HEAD
-        case 'navigate': {
-=======
         case "navigate": {
->>>>>>> main
           if (!input.url) {
             throw new ToolError("URL required for navigation");
           }
@@ -432,17 +385,6 @@ export class BrowserTool extends BaseBrowserTool {
 
             await newPage.goto(input.url, {
               timeout: navigationTimeout,
-<<<<<<< HEAD
-              waitUntil: 'domcontentloaded',
-            });
-
-            await newPage
-              .waitForLoadState('load', {
-                timeout: 5000,
-              })
-              .catch((e) => {
-                console.log('⚠️ Load timeout, continuing anyway');
-=======
               waitUntil: "domcontentloaded",
             });
 
@@ -452,7 +394,6 @@ export class BrowserTool extends BaseBrowserTool {
               })
               .catch((e) => {
                 console.log("⚠️ Load timeout, continuing anyway");
->>>>>>> main
               });
 
             // Switch focus
@@ -495,22 +436,14 @@ export class BrowserTool extends BaseBrowserTool {
         metadata,
       };
     } catch (error) {
-<<<<<<< HEAD
-      console.error(pc.red('\n❌ Browser Action Failed:'), error);
-=======
       console.error(pc.red("\n❌ Browser Action Failed:"), error);
->>>>>>> main
 
       if (error instanceof AssertionCallbackError) {
         return {
           output: `Assertion failed: ${error.message}${
             error.actual !== undefined
               ? `\nExpected: ${error.expected}\nReceived: ${error.actual}`
-<<<<<<< HEAD
-              : ''
-=======
               : ""
->>>>>>> main
           }`,
         };
       }
@@ -577,15 +510,9 @@ export class BrowserTool extends BaseBrowserTool {
       return await this.page
         .evaluate(() => {
           return (
-<<<<<<< HEAD
-            document.readyState === 'complete' &&
-            !document.querySelector('.loading') &&
-            !document.querySelector('.cl-loading')
-=======
             document.readyState === "complete" &&
             !document.querySelector(".loading") &&
             !document.querySelector(".cl-loading")
->>>>>>> main
           );
         })
         .catch(() => false);
@@ -601,11 +528,7 @@ export class BrowserTool extends BaseBrowserTool {
     const buffer = await this.page.screenshot({
       type: "jpeg",
       quality: 50,
-<<<<<<< HEAD
-      scale: 'device',
-=======
       scale: "device",
->>>>>>> main
       fullPage: false,
     });
 
@@ -613,13 +536,8 @@ export class BrowserTool extends BaseBrowserTool {
     console.log(`Screenshot saved to: ${filePath}`);
 
     return {
-<<<<<<< HEAD
-      output: 'Screenshot taken',
-      base64_image: buffer.toString('base64'),
-=======
       output: "Screenshot taken",
       base64_image: buffer.toString("base64"),
->>>>>>> main
       metadata: await this.getMetadata(),
     };
   }
@@ -637,11 +555,7 @@ export class BrowserTool extends BaseBrowserTool {
   // Selector-based methods
   public async waitForSelector(
     selector: string,
-<<<<<<< HEAD
-    options?: { timeout: number }
-=======
     options?: { timeout: number },
->>>>>>> main
   ): Promise<void> {
     await this.page.waitForSelector(selector, options);
   }
@@ -673,11 +587,7 @@ export class BrowserTool extends BaseBrowserTool {
   private cleanupScreenshots(): void {
     try {
       const files = readdirSync(this.screenshotDir)
-<<<<<<< HEAD
-        .filter((file) => file.endsWith('.png') || file.endsWith('.jpg'))
-=======
         .filter((file) => file.endsWith(".png") || file.endsWith(".jpg"))
->>>>>>> main
         .map((file) => ({
           name: file,
           path: join(this.screenshotDir, file),
@@ -729,9 +639,9 @@ export class BrowserTool extends BaseBrowserTool {
     return await this.getPage().evaluate(
       ([x, y]) => {
         const elem = document.elementFromPoint(x, y);
-        return elem?.outerHTML.trim().replace(/\s+/g, ' ');
+        return elem?.outerHTML.trim().replace(/\s+/g, " ");
       },
-      [x, y]
+      [x, y],
     );
   }
 }
