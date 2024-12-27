@@ -189,7 +189,7 @@ This guide will help you set up the Shortest web app for local development.
 Pull Vercel env vars:
 
 ```bash
-npm i -g vercel
+pnpm i -g vercel
 vercel link
 vercel env pull
 ```
