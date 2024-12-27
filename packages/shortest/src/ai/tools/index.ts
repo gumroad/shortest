@@ -39,7 +39,8 @@ export const AITools = [
         action: {
           type: "string",
           enum: ["check_email"],
-          description: "Check that the email was received with specified content in a new tab",
+          description:
+            "Check that the email was received with specified content in a new tab",
         },
       },
       required: ["action", "email"],
