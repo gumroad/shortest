@@ -110,11 +110,32 @@ export function getConfig(): ShortestConfig {
 }
 
 function createTestChain(
-  nameOrFn: string | ((context: TestContext) => Promise<void>),
+  nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
   payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
   fn?: (context: TestContext) => Promise<void>
 ): TestChain {
   const registry = global.__shortest__.registry;
+
+  // Handle array of test names
+  if (Array.isArray(nameOrFn)) {
+    const tests = nameOrFn.map((name) => {
+      const test: TestFunction = {
+        name,
+        expectations: []
+      };
+      
+      registry.tests.set(name, [...(registry.tests.get(name) || []), test]);
+      registry.currentFileTests.push(test);
+      return test;
+    });
+
+    // Return chain for the last test
+    const lastTest = tests[tests.length - 1];
+    if (!lastTest.name) {
+      throw new Error('Test name is required');
+    }
+    return createTestChain(lastTest.name, payloadOrFn, fn);
+  }
 
   // Handle direct execution
   if (typeof nameOrFn === 'function') {
@@ -181,7 +202,7 @@ function createTestChain(
 }
 
 export const test: TestAPI = Object.assign(
-  (nameOrFn: string | ((context: TestContext) => Promise<void>), payloadOrFn?: ((context: TestContext) => Promise<void>) | any, fn?: (context: TestContext) => Promise<void>) => 
+  (nameOrFn: string | string[] | ((context: TestContext) => Promise<void>), payloadOrFn?: ((context: TestContext) => Promise<void>) | any, fn?: (context: TestContext) => Promise<void>) => 
     createTestChain(nameOrFn, payloadOrFn, fn),
   {
     beforeAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {

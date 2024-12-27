@@ -63,6 +63,7 @@ export type TestChain = {
 export type TestAPI = {
   (fn: (context: TestContext) => Promise<void>): TestChain;
   (name: string): TestChain;
+  (names: string[]): TestChain;
   (name: string, fn?: (context: TestContext) => Promise<void>): TestChain;
   (name: string, payload?: any, fn?: (context: TestContext) => Promise<void>): TestChain;
   
