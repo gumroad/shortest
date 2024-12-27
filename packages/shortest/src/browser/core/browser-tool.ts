@@ -17,12 +17,19 @@ import {
 import { join } from "path";
 import pc from "picocolors";
 import { Page } from "playwright";
-import { TestContext, BrowserToolConfig, TestFunction } from "../../types";
+import { initialize, getConfig } from "../../index";
+import {
+  TestContext,
+  BrowserToolConfig,
+  TestFunction,
+  ShortestConfig,
+} from "../../types";
 import { ActionInput, ToolResult, BetaToolType } from "../../types/browser";
 import { CallbackError } from "../../types/test";
 import { AssertionCallbackError } from "../../types/test";
 import * as actions from "../actions";
 import { GitHubTool } from "../integrations/github";
+import { MailosaurTool } from "../integrations/mailosaur";
 import { BrowserManager } from "../manager";
 import { BaseBrowserTool, ToolError } from "./index";
 
@@ -39,6 +46,8 @@ export class BrowserTool extends BaseBrowserTool {
   private testContext?: TestContext;
   private readonly MAX_SCREENSHOTS = 10;
   private readonly MAX_AGE_HOURS = 5;
+  private mailosaurTool?: MailosaurTool;
+  private config!: ShortestConfig;
 
   constructor(
     page: Page,
@@ -58,7 +67,9 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async initialize(): Promise<void> {
-    // Initial setup with retry
+    await initialize();
+    this.config = getConfig();
+
     const initWithRetry = async () => {
       for (let i = 0; i < 3; i++) {
         try {
@@ -419,6 +430,110 @@ export class BrowserTool extends BaseBrowserTool {
           } catch (error) {
             await newPage.close();
             throw new ToolError(`Navigation failed: ${error}`);
+          }
+        }
+
+        case "sleep": {
+          const defaultDuration = 1000;
+          const maxDuration = 60000;
+          let duration = input.duration ?? defaultDuration;
+
+          // Enforce maximum duration
+          if (duration > maxDuration) {
+            console.warn(
+              `Requested sleep duration ${duration}ms exceeds maximum of ${maxDuration}ms. Using maximum.`,
+            );
+            duration = maxDuration;
+          }
+
+          // Convert to seconds for logging
+          const seconds = Math.round(duration / 1000);
+          console.log(
+            `⏳ Waiting for ${seconds} second${seconds !== 1 ? "s" : ""}...`,
+          );
+
+          await this.page.waitForTimeout(duration);
+          output = `Finished waiting for ${seconds} second${seconds !== 1 ? "s" : ""}`;
+          break;
+        }
+
+        case "check_email": {
+          if (!this.mailosaurTool) {
+            if (!this.config.mailosaur) {
+              throw new ToolError("Mailosaur configuration required");
+            }
+            this.mailosaurTool = new MailosaurTool({
+              apiKey: this.config.mailosaur.apiKey,
+              serverId: this.config.mailosaur.serverId,
+              emailAddress: input.email,
+            });
+          }
+
+          const newPage = await this.page.context().newPage();
+
+          try {
+            const email = await this.mailosaurTool.getLatestEmail();
+
+            // Render email in new tab
+            await newPage.setContent(email.html, {
+              waitUntil: "domcontentloaded",
+            });
+
+            await newPage
+              .waitForLoadState("load", {
+                timeout: 5000,
+              })
+              .catch((error) => {
+                console.log("⚠️ Load timeout, continuing anyway", error);
+              });
+
+            // Switch focus
+            this.page = newPage;
+
+            output = `Email received successfully. Navigated to new tab to display email: ${email.subject}`;
+            metadata = {
+              window_info: {
+                title: email.subject,
+                content: email.html,
+                size: this.page.viewportSize() || {
+                  width: this.width,
+                  height: this.height,
+                },
+              },
+            };
+
+            break;
+          } catch (error: unknown) {
+            await newPage.close();
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+
+            if (errorMessage.includes("Email content missing")) {
+              return {
+                output: `Email was found but content is missing. This might be due to malformed email. Moving to next test.`,
+                error: "EMAIL_CONTENT_MISSING",
+              };
+            }
+
+            if (errorMessage.includes("Mailosaur email address is required")) {
+              return {
+                output: `Email address is required but was not provided.`,
+                error: "EMAIL_ADDRESS_MISSING",
+              };
+            }
+
+            if (errorMessage.includes("No matching messages found")) {
+              return {
+                output: `No email found for ${input.email}. The email might not have been sent yet or is older than 1 hour. Moving to next test.`,
+                error: "EMAIL_NOT_FOUND",
+              };
+            }
+
+            // Generic error case
+            return {
+              output: `Failed to fetch or render email: ${errorMessage}. Moving to next test.`,
+              error: "EMAIL_OPERATION_FAILED",
+            };
           }
         }
 

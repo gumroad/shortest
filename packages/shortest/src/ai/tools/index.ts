@@ -31,6 +31,44 @@ export const AITools = [
     },
   },
   {
+    name: "check_email",
+    description: "View received email in new browser tab",
+    input_schema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: ["check_email"],
+          description:
+            "Check that the email was received with specified content in a new tab",
+        },
+      },
+      required: ["action", "email"],
+    },
+  },
+  {
+    name: "sleep",
+    description: "Pause test execution for specified duration",
+    input_schema: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: ["sleep"],
+          description: "The action to perform",
+        },
+        duration: {
+          type: "number",
+          description:
+            "Duration to sleep in milliseconds (e.g. 5000 for 5 seconds)",
+          minimum: 0,
+          maximum: 60000,
+        },
+      },
+      required: ["action", "duration"],
+    },
+  },
+  {
     name: "run_callback",
     description: "Run callback function for current test step",
     input_schema: {

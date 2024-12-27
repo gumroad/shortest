@@ -1,3 +1,2 @@
-import { GitHubTool } from "./github";
-
-export { GitHubTool };
+export { GitHubTool } from "./github";
+export { MailosaurTool } from "./mailosaur";

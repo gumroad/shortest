@@ -258,6 +258,9 @@ importers:
       glob:
         specifier: ^10.3.10
         version: 10.4.5
+      mailosaur:
+        specifier: ^8.7.0
+        version: 8.7.0
       otplib:
         specifier: ^12.0.1
         version: 12.0.1
@@ -4109,6 +4112,15 @@ packages:
     engines: {node: '>=12.0'}
     dev: false
 
+  /agent-base@6.0.2:
+    resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
+    engines: {node: '>= 6.0.0'}
+    dependencies:
+      debug: 4.4.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /agent-base@7.1.3:
     resolution: {integrity: sha512-jRR5wdylq8CkOe6hei19GGZnxM6rBGwFl3Bg0YItGDimvjGtAvdZk4Pu6Cl4u4Igsws4a1fd1Vq3ezrhn4KmFw==}
     engines: {node: '>= 14'}
@@ -5888,6 +5900,16 @@ packages:
       - supports-color
     dev: true
 
+  /https-proxy-agent@5.0.1:
+    resolution: {integrity: sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA==}
+    engines: {node: '>= 6'}
+    dependencies:
+      agent-base: 6.0.2
+      debug: 4.4.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /https-proxy-agent@7.0.6:
     resolution: {integrity: sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==}
     engines: {node: '>= 14'}
@@ -6409,6 +6431,15 @@ packages:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
+    dev: false
+
+  /mailosaur@8.7.0:
+    resolution: {integrity: sha512-yBrq7MZCUfSwiPi4Un0LX8nwATyHXxCVB5iJoZpvIOK5MsGSOnO44do4+DGuIocQcI8t+lvWbBl8TvmsA6F69Q==}
+    engines: {node: '>= v6.0.0'}
+    dependencies:
+      https-proxy-agent: 5.0.1
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /map-obj@4.3.0:
