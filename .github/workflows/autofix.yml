@@ -16,15 +16,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "pnpm"
 
-      - run: npm install --no-package-lock --legacy-peer-deps
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - run: pnpm install
 
       - name: Lint
-        run: npm run lint -- --fix
+        run: pnpm run lint -- --fix
         shell: bash
 
       - name: Format
-        run: npm run format -- --write
+        run: pnpm run format -- --write
         shell: bash
 
       - name: Typecheck
@@ -32,6 +37,6 @@ jobs:
         run: |
           set -eo pipefail
           export NODE_OPTIONS="--max_old_space_size=4096"
-          npm run typecheck
+          pnpm run typecheck
 
       - uses: autofix-ci/action@ff86a557419858bb967097bfc916833f5647fa8c
