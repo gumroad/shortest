@@ -1,17 +1,21 @@
 import { shortest } from "@antiwork/shortest";
 import { clerk, clerkSetup } from "@clerk/testing/playwright";
 
-let frontendUrl = process.env.SHORTEST_TEST_BASE_URL ?? "http://localhost:3000";
+let frontendUrl = process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000";
 
+shortest.beforeAll(async ({ page }) => {
+  await clerkSetup({
+    frontendApiUrl: frontendUrl,
+  });
+  await clerk.signIn({
+    page,
+    signInParams: {
+      strategy: "email_code",
+      identifier: "shortest+clerk_test@example.com",
+    },
+  });
 
-shortest('Login to the app using email and password', {
-  username: process.env.GITHUB_USERNAME,
-  password: process.env.GITHUB_PASSWORD
-})
+  await page.goto(frontendUrl + "/dashboard");
+});
 
-shortest('Verify that the user can access the /dashboard page');
-
-shortest("Verify that users can generate test cases")
-.expect("It takes up to 20 seconds for the tests to be generated")
-.expect("You should validate that the vitest tests are generated and shown in the UI")
-shortest("Verify that the user can access the /dashboard page");
+shortest("Generate test cases by clicking on 'Write new tests'. Validate test cases appears in UI within 20s");
