@@ -37,9 +37,9 @@ export class BaseCache<T extends CacheEntry> {
     if (fs.existsSync(this.cacheFile)) {
       try {
         return JSON.parse(
-          fs.readFileSync(this.cacheFile, "utf-8"),
+          fs.readFileSync(this.cacheFile, "utf-8")
         ) as CacheStore;
-      } catch (error) {
+      } catch {
         return {};
       }
     } else {
@@ -56,7 +56,7 @@ export class BaseCache<T extends CacheEntry> {
       const hashedKey = hashData(key);
       const cache = this.read();
       return (cache[hashedKey] as T | undefined) ?? null;
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to get");
       return null;
     } finally {
@@ -66,7 +66,7 @@ export class BaseCache<T extends CacheEntry> {
 
   public async set(
     key: Record<string, any>,
-    value: Partial<T["data"]>,
+    value: Partial<T["data"]>
   ): Promise<void> {
     if (!(await this.acquireLock())) {
       console.error("Cache", "Failed to acquire lock for set operation");
@@ -86,7 +86,7 @@ export class BaseCache<T extends CacheEntry> {
       }) as T["data"];
 
       this.write(cache);
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to set");
       this.reset();
     } finally {
@@ -100,7 +100,7 @@ export class BaseCache<T extends CacheEntry> {
   private reset(): void {
     try {
       fs.writeFileSync(this.cacheFile, "{}");
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to reset");
     } finally {
       this.releaseLock();
@@ -110,7 +110,7 @@ export class BaseCache<T extends CacheEntry> {
   private write(cache: CacheStore): void {
     try {
       fs.writeFileSync(this.cacheFile, JSON.stringify(cache, null, 2));
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to write");
     }
   }
@@ -132,7 +132,7 @@ export class BaseCache<T extends CacheEntry> {
       if (cacheModified) {
         this.write(cache);
       }
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to cleanup");
     }
   }
@@ -145,16 +145,14 @@ export class BaseCache<T extends CacheEntry> {
           const lockAge = Date.now() - fs.statSync(this.lockFile).mtimeMs;
           if (lockAge > this.LOCK_TIMEOUT_MS) {
             fs.unlinkSync(this.lockFile);
-            this.logger.reportStatus("Cache Stale lock file removed");
           }
         }
 
         fs.writeFileSync(this.lockFile, process.pid.toString(), { flag: "wx" });
         this.lockAcquireFailures = 0;
         this.lockAcquired = true;
-        this.logger.reportStatus("Cache Lock acquired");
         return true;
-      } catch (e) {
+      } catch {
         this.logger.error("Cache", "Failed to acquire lock");
         await new Promise((resolve) => setTimeout(resolve, 5));
       }
@@ -164,7 +162,7 @@ export class BaseCache<T extends CacheEntry> {
     if (this.lockAcquireFailures >= 3) {
       this.logger.error(
         "Cache",
-        "Failed to acquire lock 3 times in a row. Releasing lock manually.",
+        "Failed to acquire lock 3 times in a row. Releasing lock manually."
       );
       this.releaseLock();
     }
@@ -178,7 +176,7 @@ export class BaseCache<T extends CacheEntry> {
         this.logger.reportStatus("Cache lock released");
       }
       this.lockAcquired = false;
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to release lock");
     }
   }
