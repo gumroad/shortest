@@ -121,9 +121,9 @@ function createTestChain(
     const tests = nameOrFn.map((name) => {
       const test: TestFunction = {
         name,
-        expectations: []
+        expectations: [],
       };
-      
+
       registry.tests.set(name, [...(registry.tests.get(name) || []), test]);
       registry.currentFileTests.push(test);
       return test;
@@ -132,7 +132,7 @@ function createTestChain(
     // Return chain for the last test
     const lastTest = tests[tests.length - 1];
     if (!lastTest.name) {
-      throw new Error('Test name is required');
+      throw new Error("Test name is required");
     }
     return createTestChain(lastTest.name, payloadOrFn, fn);
   }
@@ -202,8 +202,11 @@ function createTestChain(
 }
 
 export const test: TestAPI = Object.assign(
-  (nameOrFn: string | string[] | ((context: TestContext) => Promise<void>), payloadOrFn?: ((context: TestContext) => Promise<void>) | any, fn?: (context: TestContext) => Promise<void>) => 
-    createTestChain(nameOrFn, payloadOrFn, fn),
+  (
+    nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
+    payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
+    fn?: (context: TestContext) => Promise<void>,
+  ) => createTestChain(nameOrFn, payloadOrFn, fn),
   {
     beforeAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
       const hook = typeof nameOrFn === "function" ? nameOrFn : undefined;
