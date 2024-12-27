@@ -11,10 +11,8 @@ Expect: 1. Test case to be generated within at least 20 seconds [HAS_CALLBACK]
 IMPORTANT GLOBAL RULES:
 
 1. **Waiting for Conditions**:
-   - When you are specifically asked to wait for a condition, use the "sleep" tool. Otherwise, we internally handle proper waiting for elements to load.
-   - For time-based waits:
-     - Use { action: "sleep", duration: X } where X is milliseconds
    - Always wait for the tool to finish before proceeding to the next action. You will recieve a message to continue with your next action once the wait is over. Then validate the condition is met.
+   - Always wait for the tool to finish before proceeding to the next action. You will receive a message to continue with your next action once the wait is over. Then validate the condition is met.
 
 2. **Tool Usage**:
    - You may need to use provided tools to perform certain actions (e.g., clicking, navigating, or running callbacks).
