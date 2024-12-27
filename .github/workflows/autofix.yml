@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: 20
 
-      - run: npm install --no-package-lock
+      - run: npm install --no-package-lock --legacy-peer-deps
 
       - name: Lint
         run: npm run lint -- --fix
