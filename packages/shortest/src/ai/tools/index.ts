@@ -39,11 +39,11 @@ export const AITools = [
         action: {
           type: "string",
           enum: ["check_email"],
-          description: "Render the received email in a new tab"
-        }
+          description: "Render the received email in a new tab",
+        },
       },
-      required: ["action", "email"]
-    }
+      required: ["action", "email"],
+    },
   },
   {
     name: "sleep",
@@ -54,17 +54,18 @@ export const AITools = [
         action: {
           type: "string",
           enum: ["sleep"],
-          description: "The action to perform"
+          description: "The action to perform",
         },
         duration: {
           type: "number",
-          description: "Duration to sleep in milliseconds (e.g. 5000 for 5 seconds)",
+          description:
+            "Duration to sleep in milliseconds (e.g. 5000 for 5 seconds)",
           minimum: 0,
-          maximum: 60000
-        }
+          maximum: 60000,
+        },
       },
-      required: ["action", "duration"]
-    }
+      required: ["action", "duration"],
+    },
   },
   {
     name: "run_callback",
