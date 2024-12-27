@@ -5,7 +5,7 @@ import { BrowserTool } from '../browser/core/browser-tool';
 import { AITools } from './tools';
 import pc from 'picocolors';
 import { BaseCache } from '../cache/cache';
-import { CacheAction, CacheEntry, CacheStep } from '../types/cache';
+import { CacheAction, CacheEntry } from '../types/cache';
 import { TestFunction } from '../types';
 
 export class AIClient {
@@ -58,6 +58,7 @@ export class AIClient {
 
         console.log(`Retry attempt ${attempts}/${maxRetries}`);
         await new Promise((r) => setTimeout(r, 5000 * attempts));
+        await new Promise((r) => setTimeout(r, 5000 * attempts));
       }
     }
   }
@@ -86,6 +87,7 @@ export class AIClient {
 
     while (true) {
       try {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const response = await this.client.beta.messages.create({
@@ -173,14 +175,11 @@ export class AIClient {
               return {
                 toolBlock,
 
-                // here it gets executed
                 result: browserTool.execute(toolBlock.input as any),
               };
             });
 
-          const results = await Promise.all(
-            toolResults.map(async (t) => t.result)
-          );
+          const results = await Promise.all(toolResults.map((t) => t.result));
 
           // Log tool results
           if (this.debugMode) {

@@ -1,8 +1,8 @@
-import Stripe from "stripe";
-import { redirect } from "next/navigation";
-import { User } from "@/lib/db/schema";
-import { updateUserSubscription } from "@/lib/db/queries";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import Stripe from "stripe";
+import { updateUserSubscription } from "@/lib/db/queries";
+import { User } from "@/lib/db/schema";
 import { baseUrl } from "@/lib/utils-server";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -109,7 +109,7 @@ export async function createCustomerPortalSession(user: User) {
 }
 
 export async function handleSubscriptionChange(
-  subscription: Stripe.Subscription
+  subscription: Stripe.Subscription,
 ) {
   const customerId = subscription.customer as string;
   const subscriptionId = subscription.id;

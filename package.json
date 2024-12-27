@@ -15,7 +15,10 @@
     "db:cleanup": "tsx lib/db/cleanup.ts",
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "test": "shortest",
-    "prepare": "cd packages/shortest && pnpm build"
+    "prepare": "cd packages/shortest && pnpm build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",
@@ -45,6 +48,7 @@
     "ai": "^3.4.0",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^2.4.3",
+    "bright": "^0.8.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
@@ -81,7 +85,15 @@
     "@testing-library/react": "^16.0.1",
     "@types/adm-zip": "^0.5.5",
     "@types/js-yaml": "^4.0.9",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.3",
+    "eslint-plugin-react-hooks": "^5.1.0",
     "happy-dom": "^15.7.4",
     "js-yaml": "^4.1.0",
     "jsdom": "^25.0.1",

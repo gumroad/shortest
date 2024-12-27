@@ -19,7 +19,7 @@ async function loadConfig(): Promise<void> {
     config = Object.freeze(
       parsedConfig && Object.keys(parsedConfig).length > 0
         ? ConfigSchema.parse(parsedConfig)
-        : {}
+        : {},
     );
   } catch (error) {
     if (
@@ -31,7 +31,7 @@ async function loadConfig(): Promise<void> {
       throw new Error(
         `Failed to load configuration: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }

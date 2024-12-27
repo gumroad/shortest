@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-import { Page, Browser } from 'playwright';
+import { Page } from 'playwright';
 import { BaseBrowserTool, ToolError } from './index';
 import { ActionInput, ToolResult, BetaToolType } from '../../types/browser';
 import {
@@ -43,12 +43,12 @@ export class BrowserTool extends BaseBrowserTool {
   constructor(
     page: Page,
     browserManager: BrowserManager,
-    config: BrowserToolConfig
+    config: BrowserToolConfig,
   ) {
     super(config);
     this.page = page;
     this.browserManager = browserManager;
-    this.screenshotDir = join(process.cwd(), '.shortest', 'screenshots');
+    this.screenshotDir = join(process.cwd(), ".shortest", "screenshots");
     mkdirSync(this.screenshotDir, { recursive: true });
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
@@ -73,7 +73,7 @@ export class BrowserTool extends BaseBrowserTool {
     await initWithRetry();
 
     // Re-initialize on navigation
-    this.page.on('load', async () => {
+    this.page.on("load", async () => {
       await initWithRetry();
     });
   }
@@ -82,21 +82,29 @@ export class BrowserTool extends BaseBrowserTool {
     try {
       // Simpler check for page readiness
       await this.page
+<<<<<<< HEAD
         .waitForLoadState('domcontentloaded', { timeout: 1000 })
+=======
+        .waitForLoadState("domcontentloaded", { timeout: 1000 })
+>>>>>>> main
         .catch(() => {});
 
       // Add styles only if they don't exist
       const hasStyles = await this.page
         .evaluate(() => {
+<<<<<<< HEAD
           return !!document.querySelector('style[data-shortest-cursor]');
+=======
+          return !!document.querySelector("style[data-shortest-cursor]");
+>>>>>>> main
         })
         .catch(() => false);
 
       if (!hasStyles) {
         // Create style element directly in evaluate
         await this.page.evaluate(() => {
-          const style = document.createElement('style');
-          style.setAttribute('data-shortest-cursor', 'true');
+          const style = document.createElement("style");
+          style.setAttribute("data-shortest-cursor", "true");
           style.textContent = `
             #ai-cursor {
               width: 20px;
@@ -132,13 +140,13 @@ export class BrowserTool extends BaseBrowserTool {
 
       // Initialize cursor elements with position persistence
       await this.page.evaluate(() => {
-        if (!document.getElementById('ai-cursor')) {
-          const cursor = document.createElement('div');
-          cursor.id = 'ai-cursor';
+        if (!document.getElementById("ai-cursor")) {
+          const cursor = document.createElement("div");
+          cursor.id = "ai-cursor";
           document.body.appendChild(cursor);
 
-          const trail = document.createElement('div');
-          trail.id = 'ai-cursor-trail';
+          const trail = document.createElement("div");
+          trail.id = "ai-cursor-trail";
           document.body.appendChild(trail);
 
           // Restore or initialize position
@@ -146,10 +154,10 @@ export class BrowserTool extends BaseBrowserTool {
           window.lastPosition = window.lastPosition || { x: 0, y: 0 };
 
           // Set initial position
-          cursor.style.left = window.cursorPosition.x + 'px';
-          cursor.style.top = window.cursorPosition.y + 'px';
-          trail.style.left = window.cursorPosition.x + 'px';
-          trail.style.top = window.cursorPosition.y + 'px';
+          cursor.style.left = window.cursorPosition.x + "px";
+          cursor.style.top = window.cursorPosition.y + "px";
+          trail.style.left = window.cursorPosition.x + "px";
+          trail.style.top = window.cursorPosition.y + "px";
 
           // Update handler
           const updateCursor = (x: number, y: number) => {
@@ -163,7 +171,7 @@ export class BrowserTool extends BaseBrowserTool {
             });
           };
 
-          document.addEventListener('mousemove', (e) => {
+          document.addEventListener("mousemove", (e) => {
             window.lastPosition = window.cursorPosition;
             updateCursor(e.clientX, e.clientY);
           });
@@ -172,10 +180,17 @@ export class BrowserTool extends BaseBrowserTool {
     } catch (error) {
       if (
         error instanceof Error &&
+<<<<<<< HEAD
         !error.message.includes('context was destroyed') &&
         !error.message.includes('Target closed')
       ) {
         console.warn('Cursor initialization failed:', error);
+=======
+        !error.message.includes("context was destroyed") &&
+        !error.message.includes("Target closed")
+      ) {
+        console.warn("Cursor initialization failed:", error);
+>>>>>>> main
       }
     }
   }
@@ -190,14 +205,14 @@ export class BrowserTool extends BaseBrowserTool {
 
   async execute(input: ActionInput): Promise<ToolResult> {
     try {
-      let output = '';
+      let output = "";
       let metadata = {};
 
       switch (input.action) {
-        case 'left_click':
-        case 'right_click':
-        case 'middle_click':
-        case 'double_click': {
+        case "left_click":
+        case "right_click":
+        case "middle_click":
+        case "double_click": {
           const clickCoords = input.coordinates || this.lastMousePosition;
           await this.clickAtCoordinates(clickCoords[0], clickCoords[1]);
           output = `${input.action} at (${clickCoords[0]}, ${clickCoords[1]})`;
@@ -211,11 +226,19 @@ export class BrowserTool extends BaseBrowserTool {
           // If navigation started, get updated metadata
           if (
             await this.page
+<<<<<<< HEAD
               .evaluate(() => document.readyState !== 'complete')
               .catch(() => true)
           ) {
             try {
               await this.page.waitForLoadState('domcontentloaded', {
+=======
+              .evaluate(() => document.readyState !== "complete")
+              .catch(() => true)
+          ) {
+            try {
+              await this.page.waitForLoadState("domcontentloaded", {
+>>>>>>> main
                 timeout: 5000,
               });
               metadata = await this.getMetadata();
@@ -226,39 +249,43 @@ export class BrowserTool extends BaseBrowserTool {
           break;
         }
 
-        case 'mouse_move':
+        case "mouse_move":
           const coords = input.coordinates || (input as any).coordinate;
           if (!coords) {
-            throw new ToolError('Coordinates required for mouse_move');
+            throw new ToolError("Coordinates required for mouse_move");
           }
           await actions.mouseMove(this.page, coords[0], coords[1]);
           this.lastMousePosition = [coords[0], coords[1]];
           output = `Mouse moved to (${coords[0]}, ${coords[1]})`;
           break;
 
-        case 'left_click_drag':
+        case "left_click_drag":
           if (!input.coordinates) {
-            throw new ToolError('Coordinates required for left_click_drag');
+            throw new ToolError("Coordinates required for left_click_drag");
           }
           await actions.dragMouse(
             this.page,
             input.coordinates[0],
+<<<<<<< HEAD
             input.coordinates[1]
+=======
+            input.coordinates[1],
+>>>>>>> main
           );
           output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
           break;
 
-        case 'cursor_position':
+        case "cursor_position":
           const position = await actions.getCursorPosition(this.page);
           output = `Cursor position: (${position[0]}, ${position[1]})`;
           break;
 
-        case 'screenshot':
+        case "screenshot":
           return await this.takeScreenshotWithMetadata();
 
-        case 'type':
+        case "type":
           if (!input.text) {
-            throw new ToolError('Text required for type action');
+            throw new ToolError("Text required for type action");
           }
           await this.page.waitForTimeout(100);
           await this.page.keyboard.type(input.text);
@@ -266,9 +293,9 @@ export class BrowserTool extends BaseBrowserTool {
           output = `Typed: ${input.text}`;
           break;
 
-        case 'key': {
+        case "key": {
           if (!input.text) {
-            throw new ToolError('Key required for key action');
+            throw new ToolError("Key required for key action");
           }
 
           await this.page.waitForTimeout(100);
@@ -294,7 +321,7 @@ export class BrowserTool extends BaseBrowserTool {
           break;
         }
 
-        case 'github_login': {
+        case "github_login": {
           if (!this.githubTool) {
             this.githubTool = new GitHubTool();
           }
@@ -304,12 +331,16 @@ export class BrowserTool extends BaseBrowserTool {
           });
 
           output = loginResult.success
+<<<<<<< HEAD
             ? 'GitHub login was successfully completed'
+=======
+            ? "GitHub login was successfully completed"
+>>>>>>> main
             : `GitHub login failed: ${loginResult.error}`;
           break;
         }
 
-        case 'clear_session':
+        case "clear_session":
           const newContext = await this.browserManager.recreateContext();
           this.page = newContext.pages()[0] || (await newContext.newPage());
           await this.page.evaluate(() => {
@@ -318,14 +349,22 @@ export class BrowserTool extends BaseBrowserTool {
           });
 
           return {
+<<<<<<< HEAD
             output: 'Successfully cleared browser data and created new context',
+=======
+            output: "Successfully cleared browser data and created new context",
+>>>>>>> main
             metadata: {},
           };
 
-        case 'run_callback': {
+        case "run_callback": {
           if (!this.testContext?.currentTest) {
             throw new ToolError(
+<<<<<<< HEAD
               'No test context available for callback execution'
+=======
+              "No test context available for callback execution",
+>>>>>>> main
             );
           }
 
@@ -338,7 +377,7 @@ export class BrowserTool extends BaseBrowserTool {
             if (currentStepIndex === 0 && currentTest.fn) {
               await currentTest.fn(testContext);
               testContext.currentStepIndex = 1;
-              return { output: 'Test function executed successfully' };
+              return { output: "Test function executed successfully" };
             } else {
               // Handle expectations
               const expectationIndex = currentStepIndex - 1;
@@ -363,18 +402,26 @@ export class BrowserTool extends BaseBrowserTool {
               throw new AssertionCallbackError(
                 assertionError.message,
                 assertionError.matcherResult.actual,
-                assertionError.matcherResult.expected
+                assertionError.matcherResult.expected,
               );
             }
             throw new CallbackError(
+<<<<<<< HEAD
               error instanceof Error ? error.message : String(error)
+=======
+              error instanceof Error ? error.message : String(error),
+>>>>>>> main
             );
           }
         }
 
+<<<<<<< HEAD
         case 'navigate': {
+=======
+        case "navigate": {
+>>>>>>> main
           if (!input.url) {
-            throw new ToolError('URL required for navigation');
+            throw new ToolError("URL required for navigation");
           }
 
           // Create new tab
@@ -385,6 +432,7 @@ export class BrowserTool extends BaseBrowserTool {
 
             await newPage.goto(input.url, {
               timeout: navigationTimeout,
+<<<<<<< HEAD
               waitUntil: 'domcontentloaded',
             });
 
@@ -394,6 +442,17 @@ export class BrowserTool extends BaseBrowserTool {
               })
               .catch((e) => {
                 console.log('⚠️ Load timeout, continuing anyway');
+=======
+              waitUntil: "domcontentloaded",
+            });
+
+            await newPage
+              .waitForLoadState("load", {
+                timeout: 5000,
+              })
+              .catch((e) => {
+                console.log("⚠️ Load timeout, continuing anyway");
+>>>>>>> main
               });
 
             // Switch focus
@@ -427,7 +486,7 @@ export class BrowserTool extends BaseBrowserTool {
         await this.page.waitForTimeout(200);
         metadata = await this.getMetadata();
       } catch (metadataError) {
-        console.warn('Failed to get metadata:', metadataError);
+        console.warn("Failed to get metadata:", metadataError);
         metadata = {};
       }
 
@@ -436,14 +495,22 @@ export class BrowserTool extends BaseBrowserTool {
         metadata,
       };
     } catch (error) {
+<<<<<<< HEAD
       console.error(pc.red('\n❌ Browser Action Failed:'), error);
+=======
+      console.error(pc.red("\n❌ Browser Action Failed:"), error);
+>>>>>>> main
 
       if (error instanceof AssertionCallbackError) {
         return {
           output: `Assertion failed: ${error.message}${
             error.actual !== undefined
               ? `\nExpected: ${error.expected}\nReceived: ${error.actual}`
+<<<<<<< HEAD
               : ''
+=======
+              : ""
+>>>>>>> main
           }`,
         };
       }
@@ -470,13 +537,13 @@ export class BrowserTool extends BaseBrowserTool {
       try {
         url = await this.page.url();
       } catch {
-        url = 'navigating...';
+        url = "navigating...";
       }
 
       try {
         title = await this.page.title();
       } catch {
-        title = 'loading...';
+        title = "loading...";
       }
 
       metadata.window_info = {
@@ -510,9 +577,15 @@ export class BrowserTool extends BaseBrowserTool {
       return await this.page
         .evaluate(() => {
           return (
+<<<<<<< HEAD
             document.readyState === 'complete' &&
             !document.querySelector('.loading') &&
             !document.querySelector('.cl-loading')
+=======
+            document.readyState === "complete" &&
+            !document.querySelector(".loading") &&
+            !document.querySelector(".cl-loading")
+>>>>>>> main
           );
         })
         .catch(() => false);
@@ -522,13 +595,17 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   private async takeScreenshotWithMetadata(): Promise<ToolResult> {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filePath = join(this.screenshotDir, `screenshot-${timestamp}.png`);
 
     const buffer = await this.page.screenshot({
-      type: 'jpeg',
+      type: "jpeg",
       quality: 50,
+<<<<<<< HEAD
       scale: 'device',
+=======
+      scale: "device",
+>>>>>>> main
       fullPage: false,
     });
 
@@ -536,8 +613,13 @@ export class BrowserTool extends BaseBrowserTool {
     console.log(`Screenshot saved to: ${filePath}`);
 
     return {
+<<<<<<< HEAD
       output: 'Screenshot taken',
       base64_image: buffer.toString('base64'),
+=======
+      output: "Screenshot taken",
+      base64_image: buffer.toString("base64"),
+>>>>>>> main
       metadata: await this.getMetadata(),
     };
   }
@@ -555,7 +637,11 @@ export class BrowserTool extends BaseBrowserTool {
   // Selector-based methods
   public async waitForSelector(
     selector: string,
+<<<<<<< HEAD
     options?: { timeout: number }
+=======
+    options?: { timeout: number },
+>>>>>>> main
   ): Promise<void> {
     await this.page.waitForSelector(selector, options);
   }
@@ -577,7 +663,7 @@ export class BrowserTool extends BaseBrowserTool {
   }
 
   public async waitForNavigation(options?: { timeout: number }): Promise<void> {
-    await this.page.waitForLoadState('load', { timeout: options?.timeout });
+    await this.page.waitForLoadState("load", { timeout: options?.timeout });
   }
 
   updateTestContext(newContext: TestContext) {
@@ -587,7 +673,11 @@ export class BrowserTool extends BaseBrowserTool {
   private cleanupScreenshots(): void {
     try {
       const files = readdirSync(this.screenshotDir)
+<<<<<<< HEAD
         .filter((file) => file.endsWith('.png') || file.endsWith('.jpg'))
+=======
+        .filter((file) => file.endsWith(".png") || file.endsWith(".jpg"))
+>>>>>>> main
         .map((file) => ({
           name: file,
           path: join(this.screenshotDir, file),
@@ -611,27 +701,27 @@ export class BrowserTool extends BaseBrowserTool {
         }
       });
     } catch (error) {
-      console.warn('Failed to cleanup screenshots:', error);
+      console.warn("Failed to cleanup screenshots:", error);
     }
   }
 
   async showCursor(): Promise<void> {
     this.cursorVisible = true;
     await this.page.evaluate(() => {
-      const cursor = document.getElementById('ai-cursor');
-      const trail = document.getElementById('ai-cursor-trail');
-      if (cursor) cursor.style.display = 'block';
-      if (trail) trail.style.display = 'block';
+      const cursor = document.getElementById("ai-cursor");
+      const trail = document.getElementById("ai-cursor-trail");
+      if (cursor) cursor.style.display = "block";
+      if (trail) trail.style.display = "block";
     });
   }
 
   async hideCursor(): Promise<void> {
     this.cursorVisible = false;
     await this.page.evaluate(() => {
-      const cursor = document.getElementById('ai-cursor');
-      const trail = document.getElementById('ai-cursor-trail');
-      if (cursor) cursor.style.display = 'none';
-      if (trail) trail.style.display = 'none';
+      const cursor = document.getElementById("ai-cursor");
+      const trail = document.getElementById("ai-cursor-trail");
+      if (cursor) cursor.style.display = "none";
+      if (trail) trail.style.display = "none";
     });
   }
 

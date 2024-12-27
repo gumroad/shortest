@@ -2,14 +2,14 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { Octokit } from "@octokit/rest";
-import { TestFile, PullRequest } from "../app/(dashboard)/dashboard/types";
 import AdmZip from "adm-zip";
-import { getTestPatternsConfig } from "./config";
 import { minimatch } from "minimatch";
+import { TestFile, PullRequest } from "../app/(dashboard)/dashboard/types";
+import { getTestPatternsConfig } from "./config";
 
 function matchTestPatterns(testPatterns: string[], filePath: string) {
   return testPatterns.some((pattern) =>
-    minimatch(filePath, pattern, { dot: true, matchBase: true })
+    minimatch(filePath, pattern, { dot: true, matchBase: true }),
   );
 }
 
@@ -52,7 +52,7 @@ export async function getAssignedPullRequests() {
           octokit,
           owner,
           repo,
-          branchName
+          branchName,
         );
 
         return {
@@ -70,7 +70,7 @@ export async function getAssignedPullRequests() {
           repo,
           branchName,
         };
-      })
+      }),
     );
 
     return pullRequests;
@@ -83,7 +83,7 @@ export async function getAssignedPullRequests() {
 export async function fetchBuildStatus(
   owner: string,
   repo: string,
-  pullNumber: number
+  pullNumber: number,
 ): Promise<PullRequest> {
   const octokit = await getOctokit();
 
@@ -98,7 +98,7 @@ export async function fetchBuildStatus(
       octokit,
       owner,
       repo,
-      pr.head.ref
+      pr.head.ref,
     );
 
     return {
@@ -127,7 +127,7 @@ async function fetchBuildStatusForRef(
   octokit: Octokit,
   owner: string,
   repo: string,
-  ref: string
+  ref: string,
 ): Promise<string> {
   try {
     const { data } = await octokit.rest.checks.listForRef({
@@ -164,7 +164,7 @@ export async function commitChangesToPullRequest(
   repo: string,
   pullNumber: number,
   filesToCommit: TestFile[],
-  commitMessage: string
+  commitMessage: string,
 ): Promise<string> {
   const octokit = await getOctokit();
 
@@ -210,7 +210,7 @@ export async function commitChangesToPullRequest(
       });
 
       const existingFileIndex = updatedTree.findIndex(
-        (item) => item.path === file.name
+        (item) => item.path === file.name,
       );
       if (existingFileIndex !== -1) {
         updatedTree[existingFileIndex] = {
@@ -261,7 +261,7 @@ export async function commitChangesToPullRequest(
 export async function getPullRequestInfo(
   owner: string,
   repo: string,
-  pullNumber: number
+  pullNumber: number,
 ) {
   const octokit = await getOctokit();
   const testPatterns = await getTestPatternsConfig({ owner, repo });
@@ -311,7 +311,7 @@ export async function getPullRequestInfo(
         ) {
           const decodedContent = Buffer.from(
             fileContent.data.content,
-            "base64"
+            "base64",
           ).toString("utf-8");
           testFiles.push({
             name: item.path,
@@ -334,7 +334,7 @@ export async function getPullRequestInfo(
 export async function getFailingTests(
   owner: string,
   repo: string,
-  pullNumber: number
+  pullNumber: number,
 ): Promise<TestFile[]> {
   const octokit = await getOctokit();
   const testPatterns = await getTestPatternsConfig({ owner, repo });
@@ -348,7 +348,7 @@ export async function getFailingTests(
     });
 
     const failedChecks = checkRuns.check_runs.filter(
-      (run) => run.conclusion === "failure"
+      (run) => run.conclusion === "failure",
     );
 
     const failingTestFiles: TestFile[] = [];
@@ -373,7 +373,7 @@ export async function getFailingTests(
               failingTestFiles.push({
                 name: annotation.path,
                 content: Buffer.from(fileContent.content, "base64").toString(
-                  "utf-8"
+                  "utf-8",
                 ),
               });
             }
@@ -392,7 +392,7 @@ export async function getFailingTests(
 export async function getWorkflowLogs(
   owner: string,
   repo: string,
-  runId: string
+  runId: string,
 ): Promise<string> {
   const octokit = await getOctokit();
 
@@ -452,7 +452,7 @@ export async function getWorkflowLogs(
     throw new Error(
       `Failed to download workflow logs: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }
@@ -460,7 +460,7 @@ export async function getWorkflowLogs(
 export async function getLatestRunId(
   owner: string,
   repo: string,
-  branchName: string
+  branchName: string,
 ): Promise<string | null> {
   const octokit = await getOctokit();
 

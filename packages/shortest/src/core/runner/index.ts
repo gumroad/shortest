@@ -12,11 +12,10 @@ import {
   BrowserActionEnum,
 } from '../../types';
 import { Logger } from '../../utils/logger';
-import { TestBuilder } from '../builder';
 import Anthropic from '@anthropic-ai/sdk';
 import { APIRequest, BrowserContext } from 'playwright';
 import * as playwright from 'playwright';
-import { request, chromium, APIRequestContext } from 'playwright';
+import { request, APIRequestContext } from 'playwright';
 import { BaseCache } from '../../cache/cache';
 import { CacheEntry } from '../../types/cache';
 
@@ -279,7 +278,7 @@ export class TestRunner {
 
     // Parse AI result first
     const finalMessage = result.finalResponse.content.find(
-      (block: any) =>
+      (block) =>
         block.type === 'text' &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
           '"result":'

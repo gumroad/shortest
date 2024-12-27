@@ -1,14 +1,22 @@
 #!/usr/bin/env node
 
-import { TestRunner } from '../core/runner';
-import { GitHubTool } from '../browser/integrations/github';
-import pc from 'picocolors';
+import pc from "picocolors";
+import { GitHubTool } from "../browser/integrations/github";
+import { TestRunner } from "../core/runner";
 
+<<<<<<< HEAD
 process.removeAllListeners('warning');
 process.on('warning', (warning) => {
   if (
     warning.name === 'DeprecationWarning' &&
     warning.message.includes('punycode')
+=======
+process.removeAllListeners("warning");
+process.on("warning", (warning) => {
+  if (
+    warning.name === "DeprecationWarning" &&
+    warning.message.includes("punycode")
+>>>>>>> main
   ) {
     return;
   }
@@ -16,6 +24,7 @@ process.on('warning', (warning) => {
 });
 
 const VALID_FLAGS = [
+<<<<<<< HEAD
   '--headless',
   '--github-code',
   '--debug-ai',
@@ -24,55 +33,70 @@ const VALID_FLAGS = [
   '-h',
 ];
 const VALID_PARAMS = ['--target', '--secret'];
+=======
+  "--headless",
+  "--github-code",
+  "--debug-ai",
+  "--help",
+  "-h",
+];
+const VALID_PARAMS = ["--target", "--secret"];
+>>>>>>> main
 
 function showHelp() {
   console.log(`
-${pc.bold('Shortest')} - AI-powered end-to-end testing framework
-${pc.dim('https://github.com/anti-work/shortest')}
+${pc.bold("Shortest")} - AI-powered end-to-end testing framework
+${pc.dim("https://github.com/anti-work/shortest")}
 
-${pc.bold('Usage:')}
+${pc.bold("Usage:")}
   shortest [options] [test-pattern]
 
-${pc.bold('Options:')}
+${pc.bold("Options:")}
   --headless          Run tests in headless browser mode
   --debug-ai          Show AI conversation and decision process
   --target=<url>      Set target URL for tests (default: http://localhost:3000)
   --github-code       Generate GitHub 2FA code for authentication
   --no-cache          Disable cashing
 
-${pc.bold('Authentication:')}
+${pc.bold("Authentication:")}
   --secret=<key>      GitHub TOTP secret key (or use .env.local)
 
-${pc.bold('Examples:')}
-  ${pc.dim('# Run all tests')}
+${pc.bold("Examples:")}
+  ${pc.dim("# Run all tests")}
   shortest
 
-  ${pc.dim('# Run specific test file')}
+  ${pc.dim("# Run specific test file")}
   shortest login.test.ts
 
-  ${pc.dim('# Run tests in headless mode')}
+  ${pc.dim("# Run tests in headless mode")}
   shortest --headless
 
-  ${pc.dim('# Generate GitHub 2FA code')}
+  ${pc.dim("# Generate GitHub 2FA code")}
   shortest --github-code --secret=<OTP_SECRET>
 
-${pc.bold('Environment Setup:')}
+${pc.bold("Environment Setup:")}
   Required variables in .env.local:
   - ANTHROPIC_API_KEY     Required for AI test execution
   - GITHUB_TOTP_SECRET    Required for GitHub authentication
   - GITHUB_USERNAME       GitHub login credentials
   - GITHUB_PASSWORD       GitHub login credentials
 
+<<<<<<< HEAD
 ${pc.bold('Documentation:')}
   Visit ${pc.cyan(
     'https://github.com/anti-work/shortest'
   )} for detailed setup and usage
+=======
+${pc.bold("Documentation:")}
+  Visit ${pc.cyan("https://github.com/anti-work/shortest")} for detailed setup and usage
+>>>>>>> main
 `);
 }
 
 async function handleGitHubCode(args: string[]) {
   try {
     const secret = args
+<<<<<<< HEAD
       .find((arg) => arg.startsWith('--secret='))
       ?.split('=')[1];
     const github = new GitHubTool(secret);
@@ -83,11 +107,23 @@ async function handleGitHubCode(args: string[]) {
     console.log(pc.cyan('Expires in: ') + pc.bold(`${timeRemaining}s`));
     console.log(
       pc.dim(`Using secret from: ${secret ? 'CLI flag' : '.env file'}\n`)
+=======
+      .find((arg) => arg.startsWith("--secret="))
+      ?.split("=")[1];
+    const github = new GitHubTool(secret);
+    const { code, timeRemaining } = github.generateTOTPCode();
+
+    console.log("\n" + pc.bgCyan(pc.black(" GitHub 2FA Code ")));
+    console.log(pc.cyan("Code: ") + pc.bold(code));
+    console.log(pc.cyan("Expires in: ") + pc.bold(`${timeRemaining}s`));
+    console.log(
+      pc.dim(`Using secret from: ${secret ? "CLI flag" : ".env file"}\n`),
+>>>>>>> main
     );
 
     process.exit(0);
   } catch (error) {
-    console.error(pc.red('\n✖ Error:'), (error as Error).message, '\n');
+    console.error(pc.red("\n✖ Error:"), (error as Error).message, "\n");
     process.exit(1);
   }
 }
@@ -99,7 +135,7 @@ function isValidArg(arg: string): boolean {
   }
 
   // Check if it's a parameter with value
-  const paramName = arg.split('=')[0];
+  const paramName = arg.split("=")[0];
   if (VALID_PARAMS.includes(paramName)) {
     return true;
   }
@@ -110,24 +146,37 @@ function isValidArg(arg: string): boolean {
 async function main() {
   const args = process.argv.slice(2);
 
+<<<<<<< HEAD
   if (args.includes('--help') || args.includes('-h')) {
+=======
+  if (args.includes("--help") || args.includes("-h")) {
+>>>>>>> main
     showHelp();
     process.exit(0);
   }
 
+<<<<<<< HEAD
   if (args.includes('--github-code')) {
+=======
+  if (args.includes("--github-code")) {
+>>>>>>> main
     await handleGitHubCode(args);
   }
 
   const invalidFlags = args
+<<<<<<< HEAD
     .filter((arg) => arg.startsWith('--'))
+=======
+    .filter((arg) => arg.startsWith("--"))
+>>>>>>> main
     .filter((arg) => !isValidArg(arg));
 
   if (invalidFlags.length > 0) {
-    console.error(`Error: Invalid argument(s): ${invalidFlags.join(', ')}`);
+    console.error(`Error: Invalid argument(s): ${invalidFlags.join(", ")}`);
     process.exit(1);
   }
 
+<<<<<<< HEAD
   const headless = args.includes('--headless');
   const targetUrl = args
     .find((arg) => arg.startsWith('--target='))
@@ -135,6 +184,14 @@ async function main() {
   const testPattern = args.find((arg) => !arg.startsWith('--'));
   const debugAI = args.includes('--debug-ai');
   const noCache = args.includes('--no-cache');
+=======
+  const headless = args.includes("--headless");
+  const targetUrl = args
+    .find((arg) => arg.startsWith("--target="))
+    ?.split("=")[1];
+  const testPattern = args.find((arg) => !arg.startsWith("--"));
+  const debugAI = args.includes("--debug-ai");
+>>>>>>> main
 
   try {
     const runner = new TestRunner(
@@ -143,7 +200,10 @@ async function main() {
       headless,
       targetUrl,
       debugAI,
+<<<<<<< HEAD
       noCache
+=======
+>>>>>>> main
     );
     await runner.initialize();
 
@@ -154,11 +214,12 @@ async function main() {
     }
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes('Config')) {
-        console.error(pc.red('\nConfiguration Error:'));
+      if (error.message.includes("Config")) {
+        console.error(pc.red("\nConfiguration Error:"));
         console.error(pc.dim(error.message));
         console.error(
           pc.dim(
+<<<<<<< HEAD
             '\nMake sure you have a valid shortest.config.ts with all required fields:'
           )
         );
@@ -166,12 +227,21 @@ async function main() {
         console.error(pc.dim('  - baseUrl: string'));
         console.error(pc.dim('  - testDir: string | string[]'));
         console.error(pc.dim('  - anthropicKey: string'));
+=======
+            "\nMake sure you have a valid shortest.config.ts with all required fields:",
+          ),
+        );
+        console.error(pc.dim("  - headless: boolean"));
+        console.error(pc.dim("  - baseUrl: string"));
+        console.error(pc.dim("  - testDir: string | string[]"));
+        console.error(pc.dim("  - anthropicKey: string"));
+>>>>>>> main
         console.error();
       } else {
-        console.error(pc.red('\nError:'), error.message);
+        console.error(pc.red("\nError:"), error.message);
       }
     } else {
-      console.error(pc.red('\nUnknown error occurred'));
+      console.error(pc.red("\nUnknown error occurred"));
     }
     process.exit(1);
   }
