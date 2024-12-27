@@ -32,14 +32,14 @@ export const AITools = [
   },
   {
     name: "check_email",
-    description: "Fetch, decode and render received email in browser",
+    description: "View received email in new browser tab",
     input_schema: {
       type: "object",
       properties: {
         action: {
           type: "string",
           enum: ["check_email"],
-          description: "Render the received email in a new tab",
+          description: "Check that the email was received with specified content in a new tab",
         },
       },
       required: ["action", "email"],
