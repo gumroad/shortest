@@ -35,7 +35,7 @@ async function checkStripeCLI() {
       console.log("Stripe CLI is authenticated.");
     } catch (error) {
       console.log(
-        "Stripe CLI is not authenticated or the authentication has expired.",
+        `Stripe CLI is not authenticated or the authentication has expired. ${error}`,
       );
       console.log("Please run: stripe login");
       const answer = await question(
@@ -53,16 +53,12 @@ async function checkStripeCLI() {
         await execAsync("stripe config --list");
         console.log("Stripe CLI authentication confirmed.");
       } catch (error) {
-        console.error(
-          "Failed to verify Stripe CLI authentication. Please try again.",
-        );
+        console.error(`Failed to verify Stripe CLI authentication. ${error}`);
         process.exit(1);
       }
     }
   } catch (error) {
-    console.error(
-      "Stripe CLI is not installed. Please install it and try again.",
-    );
+    console.error(`Stripe CLI is not installed. ${error}`);
     console.log("To install Stripe CLI, follow these steps:");
     console.log("1. Visit: https://docs.stripe.com/stripe-cli");
     console.log(
@@ -209,7 +205,7 @@ volumes:
     };
   } catch (error) {
     console.error(
-      "Failed to start Docker container or extract environment variables. Please check your Docker installation and try again.",
+      `Failed to start Docker container or extract environment variables. ${error}`,
     );
     process.exit(1);
   }

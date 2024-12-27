@@ -1,11 +1,8 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { type NextRequest } from "next/server";
-import { getOctokit } from "@/lib/github";
 
 export async function POST(request: NextRequest) {
-  const octokit = await getOctokit();
-
   let payload;
   try {
     payload = await request.json();
@@ -29,16 +26,16 @@ export async function POST(request: NextRequest) {
   try {
     switch (githubEvent) {
       case "push":
-        await handlePushEvent(payload, octokit);
+        await handlePushEvent(payload);
         break;
       case "pull_request":
-        await handlePullRequestEvent(payload, octokit);
+        await handlePullRequestEvent(payload);
         break;
       case "check_run":
-        await handleCheckRunEvent(payload, octokit);
+        await handleCheckRunEvent(payload);
         break;
       case "check_suite":
-        await handleCheckSuiteEvent(payload, octokit);
+        await handleCheckSuiteEvent(payload);
         break;
       default:
         console.log(`Unhandled event type: ${githubEvent}`);
@@ -54,18 +51,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePushEvent(payload: any, octokit: any) {
-  const { repository, commits } = payload;
+async function handlePushEvent(payload: any) {
+  const { repository } = payload;
   console.log(`New push to ${repository.full_name}`);
 }
 
-async function handlePullRequestEvent(payload: any, octokit: any) {
+async function handlePullRequestEvent(payload: any) {
   const { action, pull_request, repository } = payload;
   console.log(`Pull request ${action} in ${repository.full_name}`);
   revalidateTag(`pullRequest-${pull_request.id}`);
 }
 
-async function handleCheckRunEvent(payload: any, octokit: any) {
+async function handleCheckRunEvent(payload: any) {
   const { action, check_run, repository } = payload;
   console.log(`Check run ${action} in ${repository.full_name}`);
   if (check_run.pull_requests && check_run.pull_requests.length > 0) {
@@ -75,7 +72,7 @@ async function handleCheckRunEvent(payload: any, octokit: any) {
   }
 }
 
-async function handleCheckSuiteEvent(payload: any, octokit: any) {
+async function handleCheckSuiteEvent(payload: any) {
   const { action, check_suite, repository } = payload;
   console.log(`Check suite ${action} in ${repository.full_name}`);
   if (check_suite.pull_requests && check_suite.pull_requests.length > 0) {

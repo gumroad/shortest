@@ -65,7 +65,11 @@ export class BrowserTool extends BaseBrowserTool {
           await this.initializeCursor();
           break;
         } catch (error) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          console.warn(
+            `Retry ${i + 1}/3: Cursor initialization failed:`,
+            error,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
     };
@@ -370,12 +374,14 @@ export class BrowserTool extends BaseBrowserTool {
               waitUntil: 'domcontentloaded'
             });
 
-            await newPage.waitForLoadState('load', {
-              timeout: 5000
-            }).catch(e => {
-              console.log('⚠️ Load timeout, continuing anyway');
-            });
-            
+            await newPage
+              .waitForLoadState("load", {
+                timeout: 5000,
+              })
+              .catch((error) => {
+                console.log("⚠️ Load timeout, continuing anyway", error);
+              });
+
             // Switch focus
             this.page = newPage;
 
@@ -569,6 +575,7 @@ export class BrowserTool extends BaseBrowserTool {
       return metadata;
 
     } catch (error) {
+      console.warn("Failed to get metadata:", error);
       // Return whatever metadata we collected
       return metadata;
     }
@@ -669,7 +676,7 @@ export class BrowserTool extends BaseBrowserTool {
           try {
             unlinkSync(file.path);
           } catch (error) {
-            console.warn(`Failed to delete screenshot: ${file.path}`);
+            console.warn(`Failed to delete screenshot: ${file.path}`, error);
           }
         }
       });

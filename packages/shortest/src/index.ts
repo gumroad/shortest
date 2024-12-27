@@ -8,7 +8,6 @@ import {
   TestContext,
   TestChain,
   ShortestConfig,
-  TestHookFunction,
 } from "./types";
 
 // Initialize config

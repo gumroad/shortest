@@ -12,21 +12,21 @@ async function testAssertions() {
     // Test 1: Verify failing assertions are caught
     console.log(pc.cyan("\nTest 1: Verify failing assertions"));
     try {
-      test("Test failing assertion", async ({ page }) => {
+      test("Test failing assertion", async () => {
         expect(true).toBe(false);
       });
 
       console.log(pc.red("❌ Failed: Assertion should have thrown error"));
       failedTests++;
     } catch (error) {
-      console.log(pc.green("✅ Passed: Caught failing assertion"));
+      console.log(pc.green("✅ Passed: Caught failing assertion"), error);
       passedTests++;
     }
 
     // Test 2: Verify async assertions
     console.log(pc.cyan("\nTest 2: Verify async assertions"));
     try {
-      test("Test async assertion", async ({ page }) => {
+      test("Test async assertion", async () => {
         const result = await Promise.resolve(false);
         expect(result).toBe(true);
       });
@@ -34,7 +34,7 @@ async function testAssertions() {
       console.log(pc.red("❌ Failed: Async assertion should have thrown"));
       failedTests++;
     } catch (error) {
-      console.log(pc.green("✅ Passed: Caught async failing assertion"));
+      console.log(pc.green("✅ Passed: Caught async failing assertion"), error);
       passedTests++;
     }
 

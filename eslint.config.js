@@ -6,7 +6,7 @@ import typescriptEslintParser from "@typescript-eslint/parser";
 
 export default [
   {
-    ignores: ["node_modules/**", "dist/**"],
+    ignores: ["node_modules/**", "dist/**", ".next/**", "packages/shortest/node_modules/**", "packages/shortest/dist/**", "**/*.d.ts"],
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
