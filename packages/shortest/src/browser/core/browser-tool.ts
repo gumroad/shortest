@@ -16,7 +16,7 @@ import {
 } from "fs";
 import { join } from "path";
 import pc from "picocolors";
-import { Page, Browser } from "playwright";
+import { Page } from "playwright";
 import { TestContext, BrowserToolConfig, TestFunction } from "../../types";
 import { ActionInput, ToolResult, BetaToolType } from "../../types/browser";
 import { CallbackError } from "../../types/test";
@@ -65,6 +65,10 @@ export class BrowserTool extends BaseBrowserTool {
           await this.initializeCursor();
           break;
         } catch (error) {
+          console.warn(
+            `Retry ${i + 1}/3: Cursor initialization failed:`,
+            error,
+          );
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       }
@@ -392,8 +396,8 @@ export class BrowserTool extends BaseBrowserTool {
               .waitForLoadState("load", {
                 timeout: 5000,
               })
-              .catch((e) => {
-                console.log("⚠️ Load timeout, continuing anyway");
+              .catch((error) => {
+                console.log("⚠️ Load timeout, continuing anyway", error);
               });
 
             // Switch focus
@@ -499,6 +503,7 @@ export class BrowserTool extends BaseBrowserTool {
 
       return metadata;
     } catch (error) {
+      console.warn("Failed to get metadata:", error);
       // Return whatever metadata we collected
       return metadata;
     }
@@ -606,7 +611,7 @@ export class BrowserTool extends BaseBrowserTool {
           try {
             unlinkSync(file.path);
           } catch (error) {
-            console.warn(`Failed to delete screenshot: ${file.path}`);
+            console.warn(`Failed to delete screenshot: ${file.path}`, error);
           }
         }
       });

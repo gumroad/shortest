@@ -32,9 +32,10 @@ async function setup() {
         const browser = await chromium.launch();
         await browser.close();
       }
-    } catch (err) {
+    } catch (error) {
       console.warn(
         pc.yellow("\nWarning: Playwright browser installation failed"),
+        error,
       );
       console.log(
         pc.cyan("Please run manually: npx playwright install chromium\n"),

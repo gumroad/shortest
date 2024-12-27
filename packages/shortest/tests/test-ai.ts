@@ -1,7 +1,6 @@
 import pc from "picocolors";
 import * as playwright from "playwright";
 import { request } from "playwright";
-import { AIClient } from "../src/ai/client";
 import { BrowserTool } from "../src/browser/core/browser-tool";
 import { BrowserManager } from "../src/browser/manager";
 import { getConfig, initialize } from "../src/index";

@@ -102,8 +102,6 @@ export class GitHubTool {
       await browserTool.press(this.selectors.otpInput, "Enter");
       await navigationPromise;
 
-      // Get current URL to verify login success
-      const currentUrl = await browserTool.getPage().url();
       const isLoggedIn =
         (await browserTool.findElement(this.selectors.loginForm)) === null;
 
