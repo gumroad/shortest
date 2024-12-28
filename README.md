@@ -189,7 +189,7 @@ This guide will help you set up the Shortest web app for local development.
    pnpm install
    ```
 
-#### For Anti-Work team members:
+#### For Anti-Work team members
 
 Pull Vercel env vars:
 
@@ -199,11 +199,11 @@ vercel link
 vercel env pull
 ```
 
-#### For Other Contributors:
+#### For other contributors
 1. Run `pnpm run setup` to configure the environment variables.
 2. The setup wizard will ask you for information. Refer to "Services Configuration" section below for more details.
 
-#### Set up the database:
+#### Set up the database
 
 ```bash
 pnpm drizzle-kit generate
@@ -292,7 +292,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
-## Building Shortest Package Locally
+## Build Shortest package locally
 
 ```bash
 pnpm build:pkg
@@ -300,6 +300,7 @@ pnpm install
 ```
 
 ## Set up Shortest CLI for local development
+
 ```bash
 # packages/shortest
 cd packages/shortest
@@ -310,34 +311,33 @@ cd ../..
 pnpm link --global shortest
 ```
 
-## Test CLI Locally
+## Test CLI locally
 
 1. Create a temporary test directory outside your project:
-```bash
-cd ~/shortest-test
-```
+  ```bash
+  cd ~/shortest-test
+  ```
 
-2. Pack shortest package locally:
-```bash
-cd /packages/shortest
-pnpm pack
-```
+2. Pack Shortest package locally:
+  ```bash
+  cd packages/shortest
+  pnpm pack
+  ```
 
 3. Install the packed tarball in your test directory:
-```bash
-cd ~/test-cli
-npm init -y
-npm install ../packages/shortest/antiwork-shortest-{version}.tgz
-# or to run globally
-npm install -g ../packages/shortest/antiwork-shortest-{version}.tgz
-```
+  ```bash
+  cd ~/test-cli
+  npm init -y
+  npm install ../packages/shortest/antiwork-shortest-{version}.tgz
+  # or to run globally
+  npm install -g ../packages/shortest/antiwork-shortest-{version}.tgz
+  ```
 
 4. Try CLI
-
-```bash
-npx shortest -h
-# or
-./node_modules/.bin/shortest -h
-# or if you have installed shortest globally
-shortest -h
-```
+  ```bash
+  npx shortest -h
+  # or
+  ./node_modules/.bin/shortest -h
+  # or if you have installed shortest globally
+  shortest -h
+  ```
