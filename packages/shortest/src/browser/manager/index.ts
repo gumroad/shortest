@@ -1,9 +1,9 @@
 import { execSync } from "child_process";
-import { platform } from "os";
 import { URL } from "url";
 import pc from "picocolors";
 import { chromium, Browser, BrowserContext } from "playwright";
 import { ShortestConfig } from "../../types/config";
+import { getInstallationCommand } from "../../utils/platform";
 
 export class BrowserManager {
   private browser: Browser | null = null;
@@ -35,11 +35,10 @@ export class BrowserManager {
         error.message.includes("Executable doesn't exist")
       ) {
         console.log(pc.yellow("Installing Playwright browser..."));
-        const isWindows = platform() === "win32";
-        const installCmd = isWindows
-          ? "npx.cmd playwright install chromium"
-          : "npx playwright install chromium";
-        execSync(installCmd, { stdio: "inherit" });
+
+        const installationCommand = await getInstallationCommand();
+
+        execSync(installationCommand, { stdio: "inherit" });
         console.log(pc.green("✓ Playwright browser installed"));
 
         // Try launching again
