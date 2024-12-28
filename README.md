@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest Logo" width="128" />
+  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest logo" width="128" />
 </p>
 
 # Shortest
@@ -37,7 +37,7 @@ pnpm shortest   # for pnpm
 yarn shortest   # for yarn
 ```
 
-## Quick Start
+## Quick start
 
 1. Determine your test entry and add your Anthropic API key in config file: `shortest.config.ts`
 
@@ -49,7 +49,7 @@ export default {
   baseUrl: 'http://localhost:3000',
   testDir: 'app/__tests__',
   anthropicKey: process.env.ANTHROPIC_API_KEY
-} satisfies ShortestConfig; 
+} satisfies ShortestConfig;
 ```
 
 2. Write your test in your test directory: `app/__tests__/login.test.ts`
@@ -73,11 +73,11 @@ import { eq } from 'drizzle-orm';
 shortest('Login to the app using username and password', {
   username: process.env.USERNAME,
   password: process.env.PASSWORD
-}).after(async ({ page }) => {    
+}).after(async ({ page }) => {
   // Get current user's clerk ID from the page
   const clerkId = await page.evaluate(() => {
     return window.localStorage.getItem('clerk-user');
-  }); 
+  });
 
   if (!clerkId) {
     throw new Error('User not found in database');
@@ -109,9 +109,9 @@ shortest.beforeAll(async ({ page }) => {
 shortest.beforeEach(async ({ page }) => {
   await clerk.signIn({
     page,
-    signInParams: { 
-      strategy: "email_code", 
-      identifier: "iffy+clerk_test@example.com" 
+    signInParams: {
+      strategy: "email_code",
+      identifier: "iffy+clerk_test@example.com"
     },
   });
 });
@@ -125,16 +125,18 @@ shortest.afterAll(async ({ page }) => {
 });
 ```
 
-## Running Tests
+## Running tests
+
 ```bash
-shortest                    # Run all tests
+shortest                   # Run all tests
 shortest login.test.ts     # Run specific test
 shortest --headless        # Run in headless mode using cli
 ```
 
 And you're done!
 
-## GitHub 2FA Login Setup
+## GitHub 2FA login setup
+
 Shortest currently supports login using Github 2FA. For GitHub authentication tests:
 
 1. Go to your repository settings
@@ -144,21 +146,24 @@ Shortest currently supports login using Github 2FA. For GitHub authentication te
 5. Click "Setup key" to obtain the OTP secret
 6. Add the OTP secret to your `.env.local` file or use the Shortest CLI to add it
 7. Enter the 2FA code displayed in your terminal into Github's Authenticator setup page to complete the process
+
 ```bash
 shortest --github-code --secret=<OTP_SECRET>
 ```
 
-## Environment Setup
+## Environment setup
+
 Required in `.env.local`:
+
 ```bash
 ANTHROPIC_API_KEY=your_api_key
 GITHUB_TOTP_SECRET=your_secret  # Only for GitHub auth tests
 ```
 
-## CI Setup
-You can run shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
+## CI setup
+You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
-# Local Development Setup Guide
+# Local development setup guide
 
 This guide will help you set up the Shortest web app for local development.
 
@@ -166,11 +171,11 @@ This guide will help you set up the Shortest web app for local development.
 - React >=19.0.0 (if using with Next.js 14+ or Server Actions)
 - Next.js >=14.0.0 (if using Server Components/Actions)
 
-⚠️ **Known Issues**
+⚠️ **Known issues**
 - Using this package with React 18 in Next.js 14+ projects may cause type conflicts with Server Actions and `useFormStatus`
 - If you encounter type errors with form actions or React hooks, ensure you're using React 19
 
-### Getting Started
+### Getting started
 
 1. Clone the repository:
    ```bash
@@ -184,7 +189,7 @@ This guide will help you set up the Shortest web app for local development.
    pnpm install
    ```
 
-#### For Anti-Work Team Members:
+#### For Anti-Work team members:
 
 Pull Vercel env vars:
 
@@ -199,11 +204,12 @@ vercel env pull
 2. The setup wizard will ask you for information. Refer to "Services Configuration" section below for more details.
 
 #### Set up the database:
-   ```bash
-   pnpm drizzle-kit generate
-   pnpm db:migrate
-   pnpm db:seed # creates stripe products, currently unused
-   ```
+
+```bash
+pnpm drizzle-kit generate
+pnpm db:migrate
+pnpm db:seed # creates stripe products, currently unused
+```
 
 ### Services Configuration
 
@@ -276,7 +282,7 @@ You'll need to set up the following services for local development. If you're no
 
 </details>
 
-### Running the Application
+### Running the application
 
 Once you have set up the environment variables and installed dependencies, run the development server:
 
@@ -286,7 +292,6 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
-
 ## Building Shortest Package Locally
 
 ```bash
@@ -294,7 +299,7 @@ pnpm build:pkg
 pnpm install
 ```
 
-## Setup Shortest CLI for local development
+## Set up Shortest CLI for local development
 ```bash
 # packages/shortest
 cd packages/shortest
@@ -305,7 +310,7 @@ cd ../..
 pnpm link --global shortest
 ```
 
-## Test Cli Locally
+## Test CLI Locally
 
 1. Create a temporary test directory outside your project:
 ```bash
@@ -327,7 +332,8 @@ npm install ../packages/shortest/antiwork-shortest-{version}.tgz
 npm install -g ../packages/shortest/antiwork-shortest-{version}.tgz
 ```
 
-4. Try cli
+4. Try CLI
+
 ```bash
 npx shortest -h
 # or
@@ -335,7 +341,3 @@ npx shortest -h
 # or if you have installed shortest globally
 shortest -h
 ```
-
-
-
-
