@@ -96,6 +96,7 @@ shortest('Login to the app using username and password', {
 ```
 
 ### Lifecycle hooks
+
 You can use lifecycle hooks to run code before and after the test.
 
 ```typescript
@@ -295,34 +296,22 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
-## CLI development
+## Shortest CLI development
 
-1. Build Shortest package locally:
+1. Make changes to the package source code in `packages/shortest/`
+
+2. Test changes instantly during development (no build needed):
+  ```bash
+  pnpm shortest:dev -h
+  ```
+
+3. To test the actual built package:
   ```bash
   pnpm build:pkg
-  pnpm install
+  pnpm shortest --help
   ```
 
-2. Link for local development:
-  ```bash
-  cd packages/shortest
-  pnpm link --global
-  ```
-
-3. Make changes & rebuild:
-  ```bash
-  pnpm build:pkg
-  shortest --help  # Test changes
-  ```
-
-4. Revert using the
-  ```bash
-  # root
-  cd ../..
-  pnpm link --global @antiwork/shortest
-  ```
-
-## Test CLI locally
+### Test CLI locally
 
 1. Create a temporary test directory outside your project:
   ```bash
