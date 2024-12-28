@@ -76,7 +76,7 @@ export class BrowserManager {
           localStorage.clear();
           sessionStorage.clear();
           indexedDB.deleteDatabase("shortest");
-        })
+        }),
       ),
       // Clear permissions
       this.context.clearPermissions(),
@@ -84,7 +84,7 @@ export class BrowserManager {
 
     // Navigate all pages to blank
     await Promise.all(
-      this.context.pages().map((page) => page.goto("about:blank"))
+      this.context.pages().map((page) => page.goto("about:blank")),
     );
 
     // Close all pages except first

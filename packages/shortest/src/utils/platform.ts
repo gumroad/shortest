@@ -15,7 +15,7 @@ export const getInstallationCommand = async () => {
 
   if (!command) {
     throw new Error(
-      "Failed to resolve playwright browser installation command"
+      "Failed to resolve playwright browser installation command",
     );
   }
 
