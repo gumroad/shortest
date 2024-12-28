@@ -311,33 +311,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
   pnpm shortest --help
   ```
 
-### Test CLI locally
-
-1. Create a temporary test directory outside your project:
+4. To test in another project:
   ```bash
-  cd ~/shortest-test
-  ```
-
-2. Pack Shortest package locally:
-  ```bash
+  # In Shortest package directory
   cd packages/shortest
   pnpm pack
-  ```
 
-3. Install the packed tarball in your test directory:
-  ```bash
-  cd ~/test-cli
-  npm init -y
-  npm install ../packages/shortest/antiwork-shortest-{version}.tgz
-  # or to run globally
-  npm install -g ../packages/shortest/antiwork-shortest-{version}.tgz
-  ```
-
-4. Try CLI
-  ```bash
+  # In your test project
+  npm install /path/to/antiwork-shortest-{version}.tgz.tgz
   npx shortest -h
-  # or
-  ./node_modules/.bin/shortest -h
-  # or if you have installed shortest globally
-  shortest -h
   ```
