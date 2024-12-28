@@ -3,4 +3,8 @@ export interface ShortestConfig {
   baseUrl: string;
   testDir: string | string[];
   anthropicKey: string;
+  mailosaur?: {
+    apiKey: string;
+    serverId: string;
+  };
 }

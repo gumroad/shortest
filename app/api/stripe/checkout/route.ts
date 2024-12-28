@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
       throw new Error("Invalid customer data from Stripe.");
     }
 
-    const customerId = session.customer.id;
     const subscriptionId =
       typeof session.subscription === "string"
         ? session.subscription

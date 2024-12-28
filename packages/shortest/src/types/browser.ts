@@ -3,7 +3,7 @@ import { TestContext, Page } from "./test";
 export interface BrowserToolInterface {
   waitForSelector(
     selector: string,
-    options?: { timeout: number },
+    options?: { timeout: number }
   ): Promise<void>;
   fill(selector: string, value: string): Promise<void>;
   press(selector: string, key: string): Promise<void>;
@@ -28,6 +28,8 @@ export enum BrowserActionEnum {
   Key = "key",
   RunCallback = "run_callback",
   Navigate = "navigate",
+  Sleep = "sleep",
+  CheckMail = "check_mail",
 }
 
 export type BrowserAction = `${BrowserActionEnum}`;
@@ -46,6 +48,8 @@ export interface ActionInput {
   username?: string;
   password?: string;
   url?: string;
+  duration?: number;
+  email?: string;
 }
 
 export interface ToolResult {
