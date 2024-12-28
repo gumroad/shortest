@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest Logo" width="128" />
+  <img src="https://github.com/user-attachments/assets/57d23950-206b-4640-a649-66a175660ade" alt="Shortest logo" width="128" />
 </p>
 
 # Shortest
@@ -16,7 +16,9 @@ Your browser does not support the video tag.
 - Built on Playwright
 - GitHub integration with 2FA support
 
-## Installation
+## Using Shortest in your project
+
+### Installation
 ```bash
 npm install -D @antiwork/shortest
 # or
@@ -30,37 +32,36 @@ Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each
 echo ".shortest/" >> .gitignore
 ```
 
-### If you installed shortest without `-g` flag, you can run tests as follows:
+If you installed shortest without `-g` flag, you can run tests as follows:
 ```bash
 npx shortest    # for npm
 pnpm shortest   # for pnpm
 yarn shortest   # for yarn
 ```
 
-## Quick Start
+### Quick start
 
 1. Determine your test entry and add your Anthropic API key in config file: `shortest.config.ts`
+  ```typescript
+  import type { ShortestConfig } from '@antiwork/shortest';
 
-```typescript
-import type { ShortestConfig } from '@antiwork/shortest';
-
-export default {
-  headless: false,
-  baseUrl: 'http://localhost:3000',
-  testDir: 'app/__tests__',
-  anthropicKey: process.env.ANTHROPIC_API_KEY
-} satisfies ShortestConfig; 
-```
+  export default {
+    headless: false,
+    baseUrl: 'http://localhost:3000',
+    testDir: 'app/__tests__',
+    anthropicKey: process.env.ANTHROPIC_API_KEY
+  } satisfies ShortestConfig;
+  ```
 
 2. Write your test in your test directory: `app/__tests__/login.test.ts`
+  ```typescript
+  import { shortest } from '@antiwork/shortest'
 
-```typescript
-import { shortest } from '@antiwork/shortest'
+  shortest('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
+  ```
 
-shortest('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
-```
+### Using callback functions
 
-## Using callback functions
 You can also use callback functions to add additional assertions and other logic. AI will execute the callback function after the test
 execution in browser is completed.
 
@@ -73,11 +74,11 @@ import { eq } from 'drizzle-orm';
 shortest('Login to the app using username and password', {
   username: process.env.USERNAME,
   password: process.env.PASSWORD
-}).after(async ({ page }) => {    
+}).after(async ({ page }) => {
   // Get current user's clerk ID from the page
   const clerkId = await page.evaluate(() => {
     return window.localStorage.getItem('clerk-user');
-  }); 
+  });
 
   if (!clerkId) {
     throw new Error('User not found in database');
@@ -94,7 +95,8 @@ shortest('Login to the app using username and password', {
 });
 ```
 
-## Lifecycle hooks
+### Lifecycle hooks
+
 You can use lifecycle hooks to run code before and after the test.
 
 ```typescript
@@ -109,9 +111,9 @@ shortest.beforeAll(async ({ page }) => {
 shortest.beforeEach(async ({ page }) => {
   await clerk.signIn({
     page,
-    signInParams: { 
-      strategy: "email_code", 
-      identifier: "iffy+clerk_test@example.com" 
+    signInParams: {
+      strategy: "email_code",
+      identifier: "iffy+clerk_test@example.com"
     },
   });
 });
@@ -125,16 +127,18 @@ shortest.afterAll(async ({ page }) => {
 });
 ```
 
-## Running Tests
+### Running tests
+
 ```bash
-shortest                    # Run all tests
+shortest                   # Run all tests
 shortest login.test.ts     # Run specific test
 shortest --headless        # Run in headless mode using cli
 ```
 
 And you're done!
 
-## GitHub 2FA Login Setup
+### GitHub 2FA login setup
+
 Shortest currently supports login using Github 2FA. For GitHub authentication tests:
 
 1. Go to your repository settings
@@ -144,21 +148,24 @@ Shortest currently supports login using Github 2FA. For GitHub authentication te
 5. Click "Setup key" to obtain the OTP secret
 6. Add the OTP secret to your `.env.local` file or use the Shortest CLI to add it
 7. Enter the 2FA code displayed in your terminal into Github's Authenticator setup page to complete the process
+
 ```bash
 shortest --github-code --secret=<OTP_SECRET>
 ```
 
-## Environment Setup
+### Environment setup
+
 Required in `.env.local`:
+
 ```bash
 ANTHROPIC_API_KEY=your_api_key
 GITHUB_TOTP_SECRET=your_secret  # Only for GitHub auth tests
 ```
 
-## CI Setup
-You can run shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
+### CI setup
+You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
-# Local Development Setup Guide
+## Web app development
 
 This guide will help you set up the Shortest web app for local development.
 
@@ -166,11 +173,12 @@ This guide will help you set up the Shortest web app for local development.
 - React >=19.0.0 (if using with Next.js 14+ or Server Actions)
 - Next.js >=14.0.0 (if using Server Components/Actions)
 
-⚠️ **Known Issues**
-- Using this package with React 18 in Next.js 14+ projects may cause type conflicts with Server Actions and `useFormStatus`
-- If you encounter type errors with form actions or React hooks, ensure you're using React 19
+> [!WARNING]
+> Using this package with React 18 in Next.js 14+ projects may cause type conflicts with Server Actions and `useFormStatus`
+>
+> If you encounter type errors with form actions or React hooks, ensure you're using React 19
 
-### Getting Started
+### Getting started
 
 1. Clone the repository:
    ```bash
@@ -184,7 +192,9 @@ This guide will help you set up the Shortest web app for local development.
    pnpm install
    ```
 
-#### For Anti-Work Team Members:
+### Environment setup
+
+#### For Anti-Work team members
 
 Pull Vercel env vars:
 
@@ -194,20 +204,21 @@ vercel link
 vercel env pull
 ```
 
-#### For Other Contributors:
+#### For other contributors
 1. Run `pnpm run setup` to configure the environment variables.
 2. The setup wizard will ask you for information. Refer to "Services Configuration" section below for more details.
 
-#### Set up the database:
-   ```bash
-   pnpm drizzle-kit generate
-   pnpm db:migrate
-   pnpm db:seed # creates stripe products, currently unused
-   ```
+### Set up the database
 
-### Services Configuration
+```bash
+pnpm drizzle-kit generate
+pnpm db:migrate
+pnpm db:seed # creates stripe products, currently unused
+```
 
-You'll need to set up the following services for local development. If you're not a Gumroad Vercel team member, you'll need to either run the setup wizard `pnpm run setup` or manually configure each of these services and add the corresponding environment variables to your `.env.local` file:
+### Services configuration
+
+You'll need to set up the following services for local development. If you're not a Anti-Work Vercel team member, you'll need to either run the setup wizard `pnpm run setup` or manually configure each of these services and add the corresponding environment variables to your `.env.local` file:
 
 <details>
 <summary>Clerk</summary>
@@ -276,9 +287,9 @@ You'll need to set up the following services for local development. If you're no
 
 </details>
 
-### Running the Application
+### Running locally
 
-Once you have set up the environment variables and installed dependencies, run the development server:
+Run the development server:
 
 ```bash
 pnpm dev
@@ -286,56 +297,28 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
+## Shortest CLI development
 
-## Building Shortest Package Locally
+1. Make changes to the package source code in `packages/shortest/`
 
-```bash
-pnpm build:pkg
-pnpm install
-```
+2. Test changes instantly during development (no build needed):
+  ```bash
+  pnpm shortest:dev -h
+  ```
 
-## Setup Shortest CLI for local development
-```bash
-# packages/shortest
-cd packages/shortest
-pnpm link --global
+3. To test the actual built package:
+  ```bash
+  pnpm build:pkg
+  pnpm shortest --help
+  ```
 
-# root
-cd ../..
-pnpm link --global shortest
-```
+4. To test in another project:
+  ```bash
+  # In Shortest package directory
+  cd packages/shortest
+  pnpm pack
 
-## Test Cli Locally
-
-1. Create a temporary test directory outside your project:
-```bash
-cd ~/shortest-test
-```
-
-2. Pack shortest package locally:
-```bash
-cd /packages/shortest
-pnpm pack
-```
-
-3. Install the packed tarball in your test directory:
-```bash
-cd ~/test-cli
-npm init -y
-npm install ../packages/shortest/antiwork-shortest-{version}.tgz
-# or to run globally
-npm install -g ../packages/shortest/antiwork-shortest-{version}.tgz
-```
-
-4. Try cli
-```bash
-npx shortest -h
-# or
-./node_modules/.bin/shortest -h
-# or if you have installed shortest globally
-shortest -h
-```
-
-
-
-
+  # In your test project
+  npm install /path/to/antiwork-shortest-{version}.tgz.tgz
+  npx shortest -h
+  ```
