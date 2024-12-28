@@ -1,4 +1,3 @@
-import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
 import { APIRequest, BrowserContext } from "playwright";
@@ -69,13 +68,13 @@ export class TestRunner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    const testPattern = this.config.testPattern || "**/*.test.ts";
-  
+    const testPattern = pattern || this.config.testPattern || "**/*.test.ts";
+
     const files = await glob(testPattern, {
       cwd: this.cwd,
       absolute: true,
     });
-  
+
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
@@ -83,7 +82,7 @@ export class TestRunner {
       );
       process.exit(1);
     }
-  
+
     return files;
   }
 
@@ -302,34 +301,17 @@ export class TestRunner {
     }
   }
 
-  async runFile(pattern: string) {
+  async runTests(pattern?: string) {
     await this.initialize();
     const files = await this.findTestFiles(pattern);
 
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found matching: ${pattern}`,
+        `No test files found matching the pattern: ${pattern || this.config.testPattern}`,
       );
       process.exit(1);
     }
-
-    for (const file of files) {
-      await this.executeTestFile(file);
-    }
-
-    this.logger.summary();
-
-    if (this.exitOnSuccess && this.logger.allTestsPassed()) {
-      process.exit(0);
-    } else {
-      process.exit(1);
-    }
-  }
-
-  async runAll() {
-    await this.initialize();
-    const files = await this.findTestFiles();
 
     for (const file of files) {
       await this.executeTestFile(file);

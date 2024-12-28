@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import pc from "picocolors";
+import { getConfig } from "..";
 import { GitHubTool } from "../browser/integrations/github";
 import { TestRunner } from "../core/runner";
 
@@ -128,10 +129,13 @@ async function main() {
   const targetUrl = args
     .find((arg) => arg.startsWith("--target="))
     ?.split("=")[1];
-  const testPattern = args.find((arg) => !arg.startsWith("--"));
+  const cliTestPattern = args.find((arg) => !arg.startsWith("--"));
   const debugAI = args.includes("--debug-ai");
 
   try {
+    const config = getConfig();
+    const testPattern = cliTestPattern || config.testPattern; // Use CLI argument if provided, otherwise use config
+
     const runner = new TestRunner(
       process.cwd(),
       true,
@@ -140,12 +144,7 @@ async function main() {
       debugAI,
     );
     await runner.initialize();
-
-    if (testPattern) {
-      await runner.runFile(testPattern);
-    } else {
-      await runner.runAll();
-    }
+    await runner.runTests(testPattern);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("Config")) {
