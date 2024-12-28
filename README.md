@@ -173,9 +173,10 @@ This guide will help you set up the Shortest web app for local development.
 - React >=19.0.0 (if using with Next.js 14+ or Server Actions)
 - Next.js >=14.0.0 (if using Server Components/Actions)
 
-⚠️ **Known issues**
-- Using this package with React 18 in Next.js 14+ projects may cause type conflicts with Server Actions and `useFormStatus`
-- If you encounter type errors with form actions or React hooks, ensure you're using React 19
+> [!WARNING]
+> Using this package with React 18 in Next.js 14+ projects may cause type conflicts with Server Actions and `useFormStatus`
+>
+> If you encounter type errors with form actions or React hooks, ensure you're using React 19
 
 ### Getting started
 
