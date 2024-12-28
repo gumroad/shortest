@@ -18,6 +18,8 @@ Your browser does not support the video tag.
 
 ## Using Shortest in your project
 
+If helpful, [here's a short video](https://github.com/anti-work/shortest/issues/143#issuecomment-2564488173)!
+
 ### Installation
 ```bash
 npm install -D @antiwork/shortest
