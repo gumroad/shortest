@@ -18,7 +18,8 @@
     "prepare": "cd packages/shortest && pnpm build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit --incremental"
+    "typecheck": "tsc --noEmit --incremental",
+    "shortest:dev": "npx tsx packages/shortest/src/cli/bin.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",
