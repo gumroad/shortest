@@ -29,7 +29,7 @@ export enum BrowserActionEnum {
   RunCallback = "run_callback",
   Navigate = "navigate",
   Sleep = "sleep",
-  CheckMail = "check_mail",
+  CheckMail = "check_email",
 }
 
 export type BrowserAction = `${BrowserActionEnum}`;
