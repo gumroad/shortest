@@ -21,8 +21,8 @@ export class BaseCache<T extends CacheEntry> {
 
   constructor() {
     this.logger = new Logger();
-    this.cacheFile = path.join(process.cwd(), ".cache", "cache.json");
-    this.lockFile = path.join(process.cwd(), ".cache", "cache.lock");
+    this.cacheFile = path.join(process.cwd(), ".shortest", "cache.json");
+    this.lockFile = path.join(process.cwd(), ".shortest", "cache.lock");
     this.ensureDirectory();
     this.setupProcessHandlers();
   }
