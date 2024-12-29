@@ -324,6 +324,10 @@ export class TestRunner {
       }
     }
 
+    if (aiResult.result === "pass") {
+      // batch set new chache if test is successful
+      await this.cache.set(test, result.pendingCache);
+    }
     return aiResult;
   }
 

@@ -1,10 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
 import { BrowserTool } from "../browser/core/browser-tool";
-import { BaseCache } from "../cache/cache";
-import { TestFunction } from "../types";
 import { AIConfig } from "../types/ai";
-import { CacheAction, CacheEntry, CacheStep } from "../types/cache";
+import { CacheAction, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
 
@@ -32,8 +30,6 @@ export class AIClient {
   async processAction(
     prompt: string,
     browserTool: BrowserTool,
-    cache: BaseCache<CacheEntry>,
-    test: TestFunction,
     outputCallback?: (
       content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
@@ -47,8 +43,6 @@ export class AIClient {
         return await this.makeRequest(
           prompt,
           browserTool,
-          cache,
-          test,
           outputCallback,
           toolOutputCallback
         );
@@ -66,8 +60,6 @@ export class AIClient {
   async makeRequest(
     prompt: string,
     browserTool: BrowserTool,
-    cache: BaseCache<CacheEntry>,
-    test: TestFunction,
     _outputCallback?: (
       content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
@@ -213,12 +205,10 @@ export class AIClient {
             })),
           });
         } else {
-          // batch set new chache if test is successful
-          await cache.set(test, pendingCache);
-
           return {
             messages,
             finalResponse: response,
+            pendingCache,
           };
         }
       } catch (error: any) {
