@@ -1,5 +1,3 @@
-// visual test for github.com
-
 import { shortest } from "@antiwork/shortest";
 
 // GitHub header visual test
