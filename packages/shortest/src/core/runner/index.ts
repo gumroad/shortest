@@ -272,12 +272,7 @@ export class TestRunner {
     }
 
     // Execute test with enhanced prompt
-    const result = await aiClient.processAction(
-      prompt,
-      browserTool,
-      this.cache,
-      test
-    );
+    const result = await aiClient.processAction(prompt, browserTool);
 
     if (!result) {
       throw new Error("AI processing failed: no result returned");
