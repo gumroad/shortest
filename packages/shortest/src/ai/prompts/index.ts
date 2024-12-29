@@ -12,7 +12,6 @@ IMPORTANT GLOBAL RULES:
 
 1. **Waiting for Conditions**:
    - Always wait for the tool to finish before proceeding to the next action. You will recieve a message to continue with your next action once the wait is over. Then validate the condition is met.
-   - Always wait for the tool to finish before proceeding to the next action. You will receive a message to continue with your next action once the wait is over. Then validate the condition is met.
 
 2. **Tool Usage**:
    - You may need to use provided tools to perform certain actions (e.g., clicking, navigating, or running callbacks).
