@@ -10,6 +10,7 @@ export interface CacheStep {
   reasoning: string; // WHY I DID
   action: CacheAction | null; // WHAT I DID
   timestamp: number; // WHEN I DID
+  result: string | null; // OUTCOME
   extras?: any;
 }
 

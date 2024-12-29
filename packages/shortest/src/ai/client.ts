@@ -4,7 +4,7 @@ import { BrowserTool } from "../browser/core/browser-tool";
 import { BaseCache } from "../cache/cache";
 import { TestFunction } from "../types";
 import { AIConfig } from "../types/ai";
-import { CacheAction, CacheEntry } from "../types/cache";
+import { CacheAction, CacheEntry, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
 
@@ -85,6 +85,9 @@ export class AIClient {
       content: prompt,
     });
 
+    // temp cache store
+    const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
+
     while (true) {
       try {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -121,61 +124,60 @@ export class AIClient {
           content: response.content,
         });
 
-        const cachedTest = await cache.get(test);
-        const cachedSteps = cachedTest?.data.steps;
-
-        let extras = {};
-        for (const block of response.content.filter(
-          (b) => b.type === "tool_use"
-        )) {
-          // @ts-expect-error
-          if (block.input.coordinate) {
-            // @ts-expect-error
-            const [x, y] = block.input.coordinate;
-
-            const componentStr =
-              await browserTool.getNormalizedComponentStringByCoords(x, y);
-
-            extras = {
-              componentStr,
-            };
-          }
-        }
-
         // Check for tool use
         if (response.stop_reason === "tool_use") {
-          const toolResults = response.content
-            .filter((block) => block.type === "tool_use")
-            .map((block) => {
-              const toolBlock =
-                block as Anthropic.Beta.Messages.BetaToolUseBlock;
+          const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
+            response.content.filter((block) => block.type === "tool_use");
 
-              try {
-                cache.set(test, {
-                  steps: [
-                    ...(cachedSteps ?? []),
-                    {
-                      reasoning: response.content.map(
-                        (block) => (block as any).text
-                      )[0],
-                      action: toolBlock as CacheAction,
-                      timestamp: Date.now(),
-                      extras,
-                    },
-                  ],
-                });
-              } catch (error) {
-                console.log({ error });
-              }
+          const toolResults = toolBlocks.map((toolBlock) => {
+            return {
+              toolBlock,
 
-              return {
-                toolBlock,
-
-                result: browserTool.execute(toolBlock.input as any),
-              };
-            });
+              result: browserTool.execute(toolBlock.input as any),
+            };
+          });
 
           const results = await Promise.all(toolResults.map((t) => t.result));
+
+          const getExtras = async (
+            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock
+          ) => {
+            let extras: any = {};
+
+            // @ts-expect-error
+            if (toolBlock.input.coordinate) {
+              // @ts-expect-error
+              const [x, y] = toolBlock.input.coordinate;
+
+              const componentStr =
+                await browserTool.getNormalizedComponentStringByCoords(x, y);
+
+              extras = { componentStr };
+            }
+
+            return extras;
+          };
+
+          const newCacheSteps = await Promise.all(
+            toolBlocks.map(async (_toolBlock, i) => {
+              const extras = await getExtras(toolBlocks[i]);
+
+              return {
+                action: toolBlocks[i] as CacheAction,
+                reasoning: response.content.map(
+                  (block) => (block as any).text
+                )[0],
+                result: results[i].output || null,
+                extras,
+                timestamp: Date.now(),
+              };
+            })
+          );
+
+          pendingCache.steps = [
+            ...(pendingCache.steps || []),
+            ...(newCacheSteps || []),
+          ];
 
           // Log tool results
           if (this.debugMode) {
@@ -211,6 +213,9 @@ export class AIClient {
             })),
           });
         } else {
+          // batch set new chache if test is successful
+          await cache.set(test, pendingCache);
+
           return {
             messages,
             finalResponse: response,

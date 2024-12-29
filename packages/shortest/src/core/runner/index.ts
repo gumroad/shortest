@@ -431,11 +431,12 @@ export class TestRunner {
     const steps = cachedTest?.data.steps
       // do not take screenshots in cached mode
       ?.filter(
-        (step) => step.action?.input.action !== BrowserActionEnum.Screenshot
+        (step) =>
+          step.action?.input.action !== BrowserActionEnum.Screenshot.toString()
       );
 
     if (!steps) {
-      throw new Error("No steps to executem running test in a normal mode");
+      throw new Error("No steps to execute running test in a normal mode");
     }
     for (const step of steps) {
       if (
