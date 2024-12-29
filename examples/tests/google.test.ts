@@ -1,6 +1,5 @@
 import { shortest } from "@antiwork/shortest";
 
-// Setup hooks
 shortest.beforeAll(async ({ page }) => {
   await page.goto("https://google.com");
   // Accept cookies if present

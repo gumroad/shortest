@@ -1,5 +1,3 @@
-// youtube test
-
 import { shortest } from "@antiwork/shortest";
 
 // Basic search and video playback
