@@ -11,16 +11,12 @@ shortest("Watch a YouTube video and change playback settings", {
   settings: {
     quality: "1080p",
     playbackSpeed: "1.5x",
-    subtitles: "on"
-  }
+    subtitles: "on",
+  },
 });
 
 // Channel interaction
 shortest("Visit a YouTube channel and verify latest content", {
   channelName: "TED",
-  sortBy: "newest"
+  sortBy: "newest",
 });
-
-
-
-

@@ -20,20 +20,24 @@ shortest.beforeEach(async ({ page }) => {
 });
 
 // Basic search test with callback
-shortest("Perform a Google search for 'shortest test framework'", 
+shortest(
+  "Perform a Google search for 'shortest test framework'",
   async ({ page }) => {
     await page.getByLabel("Search").click();
     await page.keyboard.type("shortest test framework");
     await page.keyboard.press("Enter");
-});
+  },
+);
 
 // Test with error handling and custom assertions
 shortest("Test Google's error handling for invalid searches", {
-  searchQueries: ["@#$%^&*", "≈∆˚¬≤µµ˜∫", ""]
+  searchQueries: ["@#$%^&*", "≈∆˚¬≤µµ˜∫", ""],
 })
   .expect("Enter special characters and verify error handling")
   .expect("Check error message visibility", async ({ page }) => {
-    const errorMsg = await page.getByRole("heading", { level: 1 }).textContent();
+    const errorMsg = await page
+      .getByRole("heading", { level: 1 })
+      .textContent();
     expect(errorMsg).toContain("did not match any documents");
   });
 
@@ -44,15 +48,15 @@ shortest("Test Google's advanced search features", {
     exactPhrase: "end to end testing",
     excludeWords: "selenium",
     fileType: "pdf",
-    lastUpdate: "past year"
-  }
+    lastUpdate: "past year",
+  },
 })
   .expect("Access advanced search")
   .expect("Fill advanced search form with payload data")
   .expect("Verify search results match criteria", async ({ page }) => {
     const results = await page.$$(".g");
     for (const result of results.slice(0, 5)) {
-      const text = await result.textContent() || "";
+      const text = (await result.textContent()) || "";
       expect(text.toLowerCase()).toContain("pdf");
     }
   })
@@ -60,4 +64,3 @@ shortest("Test Google's advanced search features", {
     await page.goto("https://google.com/preferences");
     await page.getByRole("button", { name: "Reset" }).click();
   });
-
