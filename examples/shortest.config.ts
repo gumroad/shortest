@@ -2,7 +2,7 @@ import type { ShortestConfig } from "@antiwork/shortest";
 
 export default {
   headless: false,
-  baseUrl: "http://google.com/",
+  baseUrl: "https://google.com/",
   testDir: "./tests",
   anthropicKey: process.env.ANTHROPIC_API_KEY,
   mailosaur: {
