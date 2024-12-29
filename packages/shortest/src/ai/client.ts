@@ -74,6 +74,8 @@ export class AIClient {
     _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+    // temp cache store
+    const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
 
     // Log the conversation
     if (this.debugMode) {
@@ -84,9 +86,6 @@ export class AIClient {
       role: "user",
       content: prompt,
     });
-
-    // temp cache store
-    const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
 
     while (true) {
       try {
@@ -144,7 +143,8 @@ export class AIClient {
           ) => {
             let extras: any = {};
 
-            // @ts-expect-error
+            // @ts-expect-error Incorrect interface on our side leads to this error
+            // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
             if (toolBlock.input.coordinate) {
               // @ts-expect-error
               const [x, y] = toolBlock.input.coordinate;

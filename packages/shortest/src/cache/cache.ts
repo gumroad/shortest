@@ -49,7 +49,7 @@ export class BaseCache<T extends CacheEntry> {
 
   public async get(key: Record<any, any>): Promise<T | null> {
     if (!(await this.acquireLock())) {
-      console.error("Cache", "Failed to acquire lock for get operation");
+      this.logger.error("Cache", "Failed to acquire lock for set operation");
       return null;
     }
     try {
@@ -69,7 +69,7 @@ export class BaseCache<T extends CacheEntry> {
     value: Partial<T["data"]>
   ): Promise<void> {
     if (!(await this.acquireLock())) {
-      console.error("Cache", "Failed to acquire lock for set operation");
+      this.logger.error("Cache", "Failed to acquire lock for set operation");
       return;
     }
     try {
@@ -117,7 +117,7 @@ export class BaseCache<T extends CacheEntry> {
 
   public async delete(key: Record<string, any>): Promise<void> {
     if (!(await this.acquireLock())) {
-      console.error("Cache", "Failed to acquire lock for delete operation");
+      this.logger.error("Cache", "Failed to acquire lock for delete operation");
       return;
     }
 
@@ -141,7 +141,6 @@ export class BaseCache<T extends CacheEntry> {
       const cache = this.read();
       let cacheModified = false;
       for (const [key, value] of Object.entries(cache)) {
-        // TODO (current) remove it
         if (value) {
           if (Date.now() - value.timestamp > this.CACHE_TTL) {
             delete cache[key];
