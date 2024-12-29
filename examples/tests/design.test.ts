@@ -16,24 +16,21 @@ shortest(
 
 // Material Design typography
 shortest(
-  "Verify Material Design typography on material.io - Roboto font, type scale (Display Large 57/64px, Headline 24/32px, Body 16/24px) and component tokens (buttons 14px/500, cards 16px/400, app bar 22px/500)"
+  "Verify Material Design typography on material.io - Roboto font, type scale (Display Large 57/64px, Headline 24/32px, Body 16/24px) and component tokens (buttons 14px/500, cards 16px/400, app bar 22px/500)",
 );
 
 // Material elevation and spacing
-shortest(
-  "Verify Material Design elevation and spacing on material.io",
-  {
-    elevation: {
-      levels: [1, 2, 3, 4, 6, 8, 12],
-      unit: "dp",
-    },
-    spacing: {
-      grid: 8,
-      components: {
-        cardPadding: 16,
-        listItemGap: 8,
-        sectionMargin: 24,
-      },
+shortest("Verify Material Design elevation and spacing on material.io", {
+  elevation: {
+    levels: [1, 2, 3, 4, 6, 8, 12],
+    unit: "dp",
+  },
+  spacing: {
+    grid: 8,
+    components: {
+      cardPadding: 16,
+      listItemGap: 8,
+      sectionMargin: 24,
     },
   },
-);
+});
