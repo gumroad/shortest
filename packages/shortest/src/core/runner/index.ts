@@ -1,6 +1,7 @@
 import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
+import pc from "picocolors";
 import { APIRequest, BrowserContext } from "playwright";
 import * as playwright from "playwright";
 import { request, APIRequestContext } from "playwright";
@@ -16,6 +17,7 @@ import {
   BrowserActionEnum,
 } from "../../types";
 import { CacheEntry } from "../../types/cache";
+import { hashData } from "../../utils/crypto";
 import { Logger } from "../../utils/logger";
 import { TestCompiler } from "../compiler";
 
@@ -423,6 +425,9 @@ export class TestRunner {
     browserTool: BrowserTool
   ): Promise<TestResult> {
     const cachedTest = await this.cache.get(test);
+    if (this.debugAI) {
+      console.log(pc.green(`Executing cached test ${hashData(test)}`));
+    }
 
     const steps = cachedTest?.data.steps
       // do not take screenshots in cached mode
