@@ -115,6 +115,27 @@ export class BaseCache<T extends CacheEntry> {
     }
   }
 
+  public async delete(key: Record<string, any>): Promise<void> {
+    if (!(await this.acquireLock())) {
+      console.error("Cache", "Failed to acquire lock for delete operation");
+      return;
+    }
+
+    try {
+      const hashedKey = hashData(key);
+      const cache = this.read();
+
+      if (cache[hashedKey]) {
+        delete cache[hashedKey];
+        this.write(cache);
+      } else {
+        this.logger.error("Cache", "Failed to delete: entry not found");
+      }
+    } catch (error) {
+      this.logger.error("Cache", "Failed to delete");
+    }
+  }
+
   private cleanup() {
     try {
       const cache = this.read();

@@ -155,11 +155,7 @@ export class TestRunner {
     return this.testContext;
   }
 
-  private async executeTest(
-    test: TestFunction,
-    context: BrowserContext,
-    config: { noCache: boolean } = { noCache: false }
-  ) {
+  private async executeTest(test: TestFunction, context: BrowserContext) {
     // If it's direct execution, skip AI
     if (test.directExecution) {
       try {
@@ -232,7 +228,7 @@ export class TestRunner {
       .join("\n");
 
     // check if CLI option is not specified
-    if (!this.noCache && !config?.noCache) {
+    if (!this.noCache) {
       // if test hasn't changed and is already in cache, replay steps from cache
       if (await this.cache.get(test)) {
         try {
@@ -257,9 +253,9 @@ export class TestRunner {
           }
           return result;
         } catch (error) {
-          this.executeTest(test, context, {
-            noCache: true,
-          });
+          // delete stale cached test entry
+          await this.cache.delete(test);
+          this.executeTest(test, context);
         }
       }
     }
