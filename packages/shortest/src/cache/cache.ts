@@ -82,7 +82,7 @@ export class BaseCache<T extends CacheEntry> {
 
       cache[hashedKey].data = objects.mergeDeep(cache[hashedKey].data, {
         ...value,
-        timeStamp: Date.now(),
+        timestamp: Date.now(),
       }) as T["data"];
 
       this.write(cache);
