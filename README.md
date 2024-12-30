@@ -133,11 +133,15 @@ shortest.afterAll(async ({ page }) => {
 ### Running tests
 
 ```bash
-shortest                   # Run all tests
-shortest login.test.ts     # Run specific test
-shortest --headless        # Run in headless mode using cli
+npx shortest                   # Run all tests
+npx shortest login.test.ts     # Run specific test
+npx shortest --headless        # Run in headless mode using cli
 ```
 
+### Examples
+
+You can find example tests in `examples/` directory.
+To run examples, you can use `npx shortest examples/login.test.ts`
 And you're done!
 
 ### GitHub 2FA login setup
