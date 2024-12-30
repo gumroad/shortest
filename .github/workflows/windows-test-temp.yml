@@ -1,0 +1,51 @@
+name: "Shortest Tests"
+
+on:
+  pull_request:
+    branches: [fix/failing-on-windows]
+
+jobs:
+  shortest:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      MAILOSAUR_API_KEY: ${{ secrets.MAILOSAUR_API_KEY }}
+      MAILOSAUR_SERVER_ID: ${{ secrets.MAILOSAUR_SERVER_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Setup pnpm first
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      # Then setup Node with pnpm caching
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Playwright
+        run: pnpm exec playwright install chromium
+
+      - name: Wait for Vercel preview deployment
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        id: waitFor
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_status: false
+
+      - name: Run Shortest tests
+        env:
+          SHORTEST_TEST_BASE_URL: ${{ steps.waitFor.outputs.url }}
+        run: pnpm shortest --headless --target=${{ steps.waitFor.outputs.url }}
