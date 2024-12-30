@@ -3,7 +3,7 @@ import { TestContext, Page } from "./test";
 export interface BrowserToolInterface {
   waitForSelector(
     selector: string,
-    options?: { timeout: number }
+    options?: { timeout: number },
   ): Promise<void>;
   fill(selector: string, value: string): Promise<void>;
   press(selector: string, key: string): Promise<void>;

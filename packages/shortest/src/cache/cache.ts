@@ -37,7 +37,7 @@ export class BaseCache<T extends CacheEntry> {
     if (fs.existsSync(this.cacheFile)) {
       try {
         return JSON.parse(
-          fs.readFileSync(this.cacheFile, "utf-8")
+          fs.readFileSync(this.cacheFile, "utf-8"),
         ) as CacheStore;
       } catch {
         return {};
@@ -66,7 +66,7 @@ export class BaseCache<T extends CacheEntry> {
 
   public async set(
     key: Record<string, any>,
-    value: Partial<T["data"]>
+    value: Partial<T["data"]>,
   ): Promise<void> {
     if (!(await this.acquireLock())) {
       this.logger.error("Cache", "Failed to acquire lock for set operation");
@@ -182,7 +182,7 @@ export class BaseCache<T extends CacheEntry> {
     if (this.lockAcquireFailures >= 3) {
       this.logger.error(
         "Cache",
-        "Failed to acquire lock 3 times in a row. Releasing lock manually."
+        "Failed to acquire lock 3 times in a row. Releasing lock manually.",
       );
       this.releaseLock();
     }
