@@ -2,7 +2,7 @@ name: "Shortest Tests"
 
 on:
   pull_request:
-    branches: [fix/failing-on-windows]
+    branches: [main]
 
 jobs:
   shortest:
