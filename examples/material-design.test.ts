@@ -1,6 +1,5 @@
 import { shortest } from "@antiwork/shortest";
 
-// Material Design 3 color system
 shortest(
   "Visit material.io and verify the Material Design 3 color system implementation. Primary color should be #6750A4 (purple) with tonal palette ranging from 0-100. Check dynamic color theming in light and dark modes.",
   {
@@ -14,12 +13,10 @@ shortest(
   },
 );
 
-// Material Design typography
 shortest(
   "Verify Material Design typography on material.io - Roboto font, type scale (Display Large 57/64px, Headline 24/32px, Body 16/24px) and component tokens (buttons 14px/500, cards 16px/400, app bar 22px/500)",
 );
 
-// Material elevation and spacing
 shortest("Verify Material Design elevation and spacing on material.io", {
   elevation: {
     levels: [1, 2, 3, 4, 6, 8, 12],

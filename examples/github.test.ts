@@ -1,6 +1,5 @@
 import { shortest } from "@antiwork/shortest";
 
-// GitHub header visual test
 shortest(
   "Visit github.com and verify the global navigation header layout. Check GitHub logo, search bar, navigation items (Pull requests, Issues, Marketplace, Explore), and profile dropdown maintain correct spacing and alignment",
   {
@@ -14,7 +13,6 @@ shortest(
   },
 );
 
-// GitHub repository page responsive test
 shortest(
   "Check github.com/github/docs repository page across devices. Verify repository sidebar collapses on mobile, code browser adapts, and action buttons stack properly",
   {
@@ -28,7 +26,6 @@ shortest(
   },
 );
 
-// GitHub interactive components
 shortest(
   "Test GitHub's dropdown menus and modals on the repository page. Check repository settings dropdown, create new file modal, and code copy tooltip",
   {
@@ -45,7 +42,6 @@ shortest(
   },
 );
 
-// GitHub theme switch
 shortest(
   "Compare GitHub's light and dark themes on the repository page. Verify syntax highlighting, UI components, and markdown content adapt correctly",
   {

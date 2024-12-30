@@ -1,9 +1,7 @@
 import { shortest } from "@antiwork/shortest";
 
-// Basic search and video playback
 shortest("Search for 'cute puppies' on YouTube and play the first video");
 
-// Video with specific requirements
 shortest("Watch a YouTube video and change playback settings", {
   videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   settings: {
@@ -13,7 +11,6 @@ shortest("Watch a YouTube video and change playback settings", {
   },
 });
 
-// Channel interaction
 shortest("Visit a YouTube channel and verify latest content", {
   channelName: "TED",
   sortBy: "newest",

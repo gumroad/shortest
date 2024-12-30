@@ -2,13 +2,11 @@ import { shortest } from "@antiwork/shortest";
 
 shortest.beforeAll(async ({ page }) => {
   await page.goto("https://google.com");
-  // Accept cookies if present
   const acceptButton = await page.$("[aria-label='Accept all']");
   if (acceptButton) await acceptButton.click();
 });
 
 shortest.afterAll(async ({ page }) => {
-  // Clear cookies and cache
   const context = page.context();
   await context.clearCookies();
 });
