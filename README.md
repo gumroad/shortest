@@ -15,6 +15,7 @@ Your browser does not support the video tag.
 - AI-powered test execution using Anthropic Claude API
 - Built on Playwright
 - GitHub integration with 2FA support
+- Email validation with Mailosaur
 
 ## Using Shortest in your project
 
@@ -221,7 +222,6 @@ pnpm db:seed # creates stripe products, currently unused
 ### Services configuration
 
 You'll need to set up the following services for local development. If you're not a Anti-Work Vercel team member, you'll need to either run the setup wizard `pnpm run setup` or manually configure each of these services and add the corresponding environment variables to your `.env.local` file:
-
 <details>
 <summary>Clerk</summary>
 
@@ -230,6 +230,7 @@ You'll need to set up the following services for local development. If you're no
    ![Clerk App Login](https://github.com/user-attachments/assets/1de7aebc-8e9d-431a-ae13-af60635307a1)
 3. Once created, copy the environment variables to your `.env.local` file.
    ![Clerk Env Variables](https://github.com/user-attachments/assets/df3381e6-017a-4e01-8bd3-5793e5f5d31e)
+4. In the Clerk dashboard, disable the "Require the same device and browser" setting to ensure tests with mailosaur work properly.
 
 </details>
 
@@ -286,7 +287,17 @@ You'll need to set up the following services for local development. If you're no
    - Enter your `Client ID` and `Client Secret` from the GitHub OAuth app you just created.
    - Add `repo` to the `Scopes`
    ![Clerk Custom Credentials](https://github.com/user-attachments/assets/31d414e1-4e1e-4725-8649-ec1826c6e53e)
+</details>
 
+<details>
+<summary>Mailosaur</summary>
+
+1. Go to [mailosaur.com](https://mailosaur.com) and create an account.
+2. Create a new server and copy the Server ID.
+3. Go to your API settings and copy your API key.
+   - You'll need both the Server ID and API key for your environment variables:
+     - `MAILOSAUR_API_KEY`: Your API key
+     - `MAILOSAUR_SERVER_ID`: Your server ID
 </details>
 
 ### Running locally
