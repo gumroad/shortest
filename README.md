@@ -133,9 +133,9 @@ shortest.afterAll(async ({ page }) => {
 ### Running tests
 
 ```bash
-npx shortest                   # Run all tests
-npx shortest login.test.ts     # Run specific test
-npx shortest --headless        # Run in headless mode using cli
+pnpm shortest                   # Run all tests
+pnpm shortest login.test.ts     # Run specific test
+pnpm shortest --headless        # Run in headless mode using cli
 ```
 
 ### Examples
