@@ -230,7 +230,7 @@ You'll need to set up the following services for local development. If you're no
    ![Clerk App Login](https://github.com/user-attachments/assets/1de7aebc-8e9d-431a-ae13-af60635307a1)
 3. Once created, copy the environment variables to your `.env.local` file.
    ![Clerk Env Variables](https://github.com/user-attachments/assets/df3381e6-017a-4e01-8bd3-5793e5f5d31e)
-4. In the Clerk dashboard, disable the "Require the same device and browser" setting to ensure tests with mailosaur work properly.
+4. In the Clerk dashboard, disable the "Require the same device and browser" setting to ensure tests with Mailosaur work properly.
 
 </details>
 
