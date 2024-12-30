@@ -143,12 +143,12 @@ shortest.afterAll(async ({ page }) => {
 ### Running tests
 
 ```bash
-shortest                   # Run all tests
-shortest login.test.ts     # Run specific test
-shortest --headless        # Run in headless mode using cli
+pnpm shortest                   # Run all tests
+pnpm shortest login.test.ts     # Run specific test
+pnpm shortest --headless        # Run in headless mode using cli
 ```
 
-And you're done!
+You can find example tests in the [`examples`](./examples) directory.
 
 ### GitHub 2FA login setup
 
