@@ -2,10 +2,8 @@ name: Publish Package
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'packages/shortest/**'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
