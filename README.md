@@ -130,7 +130,7 @@ shortest.afterAll(async ({ page }) => {
 });
 ```
 
-### Chained Tests
+### Chaining tests
 
 Shortest supports flexible test chaining patterns:
 
