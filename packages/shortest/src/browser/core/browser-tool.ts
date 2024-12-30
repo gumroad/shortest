@@ -838,7 +838,6 @@ export class BrowserTool extends BaseBrowserTool {
           "placeholder",
           "aria-label",
           "role",
-          "href",
           "title",
           "alt",
           "d", // for <path> tags

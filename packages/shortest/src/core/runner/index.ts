@@ -448,6 +448,7 @@ export class TestRunner {
       throw new Error("No steps to execute running test in a normal mode");
     }
     for (const step of steps) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       if (
         step.action?.input.action === BrowserActionEnum.MouseMove &&
         // @ts-expect-error Interface and actual values differ
