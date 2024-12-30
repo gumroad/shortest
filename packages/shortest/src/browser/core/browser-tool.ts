@@ -754,4 +754,95 @@ export class BrowserTool extends BaseBrowserTool {
       if (trail) trail.style.display = "none";
     });
   }
+
+  /**
+   * Retrieves normalized component string by X and Y coordinates
+   * This is primarily used to determine change in UI
+   * Playwright currently does not support such functionality
+   * @see https://github.com/microsoft/playwright/issues/13273
+   */
+  async getNormalizedComponentStringByCoords(x: number, y: number) {
+    return await this.getPage().evaluate(
+      ({ x, y, allowedAttr }) => {
+        const elem = document.elementFromPoint(x, y);
+        if (elem) {
+          // todo: test func below
+          const clone = elem.cloneNode(true) as HTMLElement;
+
+          /**
+           * Gets deepest nested child node
+           * If several nodes are on the same depth, the first node would be returned
+           */
+          function getDeepestChildNode(element: Element): HTMLElement {
+            let deepestChild = element.cloneNode(true) as HTMLElement;
+            let maxDepth = 0;
+
+            function traverse(node: any, depth: number) {
+              if (depth > maxDepth) {
+                maxDepth = depth;
+                deepestChild = node;
+              }
+
+              Array.from(node.children).forEach((child) => {
+                traverse(child, depth + 1);
+              });
+            }
+
+            traverse(deepestChild, 0);
+            return deepestChild;
+          }
+
+          const deepestNode = getDeepestChildNode(clone);
+
+          // get several parents if present
+          const node = deepestNode.parentElement
+            ? deepestNode.parentElement.parentElement
+              ? deepestNode.parentElement.parentElement
+              : deepestNode.parentElement
+            : deepestNode;
+
+          /**
+           * Recursively delete attributes from Nodes
+           */
+          function cleanAttributesRecursively(
+            element: Element,
+            options: { exceptions: string[] },
+          ) {
+            Array.from(element.attributes).forEach((attr) => {
+              if (!options.exceptions.includes(attr.name)) {
+                element.removeAttribute(attr.name);
+              }
+            });
+
+            Array.from(element.children).forEach((child) => {
+              cleanAttributesRecursively(child, options);
+            });
+          }
+
+          cleanAttributesRecursively(node, {
+            exceptions: allowedAttr,
+          });
+
+          // trim and remove white spaces
+          return node.outerHTML.trim().replace(/\s+/g, " ");
+        } else {
+          return "";
+        }
+      },
+      {
+        x,
+        y,
+        allowedAttr: [
+          "type",
+          "name",
+          "placeholder",
+          "aria-label",
+          "role",
+          "title",
+          "alt",
+          "d", // for <path> tags
+        ],
+      },
+    );
+  }
 }
