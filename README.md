@@ -140,10 +140,7 @@ pnpm shortest --headless        # Run in headless mode using cli
 
 ### Examples
 
-You can find example tests in `examples/` directory.
-To run examples, you can use `pnpm shortest examples/github`
-
-And you're done!
+You can find example tests in the `examples` directory.
 
 ### GitHub 2FA login setup
 
