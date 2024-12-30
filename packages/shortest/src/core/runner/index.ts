@@ -258,7 +258,7 @@ export class TestRunner {
             }
           }
           return result;
-        } catch (error) {
+        } catch {
           // delete stale cached test entry
           await this.cache.delete(test);
           // reset window state

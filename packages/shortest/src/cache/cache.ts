@@ -131,7 +131,7 @@ export class BaseCache<T extends CacheEntry> {
       } else {
         this.logger.error("Cache", "Failed to delete: entry not found");
       }
-    } catch (error) {
+    } catch {
       this.logger.error("Cache", "Failed to delete");
     }
   }
