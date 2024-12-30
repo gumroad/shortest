@@ -52,7 +52,6 @@ export class AIClient {
 
         console.log(`Retry attempt ${attempts}/${maxRetries}`);
         await new Promise((r) => setTimeout(r, 5000 * attempts));
-        await new Promise((r) => setTimeout(r, 5000 * attempts));
       }
     }
   }
@@ -81,7 +80,6 @@ export class AIClient {
 
     while (true) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const response = await this.client.beta.messages.create({
