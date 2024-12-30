@@ -138,7 +138,7 @@ pnpm shortest login.test.ts     # Run specific test
 pnpm shortest --headless        # Run in headless mode using cli
 ```
 
-You can find example tests in the `examples` directory.
+You can find example tests in the [`examples`](./examples) directory.
 
 ### GitHub 2FA login setup
 
