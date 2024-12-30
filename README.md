@@ -141,7 +141,7 @@ pnpm shortest --headless        # Run in headless mode using cli
 ### Examples
 
 You can find example tests in `examples/` directory.
-To run examples, you can use `npx shortest examples/github`
+To run examples, you can use `pnpm shortest examples/github`
 
 And you're done!
 
