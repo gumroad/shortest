@@ -35,11 +35,14 @@ Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each
 echo ".shortest/" >> .gitignore
 ```
 
-If you installed shortest without `-g` flag, you can run tests as follows:
+Run tests:
+
 ```bash
-npx shortest    # for npm
-pnpm shortest   # for pnpm
-yarn shortest   # for yarn
+npm shortest
+# or
+pnpm shortest
+# or
+yarn shortest
 ```
 
 ### Quick start
