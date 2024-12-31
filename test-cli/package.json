@@ -10,6 +10,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@antiwork/shortest": "file:../packages/shortest/antiwork-shortest-0.0.5.tgz"
+    "@antiwork/shortest": "file:../packages/shortest/antiwork-shortest-0.1.1.tgz"
   }
 }

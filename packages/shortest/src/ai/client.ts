@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
 import { BrowserTool } from "../browser/core/browser-tool";
 import { AIConfig } from "../types/ai";
+import { CacheAction, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
 
@@ -64,6 +65,8 @@ export class AIClient {
     _toolOutputCallback?: (name: string, input: any) => void,
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+    // temp cache store
+    const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
 
     // Log the conversation
     if (this.debugMode) {
@@ -112,18 +115,59 @@ export class AIClient {
 
         // Check for tool use
         if (response.stop_reason === "tool_use") {
-          const toolResults = response.content
-            .filter((block) => block.type === "tool_use")
-            .map((block) => {
-              const toolBlock =
-                block as Anthropic.Beta.Messages.BetaToolUseBlock;
-              return {
-                toolBlock,
-                result: browserTool.execute(toolBlock.input as any),
-              };
-            });
+          const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
+            response.content.filter((block) => block.type === "tool_use");
+
+          const toolResults = toolBlocks.map((toolBlock) => {
+            return {
+              toolBlock,
+
+              result: browserTool.execute(toolBlock.input as any),
+            };
+          });
 
           const results = await Promise.all(toolResults.map((t) => t.result));
+
+          const getExtras = async (
+            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
+          ) => {
+            let extras: any = {};
+
+            // @ts-expect-error Incorrect interface on our side leads to this error
+            // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
+            if (toolBlock.input.coordinate) {
+              // @ts-expect-error
+              const [x, y] = toolBlock.input.coordinate;
+
+              const componentStr =
+                await browserTool.getNormalizedComponentStringByCoords(x, y);
+
+              extras = { componentStr };
+            }
+
+            return extras;
+          };
+
+          const newCacheSteps = await Promise.all(
+            toolBlocks.map(async (_toolBlock, i) => {
+              const extras = await getExtras(toolBlocks[i]);
+
+              return {
+                action: toolBlocks[i] as CacheAction,
+                reasoning: response.content.map(
+                  (block) => (block as any).text,
+                )[0],
+                result: results[i].output || null,
+                extras,
+                timestamp: Date.now(),
+              };
+            }),
+          );
+
+          pendingCache.steps = [
+            ...(pendingCache.steps || []),
+            ...(newCacheSteps || []),
+          ];
 
           // Log tool results
           if (this.debugMode) {
@@ -162,6 +206,7 @@ export class AIClient {
           return {
             messages,
             finalResponse: response,
+            pendingCache,
           };
         }
       } catch (error: any) {
