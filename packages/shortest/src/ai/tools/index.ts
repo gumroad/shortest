@@ -112,6 +112,10 @@ export const runBashCommand = async (command: string) => {
 
     return res;
   } catch (e) {
-    throw new Error(`Error running bash command: ${e}`);
+    // not throwing and returning the error message, because may be claude can update the command based on the error message
+    return {
+      message: "Error running the bash command",
+      error: e,
+    };
   }
 };
