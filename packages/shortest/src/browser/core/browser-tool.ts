@@ -852,7 +852,7 @@ export class BrowserTool extends BaseBrowserTool {
           "alt",
           "d", // for <path> tags
         ],
-      }
+      },
     );
   }
 }

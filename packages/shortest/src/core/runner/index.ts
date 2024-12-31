@@ -448,7 +448,7 @@ export class TestRunner {
 
     if (hasBashSteps) {
       throw new Error(
-        "Tests having bash commands are not supported in cached mode, running test in normal mode"
+        "Tests having bash commands are not supported in cached mode, running test in normal mode",
       );
     }
 
