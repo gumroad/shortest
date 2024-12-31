@@ -32,8 +32,6 @@ import { GitHubTool } from "../integrations/github";
 import { MailosaurTool } from "../integrations/mailosaur";
 import { BrowserManager } from "../manager";
 import { BaseBrowserTool, ToolError } from "./index";
-import { Logger } from "../../utils/logger";
-import { calculateTimeMsDiff } from "../../utils/time";
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -855,9 +853,8 @@ export class BrowserTool extends BaseBrowserTool {
    * - No mutations are detected for 1 second (e.g new elements such as modals, popups, etc.)
    */
   public async waitForStableDOM(): Promise<void> {
-    await this.waitForDOMContentLoaded();
-
     try {
+      await this.waitForDOMContentLoaded();
       this.page.evaluate(() => {
         return new Promise<void>((resolve) => {
           const createTimeout = () => {
@@ -882,6 +879,7 @@ export class BrowserTool extends BaseBrowserTool {
       });
     } catch (error) {
       console.log("Failed to wait for stable DOM:", error);
+      throw error;
     }
   }
 
@@ -914,6 +912,7 @@ export class BrowserTool extends BaseBrowserTool {
       ]);
     } catch (error) {
       console.error("Failed to wait for DOM Content Loaded:", error);
+      throw error;
     } finally {
       clearTimeout(timeoutHandle!);
     }
