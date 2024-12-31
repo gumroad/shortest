@@ -264,6 +264,14 @@ export class TestRunner {
           // reset window state
           const page = browserTool.getPage();
           await page.goto(initialState.metadata?.window_info?.url!);
+
+          // print that the cache run failed due to some reason,
+          console.log(
+            pc.yellow(
+              `Cache run failed for test ${hashData(test)}, running test in normal mode`,
+            ),
+          );
+
           await this.executeTest(test, context, {
             noCache: true,
           });
