@@ -1,7 +1,3 @@
-import { exec } from "child_process";
-import { promisify } from "util";
-import { ToolResult } from "../../types";
-
 export const AITools = [
   {
     type: "computer_20241022",
@@ -113,21 +109,3 @@ export const AITools = [
 ] as const;
 
 export type AITool = (typeof AITools)[number]["name"];
-
-export const runBashCommand = async (command: string): Promise<ToolResult> => {
-  try {
-    const res = await promisify(exec)(command);
-
-    return {
-      output: JSON.stringify(res),
-    };
-  } catch (e) {
-    // not throwing and returning the error message, because may be claude can update the command based on the error message
-    return {
-      output: JSON.stringify({
-      message: "Error running the bash command",
-      error: e,
-      }),
-    };
-  }
-};

@@ -537,6 +537,14 @@ export class BrowserTool extends BaseBrowserTool {
           }
         }
 
+        case "bash": {
+          if (!input.command) {
+            throw new ToolError("Command required for bash action");
+          }
+
+          return await runBashCommand(input.command);
+        }
+
         default:
           throw new ToolError(`Unknown action: ${input.action}`);
       }
@@ -842,7 +850,25 @@ export class BrowserTool extends BaseBrowserTool {
           "alt",
           "d", // for <path> tags
         ],
-      },
+      }
     );
   }
 }
+
+export const runBashCommand = async (command: string): Promise<ToolResult> => {
+  try {
+    const res = await promisify(exec)(command);
+
+    return {
+      output: JSON.stringify(res),
+    };
+  } catch (e) {
+    // not throwing and returning the error message, because may be claude can update the command based on the error message
+    return {
+      output: JSON.stringify({
+        message: "Error running the bash command",
+        error: e,
+      }),
+    };
+  }
+};

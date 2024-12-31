@@ -130,7 +130,10 @@ export class AIClient {
             ) {
               return {
                 toolBlock,
-                result: runBashCommand(input.command),
+                result: browserTool.execute({
+                  action: "bash",
+                  command: input.command,
+                }),
               };
             }
 
