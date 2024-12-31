@@ -109,7 +109,7 @@ async function testBrowser() {
                           text: result.output || "",
                         },
                       ],
-                }) as Anthropic.Beta.Messages.BetaToolResultBlockParam
+                }) as Anthropic.Beta.Messages.BetaToolResultBlockParam,
             ),
           });
 
