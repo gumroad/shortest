@@ -2,7 +2,7 @@ import type { Expect } from "expect";
 import type { Page, Browser, APIRequest, APIRequestContext } from "playwright";
 import type * as playwright from "playwright";
 import type { ShortestConfig } from "./dist/types/config";
-import type { TestAPI, TestContext } from "./dist/types/test";
+import type { TestContext } from "./dist/types/test";
 
 declare global {
   const expect: Expect;
