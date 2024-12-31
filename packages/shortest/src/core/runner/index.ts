@@ -444,6 +444,14 @@ export class TestRunner {
           step.action?.input.action !== BrowserActionEnum.Screenshot.toString(),
       );
 
+    const hasBashSteps = steps?.some((step) => step.action?.name === "bash");
+
+    if (hasBashSteps) {
+      throw new Error(
+        "Tests having bash commands are not supported in cached mode, running test in normal mode"
+      );
+    }
+
     if (!steps) {
       throw new Error("No steps to execute running test in a normal mode");
     }

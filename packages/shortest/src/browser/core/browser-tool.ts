@@ -7,6 +7,7 @@ declare global {
   }
 }
 
+import { exec } from "child_process";
 import {
   writeFileSync,
   mkdirSync,
@@ -15,6 +16,7 @@ import {
   unlinkSync,
 } from "fs";
 import { join } from "path";
+import { promisify } from "util";
 import pc from "picocolors";
 import { Page } from "playwright";
 import { initialize, getConfig } from "../../index";

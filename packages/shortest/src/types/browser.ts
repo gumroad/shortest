@@ -30,6 +30,7 @@ export enum BrowserActionEnum {
   Navigate = "navigate",
   Sleep = "sleep",
   CheckMail = "check_email",
+  Bash = "bash",
 }
 
 export type BrowserAction = `${BrowserActionEnum}`;
@@ -50,6 +51,7 @@ export interface ActionInput {
   url?: string;
   duration?: number;
   email?: string;
+  command?: string;
 }
 
 export interface ToolResult {
