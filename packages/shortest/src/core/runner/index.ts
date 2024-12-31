@@ -34,7 +34,7 @@ export class TestRunner {
     exitOnSuccess = true,
     forceHeadless = false,
     targetUrl?: string,
-    debugAI = false,
+    debugAI = false
   ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
@@ -99,7 +99,7 @@ export class TestRunner {
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found in directories: ${testDirs.join(", ")}`,
+        `No test files found in directories: ${testDirs.join(", ")}`
       );
       process.exit(1);
     }
@@ -108,7 +108,7 @@ export class TestRunner {
   }
 
   private async createTestContext(
-    context: BrowserContext,
+    context: BrowserContext
   ): Promise<TestContext> {
     if (!this.testContext) {
       // Create a properly typed playwright object
@@ -181,7 +181,7 @@ export class TestRunner {
         maxMessages: 10,
         debug: this.debugAI,
       },
-      this.debugAI,
+      this.debugAI
     );
 
     // First get page state
@@ -201,7 +201,9 @@ export class TestRunner {
             "\nExpect:",
             ...test.expectations.map(
               (exp, i) =>
-                `${i + 1}. ${exp.description}${exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"}`,
+                `${i + 1}. ${exp.description}${
+                  exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"
+                }`
             ),
           ]
         : []),
@@ -220,13 +222,25 @@ export class TestRunner {
       throw new Error("AI processing failed: no result returned");
     }
 
+    // Execute before function if present
+    if (test.beforeFn) {
+      try {
+        await test.beforeFn(testContext);
+      } catch (error) {
+        return {
+          result: "fail" as const,
+          reason: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
+
     // Parse AI result first
     const finalMessage = result.finalResponse.content.find(
       (block) =>
         block.type === "text" &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
-          '"result":',
-        ),
+          '"result":'
+        )
     );
 
     if (!finalMessage || finalMessage.type !== "text") {
@@ -251,10 +265,12 @@ export class TestRunner {
           result: "fail" as const,
           reason:
             aiResult.result === "fail"
-              ? `AI: ${aiResult.reason}, After: ${error instanceof Error ? error.message : String(error)}`
+              ? `AI: ${aiResult.reason}, After: ${
+                  error instanceof Error ? error.message : String(error)
+                }`
               : error instanceof Error
-                ? error.message
-                : String(error),
+              ? error.message
+              : String(error),
         };
       }
     }
@@ -293,7 +309,7 @@ export class TestRunner {
           this.logger.reportTest(
             test.name,
             result.result === "pass" ? "passed" : "failed",
-            result.result === "fail" ? new Error(result.reason) : undefined,
+            result.result === "fail" ? new Error(result.reason) : undefined
           );
 
           // Execute afterEach hooks with shared context
@@ -329,7 +345,7 @@ export class TestRunner {
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found matching: ${pattern}`,
+        `No test files found matching: ${pattern}`
       );
       process.exit(1);
     }
