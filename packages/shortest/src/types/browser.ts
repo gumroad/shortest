@@ -28,6 +28,7 @@ export type BrowserAction =
   | "key"
   | "run_callback"
   | "navigate"
+  | "upload_file"
   | "sleep"
   | "check_email";
 
@@ -47,6 +48,7 @@ export interface ActionInput {
   url?: string;
   duration?: number;
   email?: string;
+  filepath?: string;
 }
 
 export interface ToolResult {
