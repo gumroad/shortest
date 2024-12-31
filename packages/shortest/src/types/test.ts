@@ -21,7 +21,7 @@ export class AssertionCallbackError extends CallbackError {
   constructor(
     message: string,
     public actual?: any,
-    public expected?: any,
+    public expected?: any
   ) {
     super(message);
     this.name = "AssertionCallbackError";
@@ -54,7 +54,7 @@ export interface TestFunction {
     fn?: (context: TestContext) => Promise<void>;
     directExecution?: boolean;
   }[];
-  beforeFn?: (context: TestContext) => Promise<void>;
+  beforeFn?: (context: TestContext) => void | Promise<void>;
   afterFn?: (context: TestContext) => void | Promise<void>;
   directExecution?: boolean;
 }
@@ -64,13 +64,14 @@ export type TestChain = {
   expect(description: string): TestChain;
   expect(
     description: string,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ): TestChain;
   expect(
     description: string,
     payload?: any,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ): TestChain;
+  before(fn: (context: TestContext) => void | Promise<void>): TestChain;
   after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
 
@@ -81,7 +82,7 @@ export type TestAPI = {
   (
     name: string,
     payload?: any,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ): TestChain;
 
   beforeAll(fn: (context: TestContext) => Promise<void>): void;
