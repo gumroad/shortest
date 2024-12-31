@@ -133,6 +133,30 @@ shortest.afterAll(async ({ page }) => {
 });
 ```
 
+### Chaining tests
+
+Shortest supports flexible test chaining patterns:
+
+```typescript
+// Sequential test chain
+shortest([
+  "user can login with email and password",
+  "user can modify their account-level refund policy"
+])
+
+// Reusable test flows
+const loginAsLawyer = "login as lawyer with valid credentials"
+const loginAsContractor = "login as contractor with valid credentials"
+const allAppActions = [
+  "send invoice to company",
+  "view invoices"
+]
+
+// Combine flows with spread operator
+shortest([loginAsLawyer, ...allAppActions])
+shortest([loginAsContractor, ...allAppActions])
+```
+
 ### Running tests
 
 ```bash
