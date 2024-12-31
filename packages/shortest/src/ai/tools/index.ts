@@ -105,3 +105,13 @@ export const AITools = [
 ] as const;
 
 export type AITool = (typeof AITools)[number]["name"];
+
+export const runBashCommand = async (command: string) => {
+  try {
+    const res = await promisify(exec)(command);
+
+    return res;
+  } catch (e) {
+    throw new Error(`Error running bash command: ${e}`);
+  }
+};

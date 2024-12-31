@@ -119,6 +119,21 @@ export class AIClient {
             response.content.filter((block) => block.type === "tool_use");
 
           const toolResults = toolBlocks.map((toolBlock) => {
+            const isBash = toolBlock.name === "bash";
+            const input = toolBlock.input;
+
+            if (
+              isBash &&
+              input instanceof Object &&
+              "command" in input &&
+              typeof input.command === "string"
+            ) {
+              return {
+                toolBlock,
+                result: runBashCommand(input.command),
+              };
+            }
+
             return {
               toolBlock,
 
