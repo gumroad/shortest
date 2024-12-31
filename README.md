@@ -38,7 +38,7 @@ echo ".shortest/" >> .gitignore
 Run tests:
 
 ```bash
-npm shortest
+npx shortest
 # or
 pnpm shortest
 # or
