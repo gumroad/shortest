@@ -1,3 +1,6 @@
+import { exec } from "child_process";
+import { promisify } from "util";
+
 export const AITools = [
   {
     type: "computer_20241022",
@@ -101,6 +104,10 @@ export const AITools = [
       },
       required: ["action", "url"],
     },
+  },
+  {
+    type: "bash_20241022",
+    name: "bash",
   },
 ] as const;
 
