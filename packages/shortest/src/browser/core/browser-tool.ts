@@ -32,6 +32,8 @@ import { GitHubTool } from "../integrations/github";
 import { MailosaurTool } from "../integrations/mailosaur";
 import { BrowserManager } from "../manager";
 import { BaseBrowserTool, ToolError } from "./index";
+import { Logger } from "../../utils/logger";
+import { calculateTimeMsDiff } from "../../utils/time";
 
 export class BrowserTool extends BaseBrowserTool {
   private page: Page;
@@ -52,7 +54,7 @@ export class BrowserTool extends BaseBrowserTool {
   constructor(
     page: Page,
     browserManager: BrowserManager,
-    config: BrowserToolConfig,
+    config: BrowserToolConfig
   ) {
     super(config);
     this.page = page;
@@ -78,7 +80,7 @@ export class BrowserTool extends BaseBrowserTool {
         } catch (error) {
           console.warn(
             `Retry ${i + 1}/3: Cursor initialization failed:`,
-            error,
+            error
           );
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
@@ -258,7 +260,7 @@ export class BrowserTool extends BaseBrowserTool {
           await actions.dragMouse(
             this.page,
             input.coordinates[0],
-            input.coordinates[1],
+            input.coordinates[1]
           );
           output = `Dragged mouse to (${input.coordinates[0]}, ${input.coordinates[1]})`;
           break;
@@ -340,7 +342,7 @@ export class BrowserTool extends BaseBrowserTool {
         case "run_callback": {
           if (!this.testContext?.currentTest) {
             throw new ToolError(
-              "No test context available for callback execution",
+              "No test context available for callback execution"
             );
           }
 
@@ -378,11 +380,11 @@ export class BrowserTool extends BaseBrowserTool {
               throw new AssertionCallbackError(
                 assertionError.message,
                 assertionError.matcherResult.actual,
-                assertionError.matcherResult.expected,
+                assertionError.matcherResult.expected
               );
             }
             throw new CallbackError(
-              error instanceof Error ? error.message : String(error),
+              error instanceof Error ? error.message : String(error)
             );
           }
         }
@@ -441,7 +443,7 @@ export class BrowserTool extends BaseBrowserTool {
           // Enforce maximum duration
           if (duration > maxDuration) {
             console.warn(
-              `Requested sleep duration ${duration}ms exceeds maximum of ${maxDuration}ms. Using maximum.`,
+              `Requested sleep duration ${duration}ms exceeds maximum of ${maxDuration}ms. Using maximum.`
             );
             duration = maxDuration;
           }
@@ -449,7 +451,7 @@ export class BrowserTool extends BaseBrowserTool {
           // Convert to seconds for logging
           const seconds = Math.round(duration / 1000);
           console.log(
-            `⏳ Waiting for ${seconds} second${seconds !== 1 ? "s" : ""}...`,
+            `⏳ Waiting for ${seconds} second${seconds !== 1 ? "s" : ""}...`
           );
 
           await this.page.waitForTimeout(duration);
@@ -675,7 +677,7 @@ export class BrowserTool extends BaseBrowserTool {
   // Selector-based methods
   public async waitForSelector(
     selector: string,
-    options?: { timeout: number },
+    options?: { timeout: number }
   ): Promise<void> {
     await this.page.waitForSelector(selector, options);
   }
@@ -806,7 +808,7 @@ export class BrowserTool extends BaseBrowserTool {
            */
           function cleanAttributesRecursively(
             element: Element,
-            options: { exceptions: string[] },
+            options: { exceptions: string[] }
           ) {
             Array.from(element.attributes).forEach((attr) => {
               if (!options.exceptions.includes(attr.name)) {
@@ -842,7 +844,78 @@ export class BrowserTool extends BaseBrowserTool {
           "alt",
           "d", // for <path> tags
         ],
-      },
+      }
     );
+  }
+
+  /**
+   * Waits for DOM to stabilize
+   * DOM is considered stabilized when:
+   * - DOMContentLoaded is fired
+   * - No mutations are detected for 1 second (e.g new elements such as modals, popups, etc.)
+   */
+  public async waitForStableDOM(): Promise<void> {
+    await this.waitForDOMContentLoaded();
+
+    try {
+      this.page.evaluate(() => {
+        return new Promise<void>((resolve) => {
+          const createTimeout = () => {
+            return setTimeout(() => {
+              resolve();
+              observer.disconnect();
+            }, 1000);
+          };
+
+          let timeout = createTimeout();
+
+          const observer = new MutationObserver(() => {
+            clearTimeout(timeout);
+            timeout = createTimeout();
+          });
+
+          observer.observe(window.document.body, {
+            childList: true,
+            subtree: true,
+          });
+        });
+      });
+    } catch (error) {
+      console.log("Failed to wait for stable DOM:", error);
+    }
+  }
+
+  /**
+   * DOM is considered loaded when DOMContentLoaded is fired
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Document/DOMContentLoaded_event
+   */
+  private async waitForDOMContentLoaded(
+    options: { timeout: number } = { timeout: 1000 }
+  ): Promise<void> {
+    let timeoutHandle: NodeJS.Timeout;
+
+    try {
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(
+            new Error(
+              `Timed out after ${options.timeout}ms waiting for the DOM to stabilize.`
+            )
+          );
+        }, options.timeout);
+      });
+
+      await Promise.race([
+        this.page.waitForLoadState("domcontentloaded", {
+          timeout: options.timeout,
+        }),
+        this.page.waitForSelector("body"),
+        timeoutPromise,
+      ]);
+    } catch (error) {
+      console.error("Failed to wait for DOM Content Loaded:", error);
+    } finally {
+      clearTimeout(timeoutHandle!);
+    }
   }
 }

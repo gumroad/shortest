@@ -40,7 +40,7 @@ async function testBrowser() {
 
     while (true) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await browserTool.waitForStableDOM();
 
         const response = await anthropic.beta.messages.create({
           model: "claude-3-5-sonnet-20241022",
@@ -109,7 +109,7 @@ async function testBrowser() {
                           text: result.output || "",
                         },
                       ],
-                }) as Anthropic.Beta.Messages.BetaToolResultBlockParam,
+                }) as Anthropic.Beta.Messages.BetaToolResultBlockParam
             ),
           });
 

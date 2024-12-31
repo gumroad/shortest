@@ -15,7 +15,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -31,9 +31,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -44,7 +44,7 @@ export class AIClient {
           prompt,
           browserTool,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -60,9 +60,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -80,7 +80,7 @@ export class AIClient {
 
     while (true) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await browserTool.waitForStableDOM();
 
         const response = await this.client.beta.messages.create({
           model: this.model,
@@ -129,7 +129,7 @@ export class AIClient {
           const results = await Promise.all(toolResults.map((t) => t.result));
 
           const getExtras = async (
-            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
+            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock
           ) => {
             let extras: any = {};
 
@@ -155,13 +155,13 @@ export class AIClient {
               return {
                 action: toolBlocks[i] as CacheAction,
                 reasoning: response.content.map(
-                  (block) => (block as any).text,
+                  (block) => (block as any).text
                 )[0],
                 result: results[i].output || null,
                 extras,
                 timestamp: Date.now(),
               };
-            }),
+            })
           );
 
           pendingCache.steps = [
