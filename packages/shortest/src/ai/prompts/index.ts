@@ -52,10 +52,10 @@ IMPORTANT GLOBAL RULES:
    - You MUST pass the email address that is given to you to the tool as a parameter otherwise it will fail.
    - If no email address is given to you for this test, you should fail the test.
 
-9. **Bash Commands**:
-   - you have access to a bash tool to run bash commands
-   - only use tools that are usually available in a bash terminal, unless explicitly stated otherwise by the prompt
-   - make sure to consider the OS you are working on when generating the bash commands, the OS you are currently working on is: ${platform}
+9. **Curl Commands**:
+   - you have access to a bash tool to run curl commands
+   - only run curl commands using the bash tool, do not run any other bash commands
+   - make sure to consider the OS you are working on when generating the curl commands, the OS you are currently working on is: ${platform}
 
 Your task is to:
 1. Execute browser actions to validate test cases
