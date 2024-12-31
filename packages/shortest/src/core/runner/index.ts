@@ -457,7 +457,7 @@ export class TestRunner {
       );
 
     if (!steps) {
-      throw new Error("No steps to execute running test in a normal mode");
+      throw new Error("No steps to execute, running test in normal mode");
     }
     for (const step of steps) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -473,10 +473,8 @@ export class TestRunner {
 
         if (componentStr !== step.extras.componentStr) {
           throw new Error(
-            "Componnet UI are different, running test in a normal mode",
+            "Component UI elements are different, running test in normal mode",
           );
-        } else {
-          // fallback
         }
       }
       if (step.action?.input) {

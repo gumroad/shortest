@@ -38,7 +38,7 @@ ${pc.bold("Options:")}
   --debug-ai          Show AI conversation and decision process
   --target=<url>      Set target URL for tests (default: http://localhost:3000)
   --github-code       Generate GitHub 2FA code for authentication
-  --no-cache          Disable cashing
+  --no-cache          Disable caching (storing browser actions between tests)
 
 ${pc.bold("Authentication:")}
   --secret=<key>      GitHub TOTP secret key (or use .env.local)
