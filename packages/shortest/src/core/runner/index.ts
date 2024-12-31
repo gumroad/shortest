@@ -113,7 +113,7 @@ export class TestRunner {
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found in directories: ${testDirs.join(", ")}`
+        `No test files found in directories: ${testDirs.join(", ")}`,
       );
       process.exit(1);
     }
@@ -122,7 +122,7 @@ export class TestRunner {
   }
 
   private async createTestContext(
-    context: BrowserContext
+    context: BrowserContext,
   ): Promise<TestContext> {
     if (!this.testContext) {
       // Create a properly typed playwright object
@@ -199,7 +199,7 @@ export class TestRunner {
         maxMessages: 10,
         debug: this.debugAI,
       },
-      this.debugAI
+      this.debugAI,
     );
 
     // First get page state
@@ -295,8 +295,8 @@ export class TestRunner {
       (block) =>
         block.type === "text" &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
-          '"result":'
-        )
+          '"result":',
+        ),
     );
 
     if (!finalMessage || finalMessage.type !== "text") {
@@ -325,8 +325,8 @@ export class TestRunner {
                   error instanceof Error ? error.message : String(error)
                 }`
               : error instanceof Error
-              ? error.message
-              : String(error),
+                ? error.message
+                : String(error),
         };
       }
     }
@@ -369,7 +369,7 @@ export class TestRunner {
           this.logger.reportTest(
             test.name,
             result.result === "pass" ? "passed" : "failed",
-            result.result === "fail" ? new Error(result.reason) : undefined
+            result.result === "fail" ? new Error(result.reason) : undefined,
           );
 
           // Execute afterEach hooks with shared context
@@ -405,7 +405,7 @@ export class TestRunner {
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found matching: ${pattern}`
+        `No test files found matching: ${pattern}`,
       );
       process.exit(1);
     }
