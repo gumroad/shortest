@@ -3,6 +3,16 @@ export interface APIRequest extends RequestInit {
    * Target URL for the request
    */
   url?: string;
+
+  /**
+   * Query parameters to be sent with the URL
+   */
+  params?: URLSearchParams | string;
+
+  /**
+   * Data to be sent with the request
+   */
+  data?: string;
 }
 
 export interface APIRequestConfig {
@@ -18,7 +28,6 @@ export interface APIRequestConfig {
 
   /**
    * Maximum time in milliseconds to wait for the response
-   * @default 30000
    */
   timeout: number;
 
@@ -48,6 +57,14 @@ export interface SessionStorageState {
 export interface APIFetchConfig {
   /**
    * Maximum number of retries to attempt
+   * @default 0
    */
   maxRetries: number;
+
+  /**
+   * Whether to ignore HTTPS errors when sending network requests
+   * This will override the global setting in the APIRequestConfig
+   * @default false
+   */
+  ignoreHTTPSErrors: boolean;
 }
