@@ -12,7 +12,6 @@ export class BashTool {
         try {
           // parse if output is JSON
           resolve(JSON.parse(stdout));
-          console.log({ stdout });
         } catch {
           console.warn(`Non-JSON output returned: ${stdout.trim()}`);
           // otherwise return as is
