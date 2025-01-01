@@ -6,39 +6,22 @@ const req = new APIRequest({
   extraHTTPHeaders: {
     "Content-Type": "application/json",
   },
-  timeout: 50000,
 });
 
 shortest(
-  "Test 1: Ensure the request without a bearer token returns a message indicating the absence of the token",
-  req.fetch(
-    {
-      url: "/assert-bearer",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ flagged: "false" }),
-    },
-    {
-      maxRetries: 3,
-    },
-  ),
+  "Ensure the request without a bearer token returns a message indicating the absence of the token",
+  req.fetch({
+    url: "/assert-bearer",
+    method: "POST",
+    body: JSON.stringify({ flagged: "false" }),
+  })
 );
 
 shortest(
-  `Test 2: Bearer token is ${ALLOWED_TEST_BEARER}. Ensure the request with a valid bearer token returns request body`,
-  req.fetch(
-    {
-      url: "/assert-bearer",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ flagged: "true" }),
-    },
-    {
-      maxRetries: 3,
-    },
-  ),
+  `Bearer token is ${ALLOWED_TEST_BEARER}. Ensure the request with a valid bearer token returns request body`,
+  req.fetch({
+    url: "/assert-bearer",
+    method: "POST",
+    body: JSON.stringify({ flagged: "true" }),
+  })
 );

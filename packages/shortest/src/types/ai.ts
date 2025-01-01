@@ -22,15 +22,19 @@ export interface AIMessageContent {
   text?: string;
   tool_use_id?: string;
 }
+namespace RequestTypes {
+  export interface Bash {
+    command: string;
+  }
 
-export interface LLMResponseBash {
-  command: string;
+  export interface Computer {
+    input: ActionInput;
+  }
+
+  export interface ToolRequest<T extends Bash | Computer> {
+    input: T extends Bash ? Bash : ActionInput;
+  }
 }
 
-export interface LLMResponseComputer {
-  input: ActionInput;
-}
-
-export interface LLMResponse<T> {
-  input: T extends LLMResponseBash ? LLMResponseBash : ActionInput;
-}
+export type RequestBash = RequestTypes.ToolRequest<RequestTypes.Bash>;
+export type RequestComputer = RequestTypes.ToolRequest<RequestTypes.Computer>;

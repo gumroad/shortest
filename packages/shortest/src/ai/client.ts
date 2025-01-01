@@ -3,12 +3,7 @@ import pc from "picocolors";
 import { BashTool } from "../browser/core/bash-tool";
 import { BrowserTool } from "../browser/core/browser-tool";
 import { ToolResult } from "../types";
-import {
-  AIConfig,
-  LLMResponse,
-  LLMResponseBash,
-  LLMResponseComputer,
-} from "../types/ai";
+import { AIConfig, RequestBash, RequestComputer } from "../types/ai";
 import { CacheAction, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
@@ -22,7 +17,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -38,9 +33,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -51,7 +46,7 @@ export class AIClient {
           prompt,
           browserTool,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -67,9 +62,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -123,7 +118,7 @@ export class AIClient {
 
         // Collect executable tool actions
         const toolRequests = response.content.filter(
-          (block) => block.type === "tool_use",
+          (block) => block.type === "tool_use"
         ) as Anthropic.Beta.Messages.BetaToolUseBlock[];
 
         if (toolRequests.length > 0) {
@@ -133,18 +128,17 @@ export class AIClient {
                 case "bash":
                   try {
                     const toolResult = await new BashTool().execute(
-                      (toolRequest as LLMResponse<LLMResponseBash>).input
-                        .command,
+                      (toolRequest as RequestBash).input.command
                     );
                     return { toolRequest, toolResult };
                   } catch (error) {
                     console.error("Error executing bash command:", error);
-                    return null;
+                    throw error;
                   }
                 default:
                   try {
                     const toolResult = await browserTool.execute(
-                      (toolRequest as LLMResponse<LLMResponseComputer>).input,
+                      (toolRequest as RequestComputer).input
                     );
 
                     let extras: any = {};
@@ -154,7 +148,7 @@ export class AIClient {
                       const componentStr =
                         await browserTool.getNormalizedComponentStringByCoords(
                           x,
-                          y,
+                          y
                         );
                       extras = { componentStr };
                     }
@@ -174,10 +168,10 @@ export class AIClient {
                     return { toolRequest, toolResult };
                   } catch (error) {
                     console.error("Error executing browser tool:", error);
-                    return null;
+                    throw error;
                   }
               }
-            }),
+            })
           );
 
           toolResults.forEach((result) => {
