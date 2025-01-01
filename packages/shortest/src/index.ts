@@ -54,7 +54,7 @@ function validateConfig(config: Partial<ShortestConfig>) {
   if (missingFields.length > 0) {
     throw new Error(
       `Missing required fields in shortest.config.ts:\n` +
-        missingFields.map((field) => `  - ${field}`).join("\n")
+        missingFields.map((field) => `  - ${field}`).join("\n"),
     );
   }
 }
@@ -99,7 +99,7 @@ export async function initialize() {
       "  - headless: boolean\n" +
       "  - baseUrl: string\n" +
       "  - testDir: string | string[]\n" +
-      "  - anthropicKey: string"
+      "  - anthropicKey: string",
   );
 }
 
@@ -113,7 +113,7 @@ export function getConfig(): ShortestConfig {
 function createTestChain(
   nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
   payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
-  fn?: (context: TestContext) => Promise<void>
+  fn?: (context: TestContext) => Promise<void>,
 ): TestChain {
   const registry = global.__shortest__.registry;
 
@@ -172,7 +172,7 @@ function createTestChain(
     expect(
       descriptionOrFn: string | ((context: TestContext) => Promise<void>),
       payloadOrFn?: any,
-      fn?: (context: TestContext) => Promise<void>
+      fn?: (context: TestContext) => Promise<void>,
     ) {
       // Handle direct execution for expect
       if (typeof descriptionOrFn === "function") {
@@ -206,7 +206,7 @@ export const test: TestAPI = Object.assign(
   (
     nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
     payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
-    fn?: (context: TestContext) => Promise<void>
+    fn?: (context: TestContext) => Promise<void>,
   ) => createTestChain(nameOrFn, payloadOrFn, fn),
   {
     beforeAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
@@ -225,7 +225,7 @@ export const test: TestAPI = Object.assign(
       const hook = typeof nameOrFn === "function" ? nameOrFn : undefined;
       if (hook) global.__shortest__.registry.afterEachFns.push(hook);
     },
-  }
+  },
 );
 
 export const shortest: TestAPI = test;
