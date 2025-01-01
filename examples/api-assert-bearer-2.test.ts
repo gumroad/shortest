@@ -22,8 +22,8 @@ shortest(
     },
     {
       maxRetries: 3,
-    }
-  )
+    },
+  ),
 );
 
 shortest(
@@ -39,6 +39,6 @@ shortest(
     },
     {
       maxRetries: 3,
-    }
-  )
+    },
+  ),
 );
