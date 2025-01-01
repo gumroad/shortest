@@ -121,6 +121,7 @@ export class AIClient {
         });
 
         // Get executable tool
+        // @note We will only have one executable tool per response if its stop_reason is tool_use
         const executable = response.content.find(
           (block) => block.type === "tool_use"
         );
@@ -133,6 +134,8 @@ export class AIClient {
                   (executable as unknown as LLMResponse<LLMResponseBash>).input
                     .command
                 );
+
+                console.log({ result });
 
                 messages.push({
                   role: "user",
