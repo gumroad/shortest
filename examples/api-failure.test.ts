@@ -13,6 +13,6 @@ shortest(
     {},
     {
       maxRetries: 5,
-    }
-  )
+    },
+  ),
 );
