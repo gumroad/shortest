@@ -8,13 +8,13 @@ shortest(
     { url: "http://invalid.url.test" },
     {
       maxRetries: 5,
-    }
-  )
+    },
+  ),
 );
 
 shortest(
   "Ensure the request fails due to SSL sertificate error",
-  req.fetch({ url: "https://secure.donauversicherung.at" })
+  req.fetch({ url: "https://secure.donauversicherung.at" }),
 );
 
 shortest(
@@ -25,6 +25,6 @@ shortest(
     },
     {
       ignoreHTTPSErrors: true,
-    }
-  )
+    },
+  ),
 );

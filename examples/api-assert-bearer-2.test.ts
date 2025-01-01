@@ -14,7 +14,7 @@ shortest(
     url: "/assert-bearer",
     method: "POST",
     body: JSON.stringify({ flagged: "false" }),
-  })
+  }),
 );
 
 shortest(
@@ -23,5 +23,5 @@ shortest(
     url: "/assert-bearer",
     method: "POST",
     body: JSON.stringify({ flagged: "true" }),
-  })
+  }),
 );
