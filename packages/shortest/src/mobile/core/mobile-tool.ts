@@ -28,8 +28,12 @@ export class MobileTool {
     await actions.scroll(this.driver, direction, amount)
   }
 
-  async swipe(direction: 'left' | 'right' | 'up' | 'down', element?: MobileElement): Promise<void> {
-    await actions.swipe(this.driver, direction, element)
+  async swipe(
+    direction: 'left' | 'right' | 'up' | 'down',
+    startPercentage: number = 0.8,
+    endPercentage: number = 0.2
+  ): Promise<void> {
+    await actions.swipe(this.driver, direction, startPercentage, endPercentage)
   }
 
   async longPress(element: MobileElement, duration?: number): Promise<void> {

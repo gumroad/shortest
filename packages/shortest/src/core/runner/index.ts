@@ -389,8 +389,8 @@ export class TestRunner {
           const result = await this.executeTest(test, context);
           this.logger.reportTest(
             test.name,
-            result.result === "pass" ? "passed" : "failed",
-            result.result === "fail" ? new Error(result.reason) : undefined,
+            result?.result === "pass" ? "passed" : "failed",
+            result?.result === "fail" ? new Error(result?.reason ?? 'Test failed') : undefined,
           );
 
           // Execute afterEach hooks with shared context

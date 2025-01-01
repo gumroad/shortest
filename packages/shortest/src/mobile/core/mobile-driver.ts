@@ -2,6 +2,7 @@ import { MobileRunnerConfig } from '../../types'
 import { UIAutomatorDriver } from './drivers/uiautomator-driver'
 import { XCUITestDriver } from './drivers/xcuitest-driver'
 import { BaseMobileDriver } from './drivers/base-driver'
+import type { TouchAction } from 'webdriverio'
 
 export interface MobileElement {
   id: string
@@ -47,5 +48,13 @@ export class MobileDriver {
 
   async quit(): Promise<void> {
     await this.driver.quit()
+  }
+
+  async getWindowSize(): Promise<{ width: number; height: number }> {
+    return await this.driver.getWindowSize()
+  }
+
+  async performGesture(gesture: TouchAction[]): Promise<void> {
+    await this.driver.performGesture(gesture)
   }
 } 

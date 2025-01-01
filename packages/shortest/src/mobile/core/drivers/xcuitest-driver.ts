@@ -1,4 +1,4 @@
-import { remote, Browser } from 'webdriverio'
+import { remote, Browser, TouchAction } from 'webdriverio'
 import { AbstractMobileDriver } from './base-driver'
 import { MobileElement } from '../mobile-driver'
 import { MobileRunnerConfig } from '../../../types'
@@ -121,5 +121,13 @@ export class XCUITestDriver extends AbstractMobileDriver {
       await this.driver.deleteSession()
       this.driver = null
     }
+  }
+
+  async getWindowSize(): Promise<{ width: number; height: number }> {
+    return await this.driver!.getWindowSize()
+  }
+
+  async performGesture(gesture: TouchAction[]): Promise<void> {
+    await this.driver!.touchAction(gesture)
   }
 } 

@@ -1,5 +1,6 @@
 import { MobileElement } from '../mobile-driver'
 import { MobileRunnerConfig } from '../../../types'
+import type { TouchAction } from 'webdriverio'
 
 export interface BaseMobileDriver {
   init(): Promise<void>
@@ -7,6 +8,8 @@ export interface BaseMobileDriver {
   tap(element: MobileElement): Promise<void>
   type(element: MobileElement, text: string): Promise<void>
   scroll(direction: 'up' | 'down', amount: number): Promise<void>
+  getWindowSize(): Promise<{ width: number; height: number }>
+  performGesture(gesture: TouchAction[]): Promise<void>
   quit(): Promise<void>
 }
 
@@ -22,5 +25,7 @@ export abstract class AbstractMobileDriver implements BaseMobileDriver {
   abstract tap(element: MobileElement): Promise<void>
   abstract type(element: MobileElement, text: string): Promise<void>
   abstract scroll(direction: 'up' | 'down', amount: number): Promise<void>
+  abstract getWindowSize(): Promise<{ width: number; height: number }>
+  abstract performGesture(gesture: TouchAction[]): Promise<void>
   abstract quit(): Promise<void>
 } 
