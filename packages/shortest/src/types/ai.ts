@@ -1,3 +1,5 @@
+import { ActionInput } from "./browser";
+
 export interface AIConfig {
   apiKey: string;
   model?: string;
@@ -19,4 +21,16 @@ export interface AIMessageContent {
   type: "text" | "tool_use" | "tool_result";
   text?: string;
   tool_use_id?: string;
+}
+
+export interface LLMResponseBash {
+  command: string;
+}
+
+export interface LLMResponseComputer {
+  input: ActionInput;
+}
+
+export interface LLMResponse<T> {
+  input: T extends LLMResponseBash ? LLMResponseBash : ActionInput;
 }

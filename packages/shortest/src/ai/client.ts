@@ -1,7 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
 import { BrowserTool } from "../browser/core/browser-tool";
-import { AIConfig } from "../types/ai";
+import {
+  AIConfig,
+  LLMResponse,
+  LLMResponseBash,
+  LLMResponseComputer,
+} from "../types/ai";
 import { CacheAction, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
@@ -15,7 +20,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -31,9 +36,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -44,7 +49,7 @@ export class AIClient {
           prompt,
           browserTool,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -60,9 +65,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -99,6 +104,7 @@ export class AIClient {
             } else if (block.type === "tool_use") {
               const toolBlock =
                 block as Anthropic.Beta.Messages.BetaToolUseBlock;
+
               console.log(pc.yellow("\n🔧 Tool Request:"), {
                 tool: toolBlock.name,
                 input: toolBlock.input,
@@ -113,95 +119,117 @@ export class AIClient {
           content: response.content,
         });
 
-        // Check for tool use
-        if (response.stop_reason === "tool_use") {
-          const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
-            response.content.filter((block) => block.type === "tool_use");
+        // Get executable tool
+        const executable = response.content.find(
+          (block) => block.type === "tool_use"
+        );
 
-          const toolResults = toolBlocks.map((toolBlock) => {
-            return {
-              toolBlock,
+        if (response.stop_reason === "tool_use" && executable) {
+          switch (executable.name) {
+            case "bash": {
+              try {
+                const result = await new BashTool().execute(
+                  (executable as unknown as LLMResponse<LLMResponseBash>).input
+                    .command
+                );
 
-              result: browserTool.execute(toolBlock.input as any),
-            };
-          });
-
-          const results = await Promise.all(toolResults.map((t) => t.result));
-
-          const getExtras = async (
-            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
-          ) => {
-            let extras: any = {};
-
-            // @ts-expect-error Incorrect interface on our side leads to this error
-            // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
-            if (toolBlock.input.coordinate) {
-              // @ts-expect-error
-              const [x, y] = toolBlock.input.coordinate;
-
-              const componentStr =
-                await browserTool.getNormalizedComponentStringByCoords(x, y);
-
-              extras = { componentStr };
-            }
-
-            return extras;
-          };
-
-          const newCacheSteps = await Promise.all(
-            toolBlocks.map(async (_toolBlock, i) => {
-              const extras = await getExtras(toolBlocks[i]);
-
-              return {
-                action: toolBlocks[i] as CacheAction,
-                reasoning: response.content.map(
-                  (block) => (block as any).text,
-                )[0],
-                result: results[i].output || null,
-                extras,
-                timestamp: Date.now(),
-              };
-            }),
-          );
-
-          pendingCache.steps = [
-            ...(pendingCache.steps || []),
-            ...(newCacheSteps || []),
-          ];
-
-          // Log tool results
-          if (this.debugMode) {
-            results.forEach((result) => {
-              const { ...logResult } = result;
-              console.log(pc.blue("\n🔧 Tool Result:"), logResult);
-            });
-          }
-
-          // Add tool results to message history
-          messages.push({
-            role: "user",
-            content: results.map((result, index) => ({
-              type: "tool_result" as const,
-              tool_use_id: toolResults[index].toolBlock.id,
-              content: result.base64_image
-                ? [
+                messages.push({
+                  role: "user",
+                  content: [
                     {
-                      type: "image" as const,
-                      source: {
-                        type: "base64" as const,
-                        media_type: "image/jpeg" as const,
-                        data: result.base64_image,
-                      },
-                    },
-                  ]
-                : [
-                    {
-                      type: "text" as const,
-                      text: result.output || "",
+                      type: "tool_result",
+                      tool_use_id: executable.id,
+                      content: [
+                        {
+                          type: "text",
+                          text: JSON.stringify(result),
+                        },
+                      ],
                     },
                   ],
-            })),
-          });
+                });
+                continue;
+              } catch (error) {
+                console.error("Error executing bash command:", error);
+              }
+            }
+
+            default: {
+              const result = await browserTool.execute(
+                (executable as unknown as LLMResponse<LLMResponseComputer>)
+                  .input
+              );
+
+              const getExtras = async (
+                toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock
+              ) => {
+                let extras: any = {};
+
+                // @ts-expect-error Incorrect interface on our side leads to this error
+                // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
+                if (toolBlock.input.coordinate) {
+                  // @ts-expect-error
+                  const [x, y] = toolBlock.input.coordinate;
+
+                  const componentStr =
+                    await browserTool.getNormalizedComponentStringByCoords(
+                      x,
+                      y
+                    );
+
+                  extras = { componentStr };
+                }
+
+                return extras;
+              };
+
+              pendingCache.steps = [
+                ...(pendingCache.steps || []),
+                {
+                  action: executable as CacheAction,
+                  reasoning: response.content.map(
+                    (block) => (block as any).text
+                  )[0],
+                  result: result.output || null,
+                  extras: getExtras(executable),
+                  timestamp: Date.now(),
+                },
+              ];
+
+              // Log tool results
+              if (this.debugMode) {
+                const { ...logResult } = result;
+                console.log(pc.blue("\n🔧 Tool Result:"), logResult);
+              }
+
+              messages.push({
+                role: "user",
+                content: [
+                  {
+                    type: "tool_result",
+                    tool_use_id: executable.id,
+                    content: result.base64_image
+                      ? [
+                          {
+                            type: "image" as const,
+                            source: {
+                              type: "base64" as const,
+                              media_type: "image/jpeg" as const,
+                              data: result.base64_image,
+                            },
+                          },
+                        ]
+                      : [
+                          {
+                            type: "text" as const,
+                            text: result.output || "",
+                          },
+                        ],
+                  },
+                ],
+              });
+            }
+          }
         } else {
           return {
             messages,

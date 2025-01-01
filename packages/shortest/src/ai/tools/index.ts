@@ -102,6 +102,10 @@ export const AITools = [
       required: ["action", "url"],
     },
   },
+  {
+    type: "bash_20241022",
+    name: "bash",
+  },
 ] as const;
 
 export type AITool = (typeof AITools)[number]["name"];
