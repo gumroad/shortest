@@ -1,23 +1,64 @@
-import { exec } from "child_process";
+import { spawn } from "child_process";
+
+type BashToolError = "timeout" | "network" | "unknown";
 
 export class BashTool {
   public async execute(command: string): Promise<Record<string, any> | string> {
-    return new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Command failed: ${stderr || error.message}`);
-          return reject(error.message);
-        }
+    console.log({ command });
 
-        try {
-          // parse if output is JSON
-          resolve(JSON.parse(stdout));
-        } catch {
-          console.warn(`Non-JSON output returned: ${stdout.trim()}`);
-          // otherwise return as is
-          resolve(stdout.trim());
+    return new Promise((resolve, reject) => {
+      const child = spawn(command, { shell: true });
+
+      let output = "";
+      let errorOutput = "";
+
+      child.stdout.on("data", (data) => {
+        output += data.toString();
+      });
+
+      child.stderr.on("data", (data) => {
+        errorOutput += data.toString();
+        if (this.getErrorType(data.toString()) === "timeout") {
+          console.log("Timeout error occurred, retrying...");
         }
       });
+
+      child.on("exit", (code) => {
+        if (code === 0) {
+          resolve(output.trim());
+        } else {
+          // Still resolve even if there is no successfull output
+          resolve(
+            errorOutput.trim() ||
+              `Process exited with code ${code ? code.toString() : "unknown"}`
+          );
+        }
+      });
+
+      child.on("error", (err) => {
+        reject(`Error spawning process: ${err.message}`);
+        throw err;
+      });
     });
+  }
+
+  /**
+   * Check the type of error from the provided stderr buffer
+   * @param data Linux / PowerShell stderr buffer
+   * @returns The type of error (e.g., "timeout", "network", or "unknown")
+   */
+  private getErrorType(data: string): BashToolError {
+    const timeoutRegex = /timeout|retrying in|request timed out/i;
+    if (timeoutRegex.test(data)) {
+      return "timeout";
+    }
+
+    const networkErrorRegex =
+      /Could not resolve host|Name or service not known|connection refused|ENOTFOUND/i;
+    if (networkErrorRegex.test(data)) {
+      return "network";
+    }
+
+    return "unknown";
   }
 }
