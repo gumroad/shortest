@@ -22,12 +22,12 @@ shortest(
     },
     {
       maxRetries: 3,
-    },
-  ),
+    }
+  )
 );
 
 shortest(
-  `Test 2: Bearer token is ${ALLOWED_TEST_BEARER}. Ensure the request with a valid bearer token returns the expected response`,
+  `Test 2: Bearer token is ${ALLOWED_TEST_BEARER}. Ensure the request with a valid bearer token returns request body`,
   req.fetch(
     {
       url: "/assert-bearer",
@@ -39,6 +39,6 @@ shortest(
     },
     {
       maxRetries: 3,
-    },
-  ),
+    }
+  )
 );

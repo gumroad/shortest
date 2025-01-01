@@ -54,6 +54,7 @@ IMPORTANT GLOBAL RULES:
    - You have access to a bash tool to execute bash commands.
    - Only use tools typically available in a bash terminal, unless the prompt specifically instructs otherwise
    - When generating bash commands, ensure they are appropriate for the operating system you are currently using: ${os.platform()}.
+   - If you are asked to generate bash command for API requests, you should make sure you replace placeholders (<>) in the request details with the actual values from memory or context.
 
 Your task is to:
 1. Execute browser actions to validate test cases
