@@ -30,7 +30,7 @@ export class BashTool {
           // Still resolve even if there is no successfull output
           resolve(
             errorOutput.trim() ||
-              `Process exited with code ${code ? code.toString() : "unknown"}`
+              `Process exited with code ${code ? code.toString() : "unknown"}`,
           );
         }
       });

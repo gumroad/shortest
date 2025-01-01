@@ -8,8 +8,8 @@ shortest(
     { url: "http://invalid.url.test" },
     {
       maxRetries: 5,
-    }
-  )
+    },
+  ),
 );
 
 shortest(
