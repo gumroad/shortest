@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   if (!token || token !== ALLOWED_TEST_BEARER) {
     return NextResponse.json(
       { message: "Bearer token is missing in cookies" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json(
       { message: "Invalid request body" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
