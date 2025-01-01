@@ -44,3 +44,10 @@ export interface SessionStorageState {
   secure: boolean;
   sameSite: "Strict" | "Lax" | "None";
 }
+
+export interface APIFetchConfig {
+  /**
+   * Maximum number of retries to attempt
+   */
+  maxRetries: number;
+}

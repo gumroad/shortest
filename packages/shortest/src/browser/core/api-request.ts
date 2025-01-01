@@ -1,6 +1,7 @@
 import {
   APIRequest as APIRequestType,
   APIRequestConfig,
+  APIFetchConfig,
 } from "../../types/request";
 
 function generatePrompt(
@@ -20,6 +21,7 @@ function generatePrompt(
         ! IMPORTANT:
           - You are tasked with generating a precise and accurate cURL command for API requests. Do not modify or process the response data in any way (e.g., jq, grep, or Python code such as python3 -c "import json,sys; data=json.load(sys.stdin); print(len(data))
             Your sole responsibility is to create a clean, unmodified cURL command for execution
+          - Every single field in the config object object must be accounted for in the final cURL command
         `;
 }
 
@@ -30,7 +32,7 @@ export class APIRequest {
     this.config = config;
   }
 
-  public fetch(request: APIRequestType): string {
-    return generatePrompt(request, this.config);
+  public fetch(request: APIRequestType, config?: APIFetchConfig): string {
+    return generatePrompt(request, { ...this.config, ...config });
   }
 }
