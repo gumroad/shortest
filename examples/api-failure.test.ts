@@ -14,7 +14,7 @@ shortest(
 
 shortest(
   "Test 2: Ensure the request fails due to SSL sertificate error",
-  req.fetch({ url: "https://secure.donauversicherung.at" })
+  req.fetch({ url: "https://secure.donauversicherung.at" }),
 );
 
 shortest(
@@ -25,6 +25,6 @@ shortest(
     },
     {
       ignoreHTTPSErrors: true,
-    }
-  )
+    },
+  ),
 );
