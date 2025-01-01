@@ -10,6 +10,9 @@ import {
   ShortestConfig,
 } from "./types";
 
+// to include the global expect in the generated d.ts file
+import "./globals";
+
 // Initialize config
 let globalConfig: ShortestConfig | null = null;
 const compiler = new TestCompiler();
