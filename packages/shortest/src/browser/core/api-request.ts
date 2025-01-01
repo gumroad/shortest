@@ -6,7 +6,7 @@ import {
 
 function generatePrompt(
   request: APIRequestType,
-  config: Partial<APIRequestConfig>,
+  config: Partial<APIRequestConfig>
 ) {
   return `
         You are about to process an API request. Your goal is to dynamically populate variables (like <Bearer API KEY>) with actual values, either inferred or retrieved. Follow these steps:
@@ -19,7 +19,7 @@ function generatePrompt(
         - Your output should look like a ready-to-execute bash command with no extraneous text.
         - Reference to SYSTEM_PROMPT 'Bash Commands' section for additional context on the task.
 
-        REQUEST OBJECT: ${JSON.stringify(request)}
+        REQUEST OBJECT (RequestInit dictionary of the Fetch API): ${JSON.stringify(request)}
         CONFIG OBJECT: ${JSON.stringify(config)}
         ! IMPORTANT:
           - You are tasked with generating a precise and accurate bash command for API requests. Do not modify or process the response data in any way (e.g., jq, grep, or Python code such as python3 -c "import json,sys; data=json.load(sys.stdin); print(len(data))").
