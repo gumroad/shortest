@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
 import { BashTool } from "../browser/core/bash-tool";
 import { BrowserTool } from "../browser/core/browser-tool";
+import { ToolResult } from "../types";
 import {
   AIConfig,
   LLMResponse,
@@ -21,7 +22,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -37,9 +38,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -50,7 +51,7 @@ export class AIClient {
           prompt,
           browserTool,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -66,9 +67,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -120,118 +121,118 @@ export class AIClient {
           content: response.content,
         });
 
-        // Get executable tool
-        // @note We will only have one executable tool per response if its stop_reason is tool_use
-        const executable = response.content.find(
-          (block) => block.type === "tool_use",
-        );
+        // Collect executable tool actions
+        const toolRequests = response.content.filter(
+          (block) => block.type === "tool_use"
+        ) as Anthropic.Beta.Messages.BetaToolUseBlock[];
 
-        if (response.stop_reason === "tool_use" && executable) {
-          switch (executable.name) {
-            case "bash": {
-              try {
-                const result = await new BashTool().execute(
-                  (executable as unknown as LLMResponse<LLMResponseBash>).input
-                    .command,
-                );
-
-                messages.push({
-                  role: "user",
-                  content: [
-                    {
-                      type: "tool_result",
-                      tool_use_id: executable.id,
-                      content: [
-                        {
-                          type: "text",
-                          text: JSON.stringify(result),
-                        },
-                      ],
-                    },
-                  ],
-                });
-                continue;
-              } catch (error) {
-                console.error("Error executing bash command:", error);
-              }
-            }
-
-            default: {
-              const result = await browserTool.execute(
-                (executable as unknown as LLMResponse<LLMResponseComputer>)
-                  .input,
-              );
-
-              const getExtras = async (
-                toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
-              ) => {
-                let extras: any = {};
-
-                // @ts-expect-error Incorrect interface on our side leads to this error
-                // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
-                if (toolBlock.input.coordinate) {
-                  // @ts-expect-error
-                  const [x, y] = toolBlock.input.coordinate;
-
-                  const componentStr =
-                    await browserTool.getNormalizedComponentStringByCoords(
-                      x,
-                      y,
+        if (toolRequests.length > 0) {
+          const toolResults = await Promise.all(
+            toolRequests.map(async (toolRequest) => {
+              switch (toolRequest.name) {
+                case "bash":
+                  try {
+                    const toolResult = await new BashTool().execute(
+                      (toolRequest as LLMResponse<LLMResponseBash>).input
+                        .command
+                    );
+                    return { toolRequest, toolResult };
+                  } catch (error) {
+                    console.error("Error executing bash command:", error);
+                    return null;
+                  }
+                default:
+                  try {
+                    const toolResult = await browserTool.execute(
+                      (toolRequest as LLMResponse<LLMResponseComputer>).input
                     );
 
-                  extras = { componentStr };
-                }
+                    let extras: any = {};
+                    if ((toolRequest.input as unknown as any).coordinate) {
+                      const [x, y] = (toolRequest.input as unknown as any)
+                        .coordinate;
+                      const componentStr =
+                        await browserTool.getNormalizedComponentStringByCoords(
+                          x,
+                          y
+                        );
+                      extras = { componentStr };
+                    }
 
-                return extras;
-              };
+                    // Update the cache
+                    pendingCache.steps = [
+                      ...(pendingCache.steps || []),
+                      {
+                        action: toolRequest as CacheAction,
+                        reasoning: toolResult.output || "",
+                        result: toolResult.output || null,
+                        extras,
+                        timestamp: Date.now(),
+                      },
+                    ];
 
-              pendingCache.steps = [
-                ...(pendingCache.steps || []),
-                {
-                  action: executable as CacheAction,
-                  reasoning: response.content.map(
-                    (block) => (block as any).text,
-                  )[0],
-                  result: result.output || null,
-                  extras: getExtras(executable),
-                  timestamp: Date.now(),
-                },
-              ];
-
-              // Log tool results
-              if (this.debugMode) {
-                const { ...logResult } = result;
-                console.log(pc.blue("\n🔧 Tool Result:"), logResult);
+                    return { toolRequest, toolResult };
+                  } catch (error) {
+                    console.error("Error executing browser tool:", error);
+                    return null;
+                  }
               }
+            })
+          );
 
-              messages.push({
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: executable.id,
-                    content: result.base64_image
-                      ? [
+          toolResults.forEach((result) => {
+            if (result) {
+              const { toolRequest, toolResult } = result;
+
+              switch (toolRequest.name) {
+                case "bash":
+                  messages.push({
+                    role: "user",
+                    content: [
+                      {
+                        type: "tool_result",
+                        tool_use_id: toolRequest.id,
+                        content: [
                           {
-                            type: "image" as const,
-                            source: {
-                              type: "base64" as const,
-                              media_type: "image/jpeg" as const,
-                              data: result.base64_image,
-                            },
-                          },
-                        ]
-                      : [
-                          {
-                            type: "text" as const,
-                            text: result.output || "",
+                            type: "text",
+                            text: JSON.stringify(toolResult),
                           },
                         ],
-                  },
-                ],
-              });
+                      },
+                    ],
+                  });
+                  break;
+                default:
+                  messages.push({
+                    role: "user",
+                    content: [
+                      {
+                        type: "tool_result",
+                        tool_use_id: toolRequest.id,
+                        content: (toolResult as ToolResult).base64_image
+                          ? [
+                              {
+                                type: "image" as const,
+                                source: {
+                                  type: "base64" as const,
+                                  media_type: "image/jpeg" as const,
+                                  data: (toolResult as ToolResult)
+                                    .base64_image!,
+                                },
+                              },
+                            ]
+                          : [
+                              {
+                                type: "text" as const,
+                                text: (toolResult as ToolResult).output || "",
+                              },
+                            ],
+                      },
+                    ],
+                  });
+              }
             }
-          }
+          });
         } else {
           return {
             messages,
