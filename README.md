@@ -23,11 +23,11 @@ If helpful, [here's a short video](https://github.com/anti-work/shortest/issues/
 
 ### Installation
 ```bash
-npm install -D @antiwork/shortest
+npm install -D @antiwork/shortest dotenv playwright @anthropic-ai/sdk expect mailosour
 # or
-pnpm add -D @antiwork/shortest
+pnpm add -D @antiwork/shortest dotenv playwright @anthropic-ai/sdk expect mailosour
 # or
-yarn add -D @antiwork/shortest
+yarn add -D @antiwork/shortest dotenv playwright @anthropic-ai/sdk expect mailosour
 ```
 
 Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
