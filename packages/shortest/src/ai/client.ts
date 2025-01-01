@@ -21,7 +21,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -37,9 +37,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -50,7 +50,7 @@ export class AIClient {
           prompt,
           browserTool,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -66,9 +66,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -123,7 +123,7 @@ export class AIClient {
         // Get executable tool
         // @note We will only have one executable tool per response if its stop_reason is tool_use
         const executable = response.content.find(
-          (block) => block.type === "tool_use",
+          (block) => block.type === "tool_use"
         );
 
         if (response.stop_reason === "tool_use" && executable) {
@@ -132,10 +132,8 @@ export class AIClient {
               try {
                 const result = await new BashTool().execute(
                   (executable as unknown as LLMResponse<LLMResponseBash>).input
-                    .command,
+                    .command
                 );
-
-                console.log({ result });
 
                 messages.push({
                   role: "user",
@@ -161,11 +159,11 @@ export class AIClient {
             default: {
               const result = await browserTool.execute(
                 (executable as unknown as LLMResponse<LLMResponseComputer>)
-                  .input,
+                  .input
               );
 
               const getExtras = async (
-                toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
+                toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock
               ) => {
                 let extras: any = {};
 
@@ -178,7 +176,7 @@ export class AIClient {
                   const componentStr =
                     await browserTool.getNormalizedComponentStringByCoords(
                       x,
-                      y,
+                      y
                     );
 
                   extras = { componentStr };
@@ -192,7 +190,7 @@ export class AIClient {
                 {
                   action: executable as CacheAction,
                   reasoning: response.content.map(
-                    (block) => (block as any).text,
+                    (block) => (block as any).text
                   )[0],
                   result: result.output || null,
                   extras: getExtras(executable),
