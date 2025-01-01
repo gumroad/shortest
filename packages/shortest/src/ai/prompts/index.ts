@@ -14,7 +14,7 @@ IMPORTANT GLOBAL RULES:
    - Always wait for the tool to finish before proceeding to the next action. You will recieve a message to continue with your next action once the wait is over. Then validate the condition is met.
 
 2. **Tool Usage**:
-   - You may need to use provided tools to perform certain actions (e.g., clicking, navigating, upload files or running callbacks).
+   - You may need to use provided tools to perform certain actions (e.g., clicking, navigating, uploading files or running callbacks).
    - After invoking a tool, wait until the tool finishes its execution and you receive a success/failure result.
    - You will also receive metadata about the tool's execution to help you interpret its outcome.
    - Only after the tool finishes and you know the result should you request any screenshots or proceed to the next action.
