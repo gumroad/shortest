@@ -224,10 +224,7 @@ export class TestRunner {
                 }`,
             ),
           ]
-        : [
-            "\nExpect:",
-            `1. "${test.name}" expected to be successful`,
-          ]),
+        : ["\nExpect:", `1. "${test.name}" expected to be successful`]),
 
       "\nCurrent Page State:",
       `URL: ${initialState.metadata?.window_info?.url || "unknown"}`,
