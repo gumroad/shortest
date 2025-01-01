@@ -22,7 +22,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
       );
     }
 
@@ -38,9 +38,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam
+      content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void
+    toolOutputCallback?: (name: string, input: any) => void,
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -51,7 +51,7 @@ export class AIClient {
           prompt,
           browserTool,
           outputCallback,
-          toolOutputCallback
+          toolOutputCallback,
         );
       } catch (error: any) {
         attempts++;
@@ -67,9 +67,9 @@ export class AIClient {
     prompt: string,
     browserTool: BrowserTool,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam
+      content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void
+    _toolOutputCallback?: (name: string, input: any) => void,
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -123,7 +123,7 @@ export class AIClient {
 
         // Collect executable tool actions
         const toolRequests = response.content.filter(
-          (block) => block.type === "tool_use"
+          (block) => block.type === "tool_use",
         ) as Anthropic.Beta.Messages.BetaToolUseBlock[];
 
         if (toolRequests.length > 0) {
@@ -134,7 +134,7 @@ export class AIClient {
                   try {
                     const toolResult = await new BashTool().execute(
                       (toolRequest as LLMResponse<LLMResponseBash>).input
-                        .command
+                        .command,
                     );
                     return { toolRequest, toolResult };
                   } catch (error) {
@@ -144,7 +144,7 @@ export class AIClient {
                 default:
                   try {
                     const toolResult = await browserTool.execute(
-                      (toolRequest as LLMResponse<LLMResponseComputer>).input
+                      (toolRequest as LLMResponse<LLMResponseComputer>).input,
                     );
 
                     let extras: any = {};
@@ -154,7 +154,7 @@ export class AIClient {
                       const componentStr =
                         await browserTool.getNormalizedComponentStringByCoords(
                           x,
-                          y
+                          y,
                         );
                       extras = { componentStr };
                     }
@@ -177,7 +177,7 @@ export class AIClient {
                     return null;
                   }
               }
-            })
+            }),
           );
 
           toolResults.forEach((result) => {
