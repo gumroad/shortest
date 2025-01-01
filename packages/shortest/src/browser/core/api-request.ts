@@ -6,7 +6,7 @@ import {
 
 function generatePrompt(
   request: APIRequestType,
-  config: Partial<APIRequestConfig>
+  config: Partial<APIRequestConfig>,
 ) {
   return `
         You are about to process an API request. Your goal is to dynamically populate variables (like <Bearer API KEY>) with actual values, either inferred or retrieved. Follow these steps:
@@ -38,7 +38,7 @@ export class APIRequest {
 
   public fetch(
     requestBase: APIRequestType,
-    config?: Partial<APIFetchConfig>
+    config?: Partial<APIFetchConfig>,
   ): string {
     const request = this.processRequest(requestBase);
     return generatePrompt(request, { ...this.config, ...config });
