@@ -371,7 +371,7 @@ Run package in development mode (from `/packages/shortest`):
 pnpm dev
 ```
 
-This will automatically rebuild the project whenever you save changes
+This will automatically rebuild the project whenever you save changes.
 
 ## Shortest CLI development
 
