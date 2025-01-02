@@ -255,13 +255,6 @@ export class TestRunner {
       }
     }
 
-    // Execute test with enhanced prompt
-    const result = await aiClient.processAction(prompt, browserTool);
-
-    if (!result) {
-      throw new Error("AI processing failed: no result returned");
-    }
-
     // Execute before function if present
     if (test.beforeFn) {
       try {
@@ -272,6 +265,13 @@ export class TestRunner {
           reason: error instanceof Error ? error.message : String(error),
         };
       }
+    }
+
+    // Execute test with enhanced prompt
+    const result = await aiClient.processAction(prompt, browserTool);
+
+    if (!result) {
+      throw new Error("AI processing failed: no result returned");
     }
 
     // Parse AI result first
