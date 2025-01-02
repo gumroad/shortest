@@ -18,7 +18,7 @@ shortest(
 );
 
 shortest(
-  "Ensure the request to be successful",
+  "Ensure the request not to fail due to SSL sertificate error",
   req.fetch(
     {
       url: "https://secure.donauversicherung.at",
