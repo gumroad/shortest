@@ -138,9 +138,6 @@ async function main() {
   const noCache = args.includes("--no-cache");
 
   try {
-    const config = getConfig();
-    const testPattern = cliTestPattern || config.testPattern; // Use CLI argument if provided, otherwise use config
-
     const runner = new TestRunner(
       process.cwd(),
       true,
@@ -150,6 +147,8 @@ async function main() {
       noCache,
     );
     await runner.initialize();
+    const config = getConfig();
+    const testPattern = cliTestPattern || config.testPattern;
     await runner.runTests(testPattern);
   } catch (error) {
     if (error instanceof Error) {
