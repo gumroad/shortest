@@ -459,12 +459,27 @@ export class BrowserTool extends BaseBrowserTool {
 
         case "check_email": {
           if (!this.mailosaurTool) {
-            if (!this.config.mailosaur) {
-              throw new ToolError("Mailosaur configuration required");
+            const mailosaurAPIKey =
+              this.config.mailosaur?.apiKey || process.env.MAILOSAUR_API_KEY;
+            const mailosaurServerId =
+              this.config.mailosaur?.serverId ||
+              process.env.MAILOSAUR_SERVER_ID;
+
+            if (!mailosaurAPIKey) {
+              throw new ToolError("Mailosaur API key is required");
             }
+
+            if (!mailosaurServerId) {
+              throw new ToolError("Mailosaur server ID is required");
+            }
+
+            if (!input.email) {
+              throw new ToolError("Mailosaur email address is required");
+            }
+
             this.mailosaurTool = new MailosaurTool({
-              apiKey: this.config.mailosaur.apiKey,
-              serverId: this.config.mailosaur.serverId,
+              apiKey: mailosaurAPIKey,
+              serverId: mailosaurServerId,
               emailAddress: input.email,
             });
           }

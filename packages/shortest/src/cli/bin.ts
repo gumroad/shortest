@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import pc from "picocolors";
+import { getConfig } from "..";
 import { GitHubTool } from "../browser/integrations/github";
 import { TestRunner } from "../core/runner";
 
@@ -38,7 +39,7 @@ ${pc.bold("Options:")}
   --debug-ai          Show AI conversation and decision process
   --target=<url>      Set target URL for tests (default: http://localhost:3000)
   --github-code       Generate GitHub 2FA code for authentication
-  --no-cache          Disable cashing
+  --no-cache          Disable caching (storing browser actions between tests)
 
 ${pc.bold("Authentication:")}
   --secret=<key>      GitHub TOTP secret key (or use .env.local)
@@ -132,7 +133,7 @@ async function main() {
   const targetUrl = args
     .find((arg) => arg.startsWith("--target="))
     ?.split("=")[1];
-  const testPattern = args.find((arg) => !arg.startsWith("--"));
+  const cliTestPattern = args.find((arg) => !arg.startsWith("--"));
   const debugAI = args.includes("--debug-ai");
   const noCache = args.includes("--no-cache");
 
@@ -146,12 +147,9 @@ async function main() {
       noCache,
     );
     await runner.initialize();
-
-    if (testPattern) {
-      await runner.runFile(testPattern);
-    } else {
-      await runner.runAll();
-    }
+    const config = getConfig();
+    const testPattern = cliTestPattern || config.testPattern;
+    await runner.runTests(testPattern);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes("Config")) {
@@ -164,7 +162,7 @@ async function main() {
         );
         console.error(pc.dim("  - headless: boolean"));
         console.error(pc.dim("  - baseUrl: string"));
-        console.error(pc.dim("  - testDir: string | string[]"));
+        console.error(pc.dim("  - testPattern: string"));
         console.error(pc.dim("  - anthropicKey: string"));
         console.error();
       } else {
