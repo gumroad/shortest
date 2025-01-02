@@ -1,7 +1,7 @@
 export interface ShortestConfig {
   headless: boolean;
   baseUrl: string;
-  testDir: string | string[];
+  testPattern: string;
   anthropicKey: string;
   mailosaur?: {
     apiKey: string;
