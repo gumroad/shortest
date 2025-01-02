@@ -1,4 +1,3 @@
-import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
 import pc from "picocolors";
@@ -83,37 +82,17 @@ export class TestRunner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    const testDirs = Array.isArray(this.config.testDir)
-      ? this.config.testDir
-      : [this.config.testDir || "__tests__"];
+    const testPattern = pattern || this.config.testPattern || "**/*.test.ts";
 
-    const files = [];
-    for (const dir of testDirs) {
-      if (pattern) {
-        const cleanPattern = pattern
-          .replace(/\.ts$/, "")
-          .replace(/\.test$/, "")
-          .split("/")
-          .pop();
-
-        const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-        const matches = await glob(globPattern, {
-          cwd: this.cwd,
-          absolute: true,
-        });
-
-        files.push(...matches);
-      } else {
-        const globPattern = `${dir}/**/*.test.ts`;
-        const matches = await glob(globPattern, { cwd: this.cwd });
-        files.push(...matches.map((f) => resolve(this.cwd, f)));
-      }
-    }
+    const files = await glob(testPattern, {
+      cwd: this.cwd,
+      absolute: true,
+    });
 
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found in directories: ${testDirs.join(", ")}`,
+        `No test files found matching: ${testPattern}`,
       );
       process.exit(1);
     }
@@ -386,34 +365,17 @@ export class TestRunner {
     }
   }
 
-  async runFile(pattern: string) {
+  async runTests(pattern?: string) {
     await this.initialize();
     const files = await this.findTestFiles(pattern);
 
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found matching: ${pattern}`,
+        `No test files found matching the pattern: ${pattern || this.config.testPattern}`,
       );
       process.exit(1);
     }
-
-    for (const file of files) {
-      await this.executeTestFile(file);
-    }
-
-    this.logger.summary();
-
-    if (this.exitOnSuccess && this.logger.allTestsPassed()) {
-      process.exit(0);
-    } else {
-      process.exit(1);
-    }
-  }
-
-  async runAll() {
-    await this.initialize();
-    const files = await this.findTestFiles();
 
     for (const file of files) {
       await this.executeTestFile(file);
