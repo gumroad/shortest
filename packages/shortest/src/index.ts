@@ -34,9 +34,6 @@ if (!global.__shortest__) {
     },
   };
 
-  // Attach to global scope
-  global.expect = global.__shortest__.expect;
-
   dotenv.config({ path: join(process.cwd(), ".env") });
   dotenv.config({ path: join(process.cwd(), ".env.local") });
 }
@@ -227,6 +224,7 @@ export const test: TestAPI = Object.assign(
   },
 );
 
+export const expect = jestExpect;
 export const shortest: TestAPI = test;
 
 export type { ShortestConfig };
