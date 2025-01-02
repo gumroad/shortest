@@ -54,7 +54,7 @@ yarn shortest
   export default {
     headless: false,
     baseUrl: 'http://localhost:3000',
-    testDir: 'app/__tests__',
+    testPattern: '**/*.test.ts',
     anthropicKey: process.env.ANTHROPIC_API_KEY
   } satisfies ShortestConfig;
   ```
@@ -131,6 +131,30 @@ shortest.afterEach(async ({ page }) => {
 shortest.afterAll(async ({ page }) => {
   await clerk.signOut({ page });
 });
+```
+
+### Chaining tests
+
+Shortest supports flexible test chaining patterns:
+
+```typescript
+// Sequential test chain
+shortest([
+  "user can login with email and password",
+  "user can modify their account-level refund policy"
+])
+
+// Reusable test flows
+const loginAsLawyer = "login as lawyer with valid credentials"
+const loginAsContractor = "login as contractor with valid credentials"
+const allAppActions = [
+  "send invoice to company",
+  "view invoices"
+]
+
+// Combine flows with spread operator
+shortest([loginAsLawyer, ...allAppActions])
+shortest([loginAsContractor, ...allAppActions])
 ```
 
 ### Running tests

@@ -10,6 +10,9 @@ import {
   ShortestConfig,
 } from "./types";
 
+// to include the global expect in the generated d.ts file
+import "./globals";
+
 // Initialize config
 let globalConfig: ShortestConfig | null = null;
 const compiler = new TestCompiler();
@@ -46,7 +49,7 @@ function validateConfig(config: Partial<ShortestConfig>) {
 
   if (config.headless === undefined) missingFields.push("headless");
   if (!config.baseUrl) missingFields.push("baseUrl");
-  if (!config.testDir) missingFields.push("testDir");
+  if (!config.testPattern) missingFields.push("testPattern");
   if (!config.anthropicKey && !process.env.ANTHROPIC_API_KEY)
     missingFields.push("anthropicKey");
 
@@ -97,7 +100,7 @@ export async function initialize() {
       "Required fields:\n" +
       "  - headless: boolean\n" +
       "  - baseUrl: string\n" +
-      "  - testDir: string | string[]\n" +
+      "  - testPattern: string\n" +
       "  - anthropicKey: string",
   );
 }
@@ -110,11 +113,32 @@ export function getConfig(): ShortestConfig {
 }
 
 function createTestChain(
-  nameOrFn: string | ((context: TestContext) => Promise<void>),
+  nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
   payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
   fn?: (context: TestContext) => Promise<void>,
 ): TestChain {
   const registry = global.__shortest__.registry;
+
+  // Handle array of test names
+  if (Array.isArray(nameOrFn)) {
+    const tests = nameOrFn.map((name) => {
+      const test: TestFunction = {
+        name,
+        expectations: [],
+      };
+
+      registry.tests.set(name, [...(registry.tests.get(name) || []), test]);
+      registry.currentFileTests.push(test);
+      return test;
+    });
+
+    // Return chain for the last test
+    const lastTest = tests[tests.length - 1];
+    if (!lastTest.name) {
+      throw new Error("Test name is required");
+    }
+    return createTestChain(lastTest.name, payloadOrFn, fn);
+  }
 
   // Handle direct execution
   if (typeof nameOrFn === "function") {
@@ -189,7 +213,7 @@ function createTestChain(
 
 export const test: TestAPI = Object.assign(
   (
-    nameOrFn: string | ((context: TestContext) => Promise<void>),
+    nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
     payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
     fn?: (context: TestContext) => Promise<void>,
   ) => createTestChain(nameOrFn, payloadOrFn, fn),
