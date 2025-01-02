@@ -55,7 +55,7 @@ yarn shortest
     headless: false,
     baseUrl: 'http://localhost:3000',
     testPattern: '**/*.test.ts',
-    anthropicKey: process.env.ANTHROPIC_API_KEY
+    anthropicKey: process.env.ANTHROPIC_API_KEY || '',
   } satisfies ShortestConfig;
   ```
 
@@ -72,7 +72,7 @@ You can also use callback functions to add additional assertions and other logic
 execution in browser is completed.
 
 ```typescript
-import { shortest } from '@antiwork/shortest';
+import { shortest, expect } from '@antiwork/shortest';
 import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
