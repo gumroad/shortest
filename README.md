@@ -36,14 +36,6 @@ Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots and cac
 echo ".shortest/" >> .gitignore
 ```
 
-Run tests:
-
-```bash
-npx shortest
-# or
-pnpm shortest
-```
-
 ### Quick start
 
 1. Determine your test entry and add your Anthropic API key in config file: `shortest.config.ts`
