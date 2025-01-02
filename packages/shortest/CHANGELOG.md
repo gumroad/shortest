@@ -3,7 +3,33 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://semver.
+org/spec/v2.0.0.html).
+
+## [0.4.0] - 2025-01-02
+
+### Added
+- Added chained tests by @crabest
+- Added 'before' function by @slavingia
+- Added Bash tool by @gladyshcodes
+
+### Changed
+- Adjusted the prompt to expect successful test execution by @crabest
+- Updated Copyright year from 2024 to 2025 by @crabest
+- Refactored config to detect test.ts files instead of files under test directory by @khalatevarun
+- Improved index.d.ts generation by @amk-dev
+- Updated shortest.config.ts by @slavingia
+- Updated npm readme by @m2rads
+
+### Removed
+- Removed yarn support by @m2rads
+
+**Full Changelog**: https://github.com/anti-work/shortest/compare/v0.3.0...v0.4.0
+
+## [0.3.0] - 2024-12-30
+
+### Changes
+- Added Caching 
 
 ## [0.2.1] - 2024-12-27
 

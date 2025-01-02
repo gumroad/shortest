@@ -28,22 +28,12 @@ If helpful, [here's a short video](https://github.com/anti-work/shortest/issues/
 npm install -D @antiwork/shortest
 # or
 pnpm add -D @antiwork/shortest
-# or
-yarn add -D @antiwork/shortest
 ```
 
-Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
+Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots and caching of each test run):
 
 ```bash
 echo ".shortest/" >> .gitignore
-```
-
-If you installed shortest without `-g` flag, you can run tests as follows:
-
-```bash
-npx shortest    # for npm
-pnpm shortest   # for pnpm
-yarn shortest   # for yarn
 ```
 
 ### Quick start
@@ -56,7 +46,7 @@ import type { ShortestConfig } from "@antiwork/shortest";
 export default {
   headless: false,
   baseUrl: "http://localhost:3000",
-  testDir: "app/__tests__",
+  testPattern: "**/*.test.ts",
   anthropicKey: process.env.ANTHROPIC_API_KEY,
 } satisfies ShortestConfig;
 ```
@@ -138,6 +128,57 @@ shortest.afterEach(async ({ page }) => {
 shortest.afterAll(async ({ page }) => {
   await clerk.signOut({ page });
 });
+```
+
+### Chaining tests
+
+Shortest supports flexible test chaining patterns:
+
+```typescript
+// Sequential test chain
+shortest([
+  "user can login with email and password",
+  "user can modify their account-level refund policy",
+]);
+
+// Reusable test flows
+const loginAsLawyer = "login as lawyer with valid credentials";
+const loginAsContractor = "login as contractor with valid credentials";
+const allAppActions = ["send invoice to company", "view invoices"];
+
+// Combine flows with spread operator
+shortest([loginAsLawyer, ...allAppActions]);
+shortest([loginAsContractor, ...allAppActions]);
+```
+
+### API Testing
+
+Test API endpoints using natural language
+
+```typescript
+const req = new APIRequest({
+  baseURL: API_BASE_URI,
+});
+
+shortest(
+  "Ensure the response contains only active users",
+  req.fetch({
+    url: "/users",
+    method: "GET",
+    params: new URLSearchParams({
+      active: true,
+    }),
+  }),
+);
+```
+
+Or simply:
+
+```typescript
+shortest(`
+  Test the API GET endpoint ${API_BASE_URI}/users with query parameter { "active": true }
+  Expect the response to contain only active users
+`);
 ```
 
 ### Running tests
