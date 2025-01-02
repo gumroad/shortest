@@ -30,18 +30,10 @@ npm install -D @antiwork/shortest
 pnpm add -D @antiwork/shortest
 ```
 
-Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
+Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots and caching of each test run):
 
 ```bash
 echo ".shortest/" >> .gitignore
-```
-
-Run tests:
-
-```bash
-npx shortest
-# or
-pnpm shortest
 ```
 
 ### Quick start
