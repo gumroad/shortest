@@ -163,7 +163,7 @@ shortest([loginAsLawyer, ...allAppActions]);
 shortest([loginAsContractor, ...allAppActions]);
 ```
 
-### Bash tool
+### API Testing
 
 Test API endpoints using natural language
 
@@ -180,7 +180,7 @@ shortest(
     params: new URLSearchParams({
       active: true,
     }),
-  })
+  }),
 );
 ```
 
