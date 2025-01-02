@@ -47,7 +47,7 @@ function validateConfig(config: Partial<ShortestConfig>) {
 
   if (config.headless === undefined) missingFields.push("headless");
   if (!config.baseUrl) missingFields.push("baseUrl");
-  if (!config.testDir) missingFields.push("testDir");
+  if (!config.testPattern) missingFields.push("testPattern");
   if (!config.anthropicKey && !process.env.ANTHROPIC_API_KEY)
     missingFields.push("anthropicKey");
 
@@ -98,7 +98,7 @@ export async function initialize() {
       "Required fields:\n" +
       "  - headless: boolean\n" +
       "  - baseUrl: string\n" +
-      "  - testDir: string | string[]\n" +
+      "  - testPattern: string\n" +
       "  - anthropicKey: string",
   );
 }
