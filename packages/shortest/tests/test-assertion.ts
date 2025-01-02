@@ -1,5 +1,5 @@
 import pc from "picocolors";
-import { test } from "../src/index";
+import { expect, test } from "../src/index";
 
 async function testAssertions() {
   console.log(pc.cyan("\n🧪 Testing Assertion Implementation"));
