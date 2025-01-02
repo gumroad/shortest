@@ -8,17 +8,21 @@ org/spec/v2.0.0.html).
 
 ## [0.4.0] - 2025-01-02
 
-### Changes
-- add chained tests by @crabest in https://github.com/anti-work/shortest/pull/136
-- adjust the prompt to expect the test to be successful by @crabest in https://github.com/anti-work/shortest/pull/232
-* update Copyright year from 2024 to 2025 by @crabest in https://github.com/anti-work/shortest/pull/235
-- refactor(config): update config to detect test.ts files instead of files under test dir by @khalatevarun in https://github.com/anti-work/shortest/pull/194
-- chore: improve index.d.ts generation by @amk-dev in https://github.com/anti-work/shortest/pull/231
-- Add 'before' function by @slavingia in https://github.com/anti-work/shortest/pull/224
-* Update shortest.config.ts by @slavingia in https://github.com/anti-work/shortest/pull/239
-- remove yarn support by @m2rads in https://github.com/anti-work/shortest/pull/242
-- Bash tool by @gladyshcodes in https://github.com/anti-work/shortest/pull/233
-- Update npm readme by @m2rads in https://github.com/anti-work/shortest/pull/245
+### Added
+- Added chained tests by @crabest
+- Added 'before' function by @slavingia
+- Added Bash tool by @gladyshcodes
+
+### Changed
+- Adjusted the prompt to expect successful test execution by @crabest
+- Updated Copyright year from 2024 to 2025 by @crabest
+- Refactored config to detect test.ts files instead of files under test directory by @khalatevarun
+- Improved index.d.ts generation by @amk-dev
+- Updated shortest.config.ts by @slavingia
+- Updated npm readme by @m2rads
+
+### Removed
+- Removed yarn support by @m2rads
 
 **Full Changelog**: https://github.com/anti-work/shortest/compare/v0.3.0...v0.4.0
 
