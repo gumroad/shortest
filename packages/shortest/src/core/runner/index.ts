@@ -171,6 +171,11 @@ export class TestRunner {
       },
     });
 
+    // this may never happen as the config is initlized before this code is executed
+    if (!this.config.anthropicKey) {
+      throw new Error("ANTHROPIC_KEY is not set");
+    }
+
     const aiClient = new AIClient(
       {
         apiKey: this.config.anthropicKey,
