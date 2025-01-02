@@ -26,8 +26,6 @@ If helpful, [here's a short video](https://github.com/anti-work/shortest/issues/
 npm install -D @antiwork/shortest
 # or
 pnpm add -D @antiwork/shortest
-# or
-yarn add -D @antiwork/shortest
 ```
 
 Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
@@ -41,8 +39,6 @@ Run tests:
 npx shortest
 # or
 pnpm shortest
-# or
-yarn shortest
 ```
 
 ### Quick start
