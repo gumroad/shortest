@@ -11,6 +11,9 @@ import {
   ShortestConfig,
 } from "./types";
 
+// to include the global expect in the generated d.ts file
+import "./globals";
+
 // Initialize config
 let globalConfig: ShortestConfig | null = null;
 const compiler = new TestCompiler();
@@ -154,6 +157,9 @@ function createTestChain(
       after: () => {
         throw new Error("after() cannot be called on direct execution test");
       },
+      before: () => {
+        throw new Error("before() cannot be called on direct execution test");
+      },
     };
   }
 
@@ -191,6 +197,10 @@ function createTestChain(
         payload: typeof payloadOrFn === "function" ? undefined : payloadOrFn,
         fn: typeof payloadOrFn === "function" ? payloadOrFn : fn,
       });
+      return chain;
+    },
+    before(fn: (context: TestContext) => void | Promise<void>) {
+      test.beforeFn = (context) => Promise.resolve(fn(context));
       return chain;
     },
     after(fn: (context: TestContext) => void | Promise<void>) {

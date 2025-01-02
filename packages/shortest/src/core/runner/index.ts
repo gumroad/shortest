@@ -171,6 +171,11 @@ export class TestRunner {
       },
     });
 
+    // this may never happen as the config is initlized before this code is executed
+    if (!this.config.anthropicKey) {
+      throw new Error("ANTHROPIC_KEY is not set");
+    }
+
     const aiClient = new AIClient(
       {
         apiKey: this.config.anthropicKey,
@@ -255,6 +260,18 @@ export class TestRunner {
 
     if (!result) {
       throw new Error("AI processing failed: no result returned");
+    }
+
+    // Execute before function if present
+    if (test.beforeFn) {
+      try {
+        await test.beforeFn(testContext);
+      } catch (error) {
+        return {
+          result: "fail" as const,
+          reason: error instanceof Error ? error.message : String(error),
+        };
+      }
     }
 
     // Parse AI result first
@@ -407,7 +424,7 @@ export class TestRunner {
       );
 
     if (!steps) {
-      throw new Error("No steps to execute running test in a normal mode");
+      throw new Error("No steps to execute, running test in normal mode");
     }
     for (const step of steps) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -423,10 +440,8 @@ export class TestRunner {
 
         if (componentStr !== step.extras.componentStr) {
           throw new Error(
-            "Componnet UI are different, running test in a normal mode",
+            "Component UI elements are different, running test in normal mode",
           );
-        } else {
-          // fallback
         }
       }
       if (step.action?.input) {

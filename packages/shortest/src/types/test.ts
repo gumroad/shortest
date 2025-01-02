@@ -54,8 +54,9 @@ export interface TestFunction {
     fn?: (context: TestContext) => Promise<void>;
     directExecution?: boolean;
   }[];
-  directExecution?: boolean;
+  beforeFn?: (context: TestContext) => void | Promise<void>;
   afterFn?: (context: TestContext) => void | Promise<void>;
+  directExecution?: boolean;
 }
 
 export type TestChain = {
@@ -70,6 +71,7 @@ export type TestChain = {
     payload?: any,
     fn?: (context: TestContext) => Promise<void>,
   ): TestChain;
+  before(fn: (context: TestContext) => void | Promise<void>): TestChain;
   after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
 
