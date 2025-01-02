@@ -1,11 +1,9 @@
 import { spawn } from "child_process";
 
-type BashToolError = "timeout" | "network" | "unknown";
+type BashToolError = "timeout" | "network" | "unknown" | "unauthorized";
 
 export class BashTool {
   public async execute(command: string): Promise<Record<string, any> | string> {
-    console.log({ command });
-
     return new Promise((resolve, reject) => {
       const child = spawn(command, { shell: true });
 
@@ -45,9 +43,15 @@ export class BashTool {
   /**
    * Check the type of error from the provided stderr buffer
    * @param data Linux / PowerShell stderr buffer
-   * @returns The type of error (e.g., "timeout", "network", or "unknown")
+   * @returns The type of error (e.g., "timeout", "network", etc)
    */
   private getErrorType(data: string): BashToolError {
+    // Unauthorized error (401) specific to Clerk
+    const unauthorizedRegex = /401 Unauthorized/i;
+    if (unauthorizedRegex.test(data)) {
+      return "unauthorized";
+    }
+
     const timeoutRegex = /timeout|retrying in|request timed out/i;
     if (timeoutRegex.test(data)) {
       return "timeout";
