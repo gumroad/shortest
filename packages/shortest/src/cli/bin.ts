@@ -21,6 +21,7 @@ const VALID_FLAGS = [
   "--github-code",
   "--debug-ai",
   "--help",
+  "--no-cache",
   "-h",
 ];
 const VALID_PARAMS = ["--target", "--secret"];
@@ -38,6 +39,7 @@ ${pc.bold("Options:")}
   --debug-ai          Show AI conversation and decision process
   --target=<url>      Set target URL for tests (default: http://localhost:3000)
   --github-code       Generate GitHub 2FA code for authentication
+  --no-cache          Disable cashing
 
 ${pc.bold("Authentication:")}
   --secret=<key>      GitHub TOTP secret key (or use .env.local)
@@ -63,7 +65,9 @@ ${pc.bold("Environment Setup:")}
   - GITHUB_PASSWORD       GitHub login credentials
 
 ${pc.bold("Documentation:")}
-  Visit ${pc.cyan("https://github.com/anti-work/shortest")} for detailed setup and usage
+  Visit ${pc.cyan(
+    "https://github.com/anti-work/shortest",
+  )} for detailed setup and usage
 `);
 }
 
@@ -131,6 +135,7 @@ async function main() {
     ?.split("=")[1];
   const cliTestPattern = args.find((arg) => !arg.startsWith("--"));
   const debugAI = args.includes("--debug-ai");
+  const noCache = args.includes("--no-cache");
 
   try {
     const config = getConfig();
@@ -142,6 +147,7 @@ async function main() {
       headless,
       targetUrl,
       debugAI,
+      noCache,
     );
     await runner.initialize();
     await runner.runTests(testPattern);

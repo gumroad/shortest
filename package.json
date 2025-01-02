@@ -14,7 +14,7 @@
     "db:studio": "drizzle-kit studio",
     "db:cleanup": "tsx lib/db/cleanup.ts",
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
-    "test": "shortest",
+    "test": "pnpm shortest",
     "prepare": "cd packages/shortest && pnpm build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

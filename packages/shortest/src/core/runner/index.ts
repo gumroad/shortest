@@ -1,13 +1,22 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
+import pc from "picocolors";
 import { APIRequest, BrowserContext } from "playwright";
 import * as playwright from "playwright";
 import { request, APIRequestContext } from "playwright";
 import { AIClient } from "../../ai/client";
 import { BrowserTool } from "../../browser/core/browser-tool";
 import { BrowserManager } from "../../browser/manager";
+import { BaseCache } from "../../cache/cache";
 import { initialize, getConfig } from "../../index";
-import { TestFunction, TestContext, ShortestConfig } from "../../types";
+import {
+  TestFunction,
+  TestContext,
+  ShortestConfig,
+  BrowserActionEnum,
+} from "../../types";
+import { CacheEntry } from "../../types/cache";
+import { hashData } from "../../utils/crypto";
 import { Logger } from "../../utils/logger";
 import { TestCompiler } from "../compiler";
 
@@ -26,7 +35,9 @@ export class TestRunner {
   private browserManager!: BrowserManager;
   private logger: Logger;
   private debugAI: boolean;
+  private noCache: boolean;
   private testContext: TestContext | null = null;
+  private cache: BaseCache<CacheEntry>;
 
   constructor(
     cwd: string,
@@ -34,14 +45,17 @@ export class TestRunner {
     forceHeadless = false,
     targetUrl?: string,
     debugAI = false,
+    noCache = false,
   ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
     this.targetUrl = targetUrl;
     this.debugAI = debugAI;
+    this.noCache = noCache;
     this.compiler = new TestCompiler();
     this.logger = new Logger();
+    this.cache = new BaseCache();
   }
 
   async initialize() {
@@ -122,7 +136,11 @@ export class TestRunner {
     return this.testContext;
   }
 
-  private async executeTest(test: TestFunction, context: BrowserContext) {
+  private async executeTest(
+    test: TestFunction,
+    context: BrowserContext,
+    config: { noCache: boolean } = { noCache: false },
+  ) {
     // If it's direct execution, skip AI
     if (test.directExecution) {
       try {
@@ -180,10 +198,12 @@ export class TestRunner {
             "\nExpect:",
             ...test.expectations.map(
               (exp, i) =>
-                `${i + 1}. ${exp.description}${exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"}`,
+                `${i + 1}. ${exp.description}${
+                  exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"
+                }`,
             ),
           ]
-        : []),
+        : ["\nExpect:", `1. "${test.name}" expected to be successful`]),
 
       "\nCurrent Page State:",
       `URL: ${initialState.metadata?.window_info?.url || "unknown"}`,
@@ -191,6 +211,44 @@ export class TestRunner {
     ]
       .filter(Boolean)
       .join("\n");
+
+    // check if CLI option is not specified
+    if (!this.noCache && !config.noCache) {
+      // if test hasn't changed and is already in cache, replay steps from cache
+      if (await this.cache.get(test)) {
+        try {
+          const result = await this.runCachedTest(test, browserTool);
+
+          if (test.afterFn) {
+            try {
+              await test.afterFn(testContext);
+            } catch (error) {
+              return {
+                result: "fail" as const,
+                reason:
+                  result?.result === "fail"
+                    ? `AI: ${result.reason}, After: ${
+                        error instanceof Error ? error.message : String(error)
+                      }`
+                    : error instanceof Error
+                      ? error.message
+                      : String(error),
+              };
+            }
+          }
+          return result;
+        } catch {
+          // delete stale cached test entry
+          await this.cache.delete(test);
+          // reset window state
+          const page = browserTool.getPage();
+          await page.goto(initialState.metadata?.window_info?.url!);
+          await this.executeTest(test, context, {
+            noCache: true,
+          });
+        }
+      }
+    }
 
     // Execute test with enhanced prompt
     const result = await aiClient.processAction(prompt, browserTool);
@@ -230,7 +288,9 @@ export class TestRunner {
           result: "fail" as const,
           reason:
             aiResult.result === "fail"
-              ? `AI: ${aiResult.reason}, After: ${error instanceof Error ? error.message : String(error)}`
+              ? `AI: ${aiResult.reason}, After: ${
+                  error instanceof Error ? error.message : String(error)
+                }`
               : error instanceof Error
                 ? error.message
                 : String(error),
@@ -238,6 +298,10 @@ export class TestRunner {
       }
     }
 
+    if (aiResult.result === "pass") {
+      // batch set new chache if test is successful
+      await this.cache.set(test, result.pendingCache);
+    }
     return aiResult;
   }
 
@@ -324,5 +388,62 @@ export class TestRunner {
     } else {
       process.exit(1);
     }
+  }
+
+  private async runCachedTest(
+    test: TestFunction,
+    browserTool: BrowserTool,
+  ): Promise<TestResult> {
+    const cachedTest = await this.cache.get(test);
+    if (this.debugAI) {
+      console.log(pc.green(`Executing cached test ${hashData(test)}`));
+    }
+
+    const steps = cachedTest?.data.steps
+      // do not take screenshots in cached mode
+      ?.filter(
+        (step) =>
+          step.action?.input.action !== BrowserActionEnum.Screenshot.toString(),
+      );
+
+    if (!steps) {
+      throw new Error("No steps to execute running test in a normal mode");
+    }
+    for (const step of steps) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (
+        step.action?.input.action === BrowserActionEnum.MouseMove &&
+        // @ts-expect-error Interface and actual values differ
+        step.action.input.coordinate
+      ) {
+        // @ts-expect-error
+        const [x, y] = step.action.input.coordinate;
+        const componentStr =
+          await browserTool.getNormalizedComponentStringByCoords(x, y);
+
+        if (componentStr !== step.extras.componentStr) {
+          throw new Error(
+            "Componnet UI are different, running test in a normal mode",
+          );
+        } else {
+          // fallback
+        }
+      }
+      if (step.action?.input) {
+        try {
+          await browserTool.execute(step.action.input);
+        } catch (error) {
+          console.error(
+            `Failed to execute step with input ${step.action.input}`,
+            error,
+          );
+        }
+      }
+    }
+
+    return {
+      result: "pass",
+      reason: "All actions successfully replayed from cache",
+    };
   }
 }
