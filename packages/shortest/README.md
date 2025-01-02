@@ -13,8 +13,6 @@ AI-powered natural language end-to-end testing framework.
 npm install -D @antiwork/shortest
 # or
 pnpm add -D @antiwork/shortest
-# or
-yarn add -D @antiwork/shortest
 ```
 
 Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
@@ -120,7 +118,6 @@ shortest --headless        # Run in headless mode using cli
 ```bash
 npx shortest    # for npm
 pnpm shortest   # for pnpm
-yarn shortest   # for yarn
 ```
 
 ## GitHub 2FA Login Setup
