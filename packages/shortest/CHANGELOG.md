@@ -3,7 +3,24 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://semver.
+org/spec/v2.0.0.html).
+
+## [0.4.0] - 2025-01-02
+
+### Changes
+- add chained tests by @crabest in https://github.com/anti-work/shortest/pull/136
+- adjust the prompt to expect the test to be successful by @crabest in https://github.com/anti-work/shortest/pull/232
+* update Copyright year from 2024 to 2025 by @crabest in https://github.com/anti-work/shortest/pull/235
+- refactor(config): update config to detect test.ts files instead of files under test dir by @khalatevarun in https://github.com/anti-work/shortest/pull/194
+- chore: improve index.d.ts generation by @amk-dev in https://github.com/anti-work/shortest/pull/231
+- Add 'before' function by @slavingia in https://github.com/anti-work/shortest/pull/224
+* Update shortest.config.ts by @slavingia in https://github.com/anti-work/shortest/pull/239
+- remove yarn support by @m2rads in https://github.com/anti-work/shortest/pull/242
+- Bash tool by @gladyshcodes in https://github.com/anti-work/shortest/pull/233
+- Update npm readme by @m2rads in https://github.com/anti-work/shortest/pull/245
+
+**Full Changelog**: https://github.com/anti-work/shortest/compare/v0.3.0...v0.4.0
 
 ## [0.3.0] - 2024-12-30
 
