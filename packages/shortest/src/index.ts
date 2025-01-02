@@ -156,6 +156,9 @@ function createTestChain(
       after: () => {
         throw new Error("after() cannot be called on direct execution test");
       },
+      before: () => {
+        throw new Error("before() cannot be called on direct execution test");
+      },
     };
   }
 
@@ -193,6 +196,10 @@ function createTestChain(
         payload: typeof payloadOrFn === "function" ? undefined : payloadOrFn,
         fn: typeof payloadOrFn === "function" ? payloadOrFn : fn,
       });
+      return chain;
+    },
+    before(fn: (context: TestContext) => void | Promise<void>) {
+      test.beforeFn = (context) => Promise.resolve(fn(context));
       return chain;
     },
     after(fn: (context: TestContext) => void | Promise<void>) {
