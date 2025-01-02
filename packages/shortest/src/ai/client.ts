@@ -1,7 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
+import { BashTool } from "../browser/core/bash-tool";
 import { BrowserTool } from "../browser/core/browser-tool";
-import { AIConfig } from "../types/ai";
+import { ToolResult } from "../types";
+import { AIConfig, RequestBash, RequestComputer } from "../types/ai";
 import { CacheAction, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
@@ -99,6 +101,7 @@ export class AIClient {
             } else if (block.type === "tool_use") {
               const toolBlock =
                 block as Anthropic.Beta.Messages.BetaToolUseBlock;
+
               console.log(pc.yellow("\n🔧 Tool Request:"), {
                 tool: toolBlock.name,
                 input: toolBlock.input,
@@ -113,94 +116,116 @@ export class AIClient {
           content: response.content,
         });
 
-        // Check for tool use
-        if (response.stop_reason === "tool_use") {
-          const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
-            response.content.filter((block) => block.type === "tool_use");
+        // Collect executable tool actions
+        const toolRequests = response.content.filter(
+          (block) => block.type === "tool_use",
+        ) as Anthropic.Beta.Messages.BetaToolUseBlock[];
 
-          const toolResults = toolBlocks.map((toolBlock) => {
-            return {
-              toolBlock,
+        if (toolRequests.length > 0) {
+          const toolResults = await Promise.all(
+            toolRequests.map(async (toolRequest) => {
+              switch (toolRequest.name) {
+                case "bash":
+                  try {
+                    const toolResult = await new BashTool().execute(
+                      (toolRequest as RequestBash).input.command,
+                    );
+                    return { toolRequest, toolResult };
+                  } catch (error) {
+                    console.error("Error executing bash command:", error);
+                    throw error;
+                  }
+                default:
+                  try {
+                    const toolResult = await browserTool.execute(
+                      (toolRequest as RequestComputer).input,
+                    );
 
-              result: browserTool.execute(toolBlock.input as any),
-            };
-          });
+                    let extras: any = {};
+                    if ((toolRequest.input as unknown as any).coordinate) {
+                      const [x, y] = (toolRequest.input as unknown as any)
+                        .coordinate;
+                      const componentStr =
+                        await browserTool.getNormalizedComponentStringByCoords(
+                          x,
+                          y,
+                        );
+                      extras = { componentStr };
+                    }
 
-          const results = await Promise.all(toolResults.map((t) => t.result));
+                    // Update the cache
+                    pendingCache.steps = [
+                      ...(pendingCache.steps || []),
+                      {
+                        action: toolRequest as CacheAction,
+                        reasoning: toolResult.output || "",
+                        result: toolResult.output || null,
+                        extras,
+                        timestamp: Date.now(),
+                      },
+                    ];
 
-          const getExtras = async (
-            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
-          ) => {
-            let extras: any = {};
-
-            // @ts-expect-error Incorrect interface on our side leads to this error
-            // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
-            if (toolBlock.input.coordinate) {
-              // @ts-expect-error
-              const [x, y] = toolBlock.input.coordinate;
-
-              const componentStr =
-                await browserTool.getNormalizedComponentStringByCoords(x, y);
-
-              extras = { componentStr };
-            }
-
-            return extras;
-          };
-
-          const newCacheSteps = await Promise.all(
-            toolBlocks.map(async (_toolBlock, i) => {
-              const extras = await getExtras(toolBlocks[i]);
-
-              return {
-                action: toolBlocks[i] as CacheAction,
-                reasoning: response.content.map(
-                  (block) => (block as any).text,
-                )[0],
-                result: results[i].output || null,
-                extras,
-                timestamp: Date.now(),
-              };
+                    return { toolRequest, toolResult };
+                  } catch (error) {
+                    console.error("Error executing browser tool:", error);
+                    throw error;
+                  }
+              }
             }),
           );
 
-          pendingCache.steps = [
-            ...(pendingCache.steps || []),
-            ...(newCacheSteps || []),
-          ];
+          toolResults.forEach((result) => {
+            if (result) {
+              const { toolRequest, toolResult } = result;
 
-          // Log tool results
-          if (this.debugMode) {
-            results.forEach((result) => {
-              const { ...logResult } = result;
-              console.log(pc.blue("\n🔧 Tool Result:"), logResult);
-            });
-          }
-
-          // Add tool results to message history
-          messages.push({
-            role: "user",
-            content: results.map((result, index) => ({
-              type: "tool_result" as const,
-              tool_use_id: toolResults[index].toolBlock.id,
-              content: result.base64_image
-                ? [
-                    {
-                      type: "image" as const,
-                      source: {
-                        type: "base64" as const,
-                        media_type: "image/jpeg" as const,
-                        data: result.base64_image,
+              switch (toolRequest.name) {
+                case "bash":
+                  messages.push({
+                    role: "user",
+                    content: [
+                      {
+                        type: "tool_result",
+                        tool_use_id: toolRequest.id,
+                        content: [
+                          {
+                            type: "text",
+                            text: JSON.stringify(toolResult),
+                          },
+                        ],
                       },
-                    },
-                  ]
-                : [
-                    {
-                      type: "text" as const,
-                      text: result.output || "",
-                    },
-                  ],
-            })),
+                    ],
+                  });
+                  break;
+                default:
+                  messages.push({
+                    role: "user",
+                    content: [
+                      {
+                        type: "tool_result",
+                        tool_use_id: toolRequest.id,
+                        content: (toolResult as ToolResult).base64_image
+                          ? [
+                              {
+                                type: "image" as const,
+                                source: {
+                                  type: "base64" as const,
+                                  media_type: "image/jpeg" as const,
+                                  data: (toolResult as ToolResult)
+                                    .base64_image!,
+                                },
+                              },
+                            ]
+                          : [
+                              {
+                                type: "text" as const,
+                                text: (toolResult as ToolResult).output || "",
+                              },
+                            ],
+                      },
+                    ],
+                  });
+              }
+            }
           });
         } else {
           return {

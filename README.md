@@ -11,6 +11,7 @@ Your browser does not support the video tag.
 </video>
 
 ## Features
+
 - Natural language E2E testing framework
 - AI-powered test execution using Anthropic Claude API
 - Built on Playwright
@@ -22,6 +23,7 @@ Your browser does not support the video tag.
 If helpful, [here's a short video](https://github.com/anti-work/shortest/issues/143#issuecomment-2564488173)!
 
 ### Installation
+
 ```bash
 npm install -D @antiwork/shortest
 # or
@@ -29,6 +31,7 @@ pnpm add -D @antiwork/shortest
 ```
 
 Add `.shortest/` to your `.gitignore` (where Shortest stores screenshots of each test run):
+
 ```bash
 echo ".shortest/" >> .gitignore
 ```
@@ -44,23 +47,28 @@ pnpm shortest
 ### Quick start
 
 1. Determine your test entry and add your Anthropic API key in config file: `shortest.config.ts`
-  ```typescript
-  import type { ShortestConfig } from '@antiwork/shortest';
 
-  export default {
-    headless: false,
-    baseUrl: 'http://localhost:3000',
-    testPattern: '**/*.test.ts',
-    anthropicKey: process.env.ANTHROPIC_API_KEY
-  } satisfies ShortestConfig;
-  ```
+```typescript
+import type { ShortestConfig } from "@antiwork/shortest";
+
+export default {
+  headless: false,
+  baseUrl: "http://localhost:3000",
+  testPattern: "**/*.test.ts",
+  anthropicKey: process.env.ANTHROPIC_API_KEY,
+} satisfies ShortestConfig;
+```
 
 2. Write your test in your test directory: `app/__tests__/login.test.ts`
-  ```typescript
-  import { shortest } from '@antiwork/shortest'
 
-  shortest('Login to the app using email and password', { username: process.env.GITHUB_USERNAME, password: process.env.GITHUB_PASSWORD })
-  ```
+```typescript
+import { shortest } from "@antiwork/shortest";
+
+shortest("Login to the app using email and password", {
+  username: process.env.GITHUB_USERNAME,
+  password: process.env.GITHUB_PASSWORD,
+});
+```
 
 ### Using callback functions
 
@@ -68,22 +76,22 @@ You can also use callback functions to add additional assertions and other logic
 execution in browser is completed.
 
 ```typescript
-import { shortest } from '@antiwork/shortest';
-import { db } from '@/lib/db/drizzle';
-import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { shortest } from "@antiwork/shortest";
+import { db } from "@/lib/db/drizzle";
+import { users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
-shortest('Login to the app using username and password', {
+shortest("Login to the app using username and password", {
   username: process.env.USERNAME,
-  password: process.env.PASSWORD
+  password: process.env.PASSWORD,
 }).after(async ({ page }) => {
   // Get current user's clerk ID from the page
   const clerkId = await page.evaluate(() => {
-    return window.localStorage.getItem('clerk-user');
+    return window.localStorage.getItem("clerk-user");
   });
 
   if (!clerkId) {
-    throw new Error('User not found in database');
+    throw new Error("User not found in database");
   }
 
   // Query the database
@@ -102,11 +110,12 @@ shortest('Login to the app using username and password', {
 You can use lifecycle hooks to run code before and after the test.
 
 ```typescript
-import { shortest } from '@antiwork/shortest';
+import { shortest } from "@antiwork/shortest";
 
 shortest.beforeAll(async ({ page }) => {
   await clerkSetup({
-    frontendApiUrl: process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000",
+    frontendApiUrl:
+      process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000",
   });
 });
 
@@ -115,7 +124,7 @@ shortest.beforeEach(async ({ page }) => {
     page,
     signInParams: {
       strategy: "email_code",
-      identifier: "iffy+clerk_test@example.com"
+      identifier: "iffy+clerk_test@example.com",
     },
   });
 });
@@ -137,20 +146,47 @@ Shortest supports flexible test chaining patterns:
 // Sequential test chain
 shortest([
   "user can login with email and password",
-  "user can modify their account-level refund policy"
-])
+  "user can modify their account-level refund policy",
+]);
 
 // Reusable test flows
-const loginAsLawyer = "login as lawyer with valid credentials"
-const loginAsContractor = "login as contractor with valid credentials"
-const allAppActions = [
-  "send invoice to company",
-  "view invoices"
-]
+const loginAsLawyer = "login as lawyer with valid credentials";
+const loginAsContractor = "login as contractor with valid credentials";
+const allAppActions = ["send invoice to company", "view invoices"];
 
 // Combine flows with spread operator
-shortest([loginAsLawyer, ...allAppActions])
-shortest([loginAsContractor, ...allAppActions])
+shortest([loginAsLawyer, ...allAppActions]);
+shortest([loginAsContractor, ...allAppActions]);
+```
+
+### API Testing
+
+Test API endpoints using natural language
+
+```typescript
+const req = new APIRequest({
+  baseURL: API_BASE_URI,
+});
+
+shortest(
+  "Ensure the response contains only active users",
+  req.fetch({
+    url: "/users",
+    method: "GET",
+    params: new URLSearchParams({
+      active: true,
+    }),
+  }),
+);
+```
+
+Or simply:
+
+```typescript
+shortest(`
+  Test the API GET endpoint ${API_BASE_URI}/users with query parameter { "active": true }
+  Expect the response to contain only active users
+`);
 ```
 
 ### Running tests
@@ -189,6 +225,7 @@ GITHUB_TOTP_SECRET=your_secret  # Only for GitHub auth tests
 ```
 
 ### CI setup
+
 You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
 ## Web app development
@@ -196,6 +233,7 @@ You can run Shortest in your CI/CD pipeline by running tests in headless mode. M
 This guide will help you set up the Shortest web app for local development.
 
 ### Prerequisites
+
 - React >=19.0.0 (if using with Next.js 14+ or Server Actions)
 - Next.js >=14.0.0 (if using Server Components/Actions)
 
@@ -207,6 +245,7 @@ This guide will help you set up the Shortest web app for local development.
 ### Getting started
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/anti-work/shortest.git
    cd shortest
@@ -231,6 +270,7 @@ vercel env pull
 ```
 
 #### For other contributors
+
 1. Run `pnpm run setup` to configure the environment variables.
 2. The setup wizard will ask you for information. Refer to "Services Configuration" section below for more details.
 
@@ -245,6 +285,7 @@ pnpm db:seed # creates stripe products, currently unused
 ### Services configuration
 
 You'll need to set up the following services for local development. If you're not a Anti-Work Vercel team member, you'll need to either run the setup wizard `pnpm run setup` or manually configure each of these services and add the corresponding environment variables to your `.env.local` file:
+
 <details>
 <summary>Clerk</summary>
 
@@ -275,7 +316,7 @@ You'll need to set up the following services for local development. If you're no
 
 1. Go to your dashboard at [anthropic.com](https://anthropic.com) and grab your API Key.
    - Note: If you've never done this before, you will need to answer some questions and likely load your account with a balance. Not much is needed to test the app.
-   ![Anthropic API Key](https://github.com/user-attachments/assets/0905ed4b-5815-4d50-bf43-8713a4397674)
+     ![Anthropic API Key](https://github.com/user-attachments/assets/0905ed4b-5815-4d50-bf43-8713a4397674)
 
 </details>
 
@@ -295,13 +336,14 @@ You'll need to set up the following services for local development. If you're no
 <summary>GitHub OAuth</summary>
 
 1. Create a GitHub OAuth App:
+
    - Go to your GitHub account settings.
    - Navigate to `Developer settings` > `OAuth Apps` > `New OAuth App`.
    - Fill in the application details:
      - **Application name**: Choose any name for your app
      - **Homepage URL**: Set to `http://localhost:3000` for local development
      - **Authorization callback URL**: Use the Clerk-provided callback URL (found in below image)
-   ![Github OAuth App](https://github.com/user-attachments/assets/1af635fd-dedc-401c-a45a-159cb20bb209)
+       ![Github OAuth App](https://github.com/user-attachments/assets/1af635fd-dedc-401c-a45a-159cb20bb209)
 
 2. Configure Clerk with GitHub OAuth:
    - Go to your Clerk dashboard.
@@ -310,7 +352,7 @@ You'll need to set up the following services for local development. If you're no
    - Enter your `Client ID` and `Client Secret` from the GitHub OAuth app you just created.
    - Add `repo` to the `Scopes`
    ![Clerk Custom Credentials](https://github.com/user-attachments/assets/31d414e1-4e1e-4725-8649-ec1826c6e53e)
-</details>
+   </details>
 
 <details>
 <summary>Mailosaur</summary>
@@ -318,10 +360,8 @@ You'll need to set up the following services for local development. If you're no
 1. Go to [mailosaur.com](https://mailosaur.com) and create an account.
 2. Create a new server and copy the Server ID.
 3. Go to your API settings and copy your API key.
-   - You'll need both the Server ID and API key for your environment variables:
-     - `MAILOSAUR_API_KEY`: Your API key
-     - `MAILOSAUR_SERVER_ID`: Your server ID
-</details>
+   - You'll need both the Server ID and API key for your environment variables: - `MAILOSAUR_API_KEY`: Your API key - `MAILOSAUR_SERVER_ID`: Your server ID
+   </details>
 
 ### Running locally
 
@@ -338,23 +378,26 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 1. Make changes to the package source code in `packages/shortest/`
 
 2. Test changes instantly during development (no build needed):
-  ```bash
-  pnpm shortest:dev -h
-  ```
+
+```bash
+pnpm shortest:dev -h
+```
 
 3. To test the actual built package:
-  ```bash
-  pnpm build:pkg
-  pnpm shortest --help
-  ```
+
+```bash
+pnpm build:pkg
+pnpm shortest --help
+```
 
 4. To test in another project:
-  ```bash
-  # In Shortest package directory
-  cd packages/shortest
-  pnpm pack
 
-  # In your test project
-  npm install /path/to/antiwork-shortest-{version}.tgz.tgz
-  npx shortest -h
-  ```
+```bash
+# In Shortest package directory
+cd packages/shortest
+pnpm pack
+
+# In your test project
+npm install /path/to/antiwork-shortest-{version}.tgz.tgz
+npx shortest -h
+```

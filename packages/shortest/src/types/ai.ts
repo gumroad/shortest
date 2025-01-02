@@ -1,3 +1,5 @@
+import { ActionInput } from "./browser";
+
 export interface AIConfig {
   apiKey: string;
   model?: string;
@@ -20,3 +22,19 @@ export interface AIMessageContent {
   text?: string;
   tool_use_id?: string;
 }
+namespace RequestTypes {
+  export interface Bash {
+    command: string;
+  }
+
+  export interface Computer {
+    input: ActionInput;
+  }
+
+  export interface ToolRequest<T extends Bash | Computer> {
+    input: T extends Bash ? Bash : ActionInput;
+  }
+}
+
+export type RequestBash = RequestTypes.ToolRequest<RequestTypes.Bash>;
+export type RequestComputer = RequestTypes.ToolRequest<RequestTypes.Computer>;

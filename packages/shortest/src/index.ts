@@ -1,6 +1,7 @@
 import { join } from "path";
 import dotenv from "dotenv";
 import { expect as jestExpect } from "expect";
+import { APIRequest } from "./browser/core/api-request";
 import { TestCompiler } from "./core/compiler";
 import {
   TestFunction,
@@ -238,5 +239,5 @@ export const test: TestAPI = Object.assign(
 );
 
 export const shortest: TestAPI = test;
-
+export { APIRequest };
 export type { ShortestConfig };
