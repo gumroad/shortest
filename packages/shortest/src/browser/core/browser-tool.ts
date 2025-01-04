@@ -62,6 +62,12 @@ export class BrowserTool extends BaseBrowserTool {
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
 
+    // Update active page reference to a newly opened tab
+    this.page.context().on("page", async (newPage) => {
+      await newPage.waitForLoadState("domcontentloaded").catch(() => {});
+      this.page = newPage;
+    });
+
     this.initialize();
     this.cleanupScreenshots();
   }
