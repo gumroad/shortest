@@ -331,7 +331,6 @@ export class TestRunner {
     return { ...aiResult, tokenUsage: result.tokenUsage };
   }
 
-
   private async executeTestFile(file: string) {
     try {
       const registry = (global as any).__shortest__.registry;
