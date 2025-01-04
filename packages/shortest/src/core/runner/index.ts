@@ -331,61 +331,6 @@ export class TestRunner {
     return { ...aiResult, tokenUsage: result.tokenUsage };
   }
 
-  private async runCachedTest(
-    test: TestFunction,
-    browserTool: BrowserTool,
-  ): Promise<TestResult> {
-    const cachedTest = await this.cache.get(test);
-    if (this.debugAI) {
-      console.log(pc.green(`Executing cached test ${hashData(test)}`));
-    }
-
-    const steps = cachedTest?.data.steps
-      // do not take screenshots in cached mode
-      ?.filter(
-        (step) =>
-          step.action?.input.action !== BrowserActionEnum.Screenshot.toString(),
-      );
-
-    if (!steps) {
-      throw new Error("No steps to execute, running test in normal mode");
-    }
-    for (const step of steps) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (
-        step.action?.input.action === BrowserActionEnum.MouseMove &&
-        // @ts-expect-error Interface and actual values differ
-        step.action.input.coordinate
-      ) {
-        // @ts-expect-error
-        const [x, y] = step.action.input.coordinate;
-
-        const componentStr =
-          await browserTool.getNormalizedComponentStringByCoords(x, y);
-
-        if (componentStr !== step.extras.componentStr) {
-          throw new Error(
-            "Component UI elements are different, running test in normal mode",
-          );
-        }
-      }
-      if (step.action?.input) {
-        try {
-          await browserTool.execute(step.action.input);
-        } catch (error) {
-          console.error(
-            `Failed to execute step with input ${step.action.input}`,
-            error,
-          );
-        }
-      }
-    }
-
-    return {
-      result: "pass",
-      reason: "All actions successfully replayed from cache",
-    };
-  }
 
   private async executeTestFile(file: string) {
     try {
@@ -471,5 +416,61 @@ export class TestRunner {
     } else {
       process.exit(1);
     }
+  }
+
+  private async runCachedTest(
+    test: TestFunction,
+    browserTool: BrowserTool,
+  ): Promise<TestResult> {
+    const cachedTest = await this.cache.get(test);
+    if (this.debugAI) {
+      console.log(pc.green(`Executing cached test ${hashData(test)}`));
+    }
+
+    const steps = cachedTest?.data.steps
+      // do not take screenshots in cached mode
+      ?.filter(
+        (step) =>
+          step.action?.input.action !== BrowserActionEnum.Screenshot.toString(),
+      );
+
+    if (!steps) {
+      throw new Error("No steps to execute, running test in normal mode");
+    }
+    for (const step of steps) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (
+        step.action?.input.action === BrowserActionEnum.MouseMove &&
+        // @ts-expect-error Interface and actual values differ
+        step.action.input.coordinate
+      ) {
+        // @ts-expect-error
+        const [x, y] = step.action.input.coordinate;
+
+        const componentStr =
+          await browserTool.getNormalizedComponentStringByCoords(x, y);
+
+        if (componentStr !== step.extras.componentStr) {
+          throw new Error(
+            "Component UI elements are different, running test in normal mode",
+          );
+        }
+      }
+      if (step.action?.input) {
+        try {
+          await browserTool.execute(step.action.input);
+        } catch (error) {
+          console.error(
+            `Failed to execute step with input ${step.action.input}`,
+            error,
+          );
+        }
+      }
+    }
+
+    return {
+      result: "pass",
+      reason: "All actions successfully replayed from cache",
+    };
   }
 }
