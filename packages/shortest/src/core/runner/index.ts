@@ -140,7 +140,11 @@ export class TestRunner {
     test: TestFunction,
     context: BrowserContext,
     config: { noCache: boolean } = { noCache: false },
-  ): Promise<{ result: "pass" | "fail"; reason: string; tokenUsage: { input: number; output: number } }> {
+  ): Promise<{
+    result: "pass" | "fail";
+    reason: string;
+    tokenUsage: { input: number; output: number };
+  }> {
     // If it's direct execution, skip AI
     if (test.directExecution) {
       try {
@@ -149,7 +153,7 @@ export class TestRunner {
         return {
           result: "pass" as const,
           reason: "Direct execution successful",
-          tokenUsage: { input: 0, output: 0  },
+          tokenUsage: { input: 0, output: 0 },
         };
       } catch (error) {
         return {
@@ -240,11 +244,11 @@ export class TestRunner {
                     : error instanceof Error
                       ? error.message
                       : String(error),
-                tokenUsage: { input: 0, output: 0  },
+                tokenUsage: { input: 0, output: 0 },
               };
             }
           }
-          return { ...result, tokenUsage: { input: 0, output: 0  } };
+          return { ...result, tokenUsage: { input: 0, output: 0 } };
         } catch {
           // delete stale cached test entry
           await this.cache.delete(test);
@@ -266,7 +270,7 @@ export class TestRunner {
         return {
           result: "fail" as const,
           reason: error instanceof Error ? error.message : String(error),
-          tokenUsage: { input: 0, output: 0  },
+          tokenUsage: { input: 0, output: 0 },
         };
       }
     }
@@ -280,7 +284,7 @@ export class TestRunner {
 
     // Parse AI result first
     const finalMessage = result.finalResponse.content.find(
-      (block:any) =>
+      (block: any) =>
         block.type === "text" &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
           '"result":',

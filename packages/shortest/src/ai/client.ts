@@ -36,7 +36,11 @@ export class AIClient {
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
     toolOutputCallback?: (name: string, input: any) => void,
-  ): Promise<{ finalResponse: any; tokenUsage: { input: number; output: number }; pendingCache: any }> {
+  ): Promise<{
+    finalResponse: any;
+    tokenUsage: { input: number; output: number };
+    pendingCache: any;
+  }> {
     const maxRetries = 3;
     let attempts = 0;
 
@@ -70,7 +74,12 @@ export class AIClient {
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
     _toolOutputCallback?: (name: string, input: any) => void,
-  ): Promise<{ messages: any; finalResponse: any; pendingCache: any; tokenUsage: { input: number; output: number } }> {
+  ): Promise<{
+    messages: any;
+    finalResponse: any;
+    pendingCache: any;
+    tokenUsage: { input: number; output: number };
+  }> {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
     const pendingCache: Partial<{ steps?: CacheStep[] }> = {};

@@ -24,7 +24,6 @@ export class Logger {
   private readonly COST_PER_1K_INPUT_TOKENS = 0.003;
   private readonly COST_PER_1K_OUTPUT_TOKENS = 0.015;
 
-
   startFile(file: string) {
     this.currentFile = file.split("/").pop() || file;
     console.log(pc.blue(`\n📄 ${pc.bold(this.currentFile)}`));
@@ -34,7 +33,7 @@ export class Logger {
     name: string | undefined,
     status: "passed" | "failed",
     error?: Error,
-    tokenUsage?: TokenMetrics
+    tokenUsage?: TokenMetrics,
   ) {
     const testName = name || "Unnamed Test";
     const symbol = status === "passed" ? "✓" : "✗";
@@ -48,8 +47,8 @@ export class Logger {
       console.log(
         pc.dim(
           `    ↳ ${totalTokens.toLocaleString()} tokens ` +
-          `(≈ $${cost.toFixed(2)})`
-        )
+            `(≈ $${cost.toFixed(2)})`,
+        ),
       );
     }
 
@@ -111,9 +110,9 @@ export class Logger {
     ).length;
     const passedTests = totalTests - failedTests;
 
-    const { totalInputTokens, totalOutputTokens, totalCost } = this.calculateTotalTokenUsage();
+    const { totalInputTokens, totalOutputTokens, totalCost } =
+      this.calculateTotalTokenUsage();
     const totalTokens = totalInputTokens + totalOutputTokens;
-
 
     console.log(pc.dim("⎯".repeat(50)));
 
@@ -131,11 +130,11 @@ export class Logger {
       pc.dim(new Date(this.startTime).toLocaleTimeString()),
     );
     console.log(
-      pc.bold(" Tokens    "), 
+      pc.bold(" Tokens    "),
       pc.dim(
         `${totalTokens.toLocaleString()} tokens ` +
-        `(≈ $${totalCost.toFixed(2)})`
-      )
+          `(≈ $${totalCost.toFixed(2)})`,
+      ),
     );
     console.log(pc.dim("\n" + "⎯".repeat(50)));
   }
