@@ -140,7 +140,11 @@ export class TestRunner {
     test: TestFunction,
     context: BrowserContext,
     config: { noCache: boolean } = { noCache: false },
-  ) {
+  ): Promise<{
+    result: "pass" | "fail";
+    reason: string;
+    tokenUsage: { input: number; output: number };
+  }> {
     // If it's direct execution, skip AI
     if (test.directExecution) {
       try {
@@ -149,12 +153,14 @@ export class TestRunner {
         return {
           result: "pass" as const,
           reason: "Direct execution successful",
+          tokenUsage: { input: 0, output: 0 },
         };
       } catch (error) {
         return {
           result: "fail" as const,
           reason:
             error instanceof Error ? error.message : "Direct execution failed",
+          tokenUsage: { input: 0, output: 0 },
         };
       }
     }
@@ -238,10 +244,11 @@ export class TestRunner {
                     : error instanceof Error
                       ? error.message
                       : String(error),
+                tokenUsage: { input: 0, output: 0 },
               };
             }
           }
-          return result;
+          return { ...result, tokenUsage: { input: 0, output: 0 } };
         } catch {
           // delete stale cached test entry
           await this.cache.delete(test);
@@ -263,6 +270,7 @@ export class TestRunner {
         return {
           result: "fail" as const,
           reason: error instanceof Error ? error.message : String(error),
+          tokenUsage: { input: 0, output: 0 },
         };
       }
     }
@@ -276,7 +284,7 @@ export class TestRunner {
 
     // Parse AI result first
     const finalMessage = result.finalResponse.content.find(
-      (block) =>
+      (block: any) =>
         block.type === "text" &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
           '"result":',
@@ -311,6 +319,7 @@ export class TestRunner {
               : error instanceof Error
                 ? error.message
                 : String(error),
+          tokenUsage: result.tokenUsage,
         };
       }
     }
@@ -319,7 +328,7 @@ export class TestRunner {
       // batch set new chache if test is successful
       await this.cache.set(test, result.pendingCache);
     }
-    return aiResult;
+    return { ...aiResult, tokenUsage: result.tokenUsage };
   }
 
   private async executeTestFile(file: string) {
@@ -354,6 +363,7 @@ export class TestRunner {
             test.name,
             result.result === "pass" ? "passed" : "failed",
             result.result === "fail" ? new Error(result.reason) : undefined,
+            result.tokenUsage,
           );
 
           // Execute afterEach hooks with shared context
@@ -435,6 +445,7 @@ export class TestRunner {
       ) {
         // @ts-expect-error
         const [x, y] = step.action.input.coordinate;
+
         const componentStr =
           await browserTool.getNormalizedComponentStringByCoords(x, y);
 
