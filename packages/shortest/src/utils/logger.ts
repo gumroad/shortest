@@ -21,8 +21,8 @@ export class Logger {
   private startTime: number = Date.now();
 
   // token pricing (Claude 3 Sonnet)
-  private readonly COST_PER_1K_INPUT_TOKENS = 0.015;
-  private readonly COST_PER_1K_OUTPUT_TOKENS = 0.075;
+  private readonly COST_PER_1K_INPUT_TOKENS = 0.003;
+  private readonly COST_PER_1K_OUTPUT_TOKENS = 0.015;
 
 
   startFile(file: string) {
