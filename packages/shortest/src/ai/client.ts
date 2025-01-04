@@ -36,7 +36,7 @@ export class AIClient {
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
     toolOutputCallback?: (name: string, input: any) => void,
-  ) {
+  ): Promise<{ finalResponse: any; tokenUsage: { input: number; output: number }; pendingCache: any }> {
     const maxRetries = 3;
     let attempts = 0;
 
@@ -56,6 +56,11 @@ export class AIClient {
         await new Promise((r) => setTimeout(r, 5000 * attempts));
       }
     }
+    return {
+      finalResponse: null,
+      tokenUsage: { input: 0, output: 0 },
+      pendingCache: null,
+    };
   }
 
   async makeRequest(
@@ -65,7 +70,7 @@ export class AIClient {
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
     _toolOutputCallback?: (name: string, input: any) => void,
-  ) {
+  ): Promise<{ messages: any; finalResponse: any; pendingCache: any; tokenUsage: { input: number; output: number } }> {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
     const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
@@ -92,8 +97,13 @@ export class AIClient {
           tools: [...AITools],
           betas: ["computer-use-2024-10-22"],
         });
-
         // Log AI response and tool usage
+
+        const tokenUsage = {
+          input: response.usage.input_tokens,
+          output: response.usage.output_tokens,
+        };
+
         if (this.debugMode) {
           response.content.forEach((block) => {
             if (block.type === "text") {
@@ -232,6 +242,7 @@ export class AIClient {
             messages,
             finalResponse: response,
             pendingCache,
+            tokenUsage,
           };
         }
       } catch (error: any) {
