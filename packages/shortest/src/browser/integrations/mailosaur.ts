@@ -1,5 +1,4 @@
 import Mailosaur from "mailosaur";
-import { ToolError } from "../core";
 
 export class MailosaurTool {
   private client: Mailosaur;
@@ -12,9 +11,9 @@ export class MailosaurTool {
     emailAddress?: string;
   }) {
     if (!config.apiKey || !config.serverId) {
-      throw new ToolError("Mailosaur configuration missing required fields");
+      throw new Error("Mailosaur configuration missing required fields");
     } else if (!config.emailAddress) {
-      throw new ToolError("Mailosaur email address is required");
+      throw new Error("Mailosaur email address is required");
     }
 
     this.client = new Mailosaur(config.apiKey);
@@ -29,7 +28,7 @@ export class MailosaurTool {
       });
 
       if (!message.html?.body || !message.text?.body) {
-        throw new ToolError("Email content missing");
+        throw new Error("Email content missing");
       }
 
       return {
@@ -38,7 +37,7 @@ export class MailosaurTool {
         text: message.text.body,
       };
     } catch (error) {
-      throw new ToolError(`Failed to fetch email: ${error}`);
+      throw new Error(`Failed to fetch email: ${error}`);
     }
   }
 }

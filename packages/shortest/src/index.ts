@@ -1,7 +1,10 @@
 import { join } from "path";
 import dotenv from "dotenv";
 import { expect as jestExpect } from "expect";
+// import { APIRequest } from "./browser/core/api-request";
 import { TestCompiler } from "./core/compiler";
+import { Platform, PlatformType } from "./core/driver/driver";
+import { DriverFactory } from "./core/driver/factory";
 import {
   TestFunction,
   TestAPI,
@@ -9,6 +12,9 @@ import {
   TestChain,
   ShortestConfig,
 } from "./types";
+
+// to include the global expect in the generated d.ts file
+// import "./global";
 
 // Initialize config
 let globalConfig: ShortestConfig | null = null;
@@ -46,19 +52,24 @@ function validateConfig(config: Partial<ShortestConfig>) {
 
   if (config.headless === undefined) missingFields.push("headless");
   if (!config.baseUrl) missingFields.push("baseUrl");
-  if (!config.testDir) missingFields.push("testDir");
+  // if (!config.testPattern) missingFields.push("testPattern");
   if (!config.anthropicKey && !process.env.ANTHROPIC_API_KEY)
     missingFields.push("anthropicKey");
 
   if (missingFields.length > 0) {
     throw new Error(
       `Missing required fields in shortest.config.ts:\n` +
-        missingFields.map((field) => `  - ${field}`).join("\n"),
+        missingFields.map((field) => `  - ${field}`).join("\n")
     );
   }
 }
 
+var initialized = false;
+
 export async function initialize() {
+  if (initialized)
+    return await new Promise((resolve) => setTimeout(resolve, 25000));
+  initialized = true;
   if (globalConfig) return globalConfig;
 
   dotenv.config({ path: join(process.cwd(), ".env") });
@@ -82,6 +93,25 @@ export async function initialize() {
           anthropicKey: process.env.ANTHROPIC_API_KEY || config.anthropicKey,
         };
 
+        const platform = determinePlatform(config.baseUrl);
+        if (platform === "unknown") {
+          throw new Error("Unknown platform");
+        }
+
+        if (!__shortest__.driver) {
+          let driver;
+          try {
+            driver = await DriverFactory.getInstance({
+              platform,
+              coreDriver: config.driver.coreDriver,
+            });
+          } catch (error) {
+            console.log("Failed to retrieve driver instance", error);
+          }
+          global.__shortest__.driver = driver;
+        }
+        global.__shortest__.config = globalConfig;
+
         return globalConfig;
       }
     } catch (error) {
@@ -97,9 +127,37 @@ export async function initialize() {
       "Required fields:\n" +
       "  - headless: boolean\n" +
       "  - baseUrl: string\n" +
-      "  - testDir: string | string[]\n" +
-      "  - anthropicKey: string",
+      "  - testPattern: string\n" +
+      "  - anthropicKey: string"
   );
+}
+
+function determinePlatform(path: string): PlatformType | "unknown" {
+  if (!path) {
+    throw new Error("Path must be provided");
+  }
+
+  try {
+    new URL(path); // If this doesn't throw, it's a valid URL
+    return Platform.Web;
+  } catch {
+    // Fallthrough, proceed to check the file extension
+  }
+
+  const extension = path.split(".").pop();
+
+  if (!extension) {
+    return "unknown";
+  }
+
+  switch (extension.toLowerCase()) {
+    case "apk":
+      return Platform.Android;
+    case "ipa":
+      return Platform.Ios;
+    default:
+      return "unknown";
+  }
 }
 
 export function getConfig(): ShortestConfig {
@@ -112,7 +170,7 @@ export function getConfig(): ShortestConfig {
 function createTestChain(
   nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
   payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
-  fn?: (context: TestContext) => Promise<void>,
+  fn?: (context: TestContext) => Promise<void>
 ): TestChain {
   const registry = global.__shortest__.registry;
 
@@ -153,6 +211,10 @@ function createTestChain(
       after: () => {
         throw new Error("after() cannot be called on direct execution test");
       },
+      // @ts-expect-error
+      before: () => {
+        throw new Error("before() cannot be called on direct execution test");
+      },
     };
   }
 
@@ -171,7 +233,7 @@ function createTestChain(
     expect(
       descriptionOrFn: string | ((context: TestContext) => Promise<void>),
       payloadOrFn?: any,
-      fn?: (context: TestContext) => Promise<void>,
+      fn?: (context: TestContext) => Promise<void>
     ) {
       // Handle direct execution for expect
       if (typeof descriptionOrFn === "function") {
@@ -192,6 +254,12 @@ function createTestChain(
       });
       return chain;
     },
+    // @ts-expect-error
+    before(fn: (context: TestContext) => void | Promise<void>) {
+      // @ts-expect-error
+      test.beforeFn = (context) => Promise.resolve(fn(context));
+      return chain;
+    },
     after(fn: (context: TestContext) => void | Promise<void>) {
       test.afterFn = (context) => Promise.resolve(fn(context));
       return chain;
@@ -205,7 +273,7 @@ export const test: TestAPI = Object.assign(
   (
     nameOrFn: string | string[] | ((context: TestContext) => Promise<void>),
     payloadOrFn?: ((context: TestContext) => Promise<void>) | any,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ) => createTestChain(nameOrFn, payloadOrFn, fn),
   {
     beforeAll: (nameOrFn: string | ((ctx: TestContext) => Promise<void>)) => {
@@ -224,9 +292,9 @@ export const test: TestAPI = Object.assign(
       const hook = typeof nameOrFn === "function" ? nameOrFn : undefined;
       if (hook) global.__shortest__.registry.afterEachFns.push(hook);
     },
-  },
+  }
 );
 
 export const shortest: TestAPI = test;
-
+// export { APIRequest };
 export type { ShortestConfig };

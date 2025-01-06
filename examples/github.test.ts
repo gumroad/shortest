@@ -10,7 +10,7 @@ shortest(
       ".AppHeader-globalBar",
     ],
     tolerance: 0.1,
-  },
+  }
 );
 
 shortest(
@@ -23,7 +23,7 @@ shortest(
       { name: "Desktop", width: 1920, height: 1080 },
     ],
     checkpoints: [".repository-content", ".file-navigation", ".Layout-sidebar"],
-  },
+  }
 );
 
 shortest(
@@ -39,7 +39,7 @@ shortest(
       tooltip: { selector: "[data-component='copyButton']", trigger: "hover" },
     },
     captureAfterInteraction: true,
-  },
+  }
 );
 
 shortest(
@@ -49,5 +49,5 @@ shortest(
     modes: ["light", "dark"],
     elements: [".BorderGrid", ".markdown-body", ".Box-header", ".btn"],
     checkContrast: true,
-  },
+  }
 );

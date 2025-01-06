@@ -24,6 +24,9 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",
     "@ai-sdk/openai": "^0.0.61",
+    "@appium/base-driver": "^9.0.0",
+    "@appium/types": "^0.22.3",
+    "@babel/runtime": "^7.26.0",
     "@clerk/nextjs": "^5.6.0",
     "@faker-js/faker": "^8.4.1",
     "@octokit/rest": "^21.0.2",
@@ -100,5 +103,8 @@
     "jsdom": "^25.0.1",
     "smee-client": "^2.0.3",
     "tsx": "^4.7.1"
+  },
+  "resolutions": {
+    "@wdio/logger": "9.4.4"
   }
 }

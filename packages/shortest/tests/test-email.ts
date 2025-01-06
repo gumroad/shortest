@@ -9,7 +9,6 @@ async function testEmailRendering() {
   console.log(pc.cyan("\n📧 Testing Email"));
 
   // Initialize config
-  await initialize();
   const config = getConfig();
 
   if (!config.mailosaur?.apiKey || !config.mailosaur?.serverId) {

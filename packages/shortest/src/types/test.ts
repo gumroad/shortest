@@ -1,5 +1,4 @@
-import type { Page, Browser, APIRequest, APIRequestContext } from "playwright";
-import type * as playwright from "playwright";
+import { Browser } from "../core/browser/browser";
 
 export interface AssertionError extends Error {
   matcherResult?: {
@@ -21,26 +20,31 @@ export class AssertionCallbackError extends CallbackError {
   constructor(
     message: string,
     public actual?: any,
-    public expected?: any,
+    public expected?: any
   ) {
     super(message);
     this.name = "AssertionCallbackError";
   }
 }
 
-export type TestContext = {
-  page: Page;
+// {
+// page: Page;
+// browser: Browser;
+// playwright: typeof playwright & {
+//   request: APIRequest & {
+//     newContext: (options?: {
+//       extraHTTPHeaders?: Record<string, string>;
+//     }) => Promise<APIRequestContext>;
+//   };
+// };
+// driver: Browser;
+// currentTest?: TestFunction;
+// currentStepIndex?: number;
+// };
+
+export interface TestContext {
   browser: Browser;
-  playwright: typeof playwright & {
-    request: APIRequest & {
-      newContext: (options?: {
-        extraHTTPHeaders?: Record<string, string>;
-      }) => Promise<APIRequestContext>;
-    };
-  };
-  currentTest?: TestFunction;
-  currentStepIndex?: number;
-};
+}
 
 export type TestHookFunction = (context: TestContext) => Promise<void>;
 
@@ -63,12 +67,12 @@ export type TestChain = {
   expect(description: string): TestChain;
   expect(
     description: string,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ): TestChain;
   expect(
     description: string,
     payload?: any,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ): TestChain;
   after(fn: (context: TestContext) => void | Promise<void>): TestChain;
 };
@@ -81,7 +85,7 @@ export type TestAPI = {
   (
     name: string,
     payload?: any,
-    fn?: (context: TestContext) => Promise<void>,
+    fn?: (context: TestContext) => Promise<void>
   ): TestChain;
 
   beforeAll(fn: (context: TestContext) => Promise<void>): void;

@@ -6,8 +6,7 @@ import { getConfig, initialize } from "../src/index";
 async function testBrowser() {
   const browserManager = new BrowserManager(getConfig());
 
-  try {
-    await initialize();
+  try 
     console.log(pc.cyan("🚀 Launching browser..."));
     const context = await browserManager.launch();
     const page = context.pages()[0];
@@ -49,7 +48,7 @@ async function testBrowser() {
 
     // Take screenshot to verify position
     console.log(
-      pc.cyan("\nTest 2: Taking screenshot to verify cursor position"),
+      pc.cyan("\nTest 2: Taking screenshot to verify cursor position")
     );
     const screenshotResult = await browserTool.execute({
       action: "screenshot",

@@ -1,10 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
-import { BrowserTool } from "../browser/core/browser-tool";
-import { AIConfig } from "../types/ai";
-import { CacheAction, CacheStep } from "../types/cache";
+import { Browser } from "../../core/browser/browser";
+import { AIConfig } from "../../types/ai";
+import { CacheAction, CacheStep } from "../../types/cache";
+import { AITools } from "./claude-tools";
+import { LLMAdapter } from "./llm-adapter";
 import { SYSTEM_PROMPT } from "./prompts";
-import { AITools } from "./tools";
 
 export class AIClient {
   private client: Anthropic;
@@ -15,7 +16,7 @@ export class AIClient {
   constructor(config: AIConfig, debugMode: boolean = false) {
     if (!config.apiKey) {
       throw new Error(
-        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var",
+        "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
@@ -29,11 +30,11 @@ export class AIClient {
 
   async processAction(
     prompt: string,
-    browserTool: BrowserTool,
+    browser: Browser,
     outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    toolOutputCallback?: (name: string, input: any) => void,
+    toolOutputCallback?: (name: string, input: any) => void
   ) {
     const maxRetries = 3;
     let attempts = 0;
@@ -42,9 +43,9 @@ export class AIClient {
       try {
         return await this.makeRequest(
           prompt,
-          browserTool,
+          browser,
           outputCallback,
-          toolOutputCallback,
+          toolOutputCallback
         );
       } catch (error: any) {
         attempts++;
@@ -58,11 +59,11 @@ export class AIClient {
 
   async makeRequest(
     prompt: string,
-    browserTool: BrowserTool,
+    browser: Browser,
     _outputCallback?: (
-      content: Anthropic.Beta.Messages.BetaContentBlockParam,
+      content: Anthropic.Beta.Messages.BetaContentBlockParam
     ) => void,
-    _toolOutputCallback?: (name: string, input: any) => void,
+    _toolOutputCallback?: (name: string, input: any) => void
   ) {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
@@ -86,7 +87,7 @@ export class AIClient {
           model: this.model,
           max_tokens: 1024,
           messages,
-          system: SYSTEM_PROMPT,
+          system: SYSTEM_PROMPT(__shortest__.config?.driver.platform),
           tools: [...AITools],
           betas: ["computer-use-2024-10-22"],
         });
@@ -118,18 +119,20 @@ export class AIClient {
           const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
             response.content.filter((block) => block.type === "tool_use");
 
+          const adapter = new LLMAdapter(browser);
+          console.log("this is executed");
+
           const toolResults = toolBlocks.map((toolBlock) => {
             return {
               toolBlock,
-
-              result: browserTool.execute(toolBlock.input as any),
+              result: adapter.transformAndExecute(toolBlock.input as any),
             };
           });
 
           const results = await Promise.all(toolResults.map((t) => t.result));
 
           const getExtras = async (
-            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock,
+            toolBlock: Anthropic.Beta.Messages.BetaToolUseBlock
           ) => {
             let extras: any = {};
 
@@ -139,14 +142,14 @@ export class AIClient {
               // @ts-expect-error
               const [x, y] = toolBlock.input.coordinate;
 
-              const componentStr =
-                await browserTool.getNormalizedComponentStringByCoords(x, y);
+              const componentStr = await browser.locateAt(x, y);
 
               extras = { componentStr };
             }
 
             return extras;
           };
+          console.log({ results });
 
           const newCacheSteps = await Promise.all(
             toolBlocks.map(async (_toolBlock, i) => {
@@ -155,13 +158,13 @@ export class AIClient {
               return {
                 action: toolBlocks[i] as CacheAction,
                 reasoning: response.content.map(
-                  (block) => (block as any).text,
+                  (block) => (block as any).text
                 )[0],
-                result: results[i].output || null,
+                result: results[i].message || null,
                 extras,
                 timestamp: Date.now(),
               };
-            }),
+            })
           );
 
           pendingCache.steps = [
@@ -171,33 +174,42 @@ export class AIClient {
 
           // Log tool results
           if (this.debugMode) {
-            results.forEach((result) => {
+            results.forEach((result: any) => {
               const { ...logResult } = result;
               console.log(pc.blue("\n🔧 Tool Result:"), logResult);
             });
           }
 
+          console.log({ received: JSON.stringify(results) });
+
+          console.log({
+            pl: JSON.stringify(__shortest__.config!.driver.platform),
+          });
+
           // Add tool results to message history
           messages.push({
             role: "user",
-            content: results.map((result, index) => ({
+            content: results.map((result, index: any) => ({
               type: "tool_result" as const,
               tool_use_id: toolResults[index].toolBlock.id,
-              content: result.base64_image
+              content: result.payload?.base64Image
                 ? [
                     {
                       type: "image" as const,
                       source: {
                         type: "base64" as const,
-                        media_type: "image/jpeg" as const,
-                        data: result.base64_image,
+                        media_type:
+                          __shortest__.config!.driver.platform === "web"
+                            ? "image/jpeg"
+                            : "image/png",
+                        data: result.payload.base64Image,
                       },
                     },
                   ]
                 : [
                     {
                       type: "text" as const,
-                      text: result.output || "",
+                      text: result.message || "",
                     },
                   ],
             })),

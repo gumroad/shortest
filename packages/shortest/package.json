@@ -26,10 +26,10 @@
     "prepare": "pnpm build",
     "prepublishOnly": "pnpm build",
     "postinstall": "node -e \"if (process.platform !== 'win32') { try { require('child_process').execSync('chmod +x dist/cli/bin.js') } catch (_) {} }\"",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist/types && cp index.d.ts dist/",
-    "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
-    "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
-    "build:cli": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outdir=dist/cli --metafile=dist/meta-cli.json --external:fsevents --external:chokidar --external:glob --external:esbuild --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:otplib --external:picocolors --external:punycode --external:https --external:http --external:net --external:tls --external:crypto --external:mailosaur",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist/types && cp index.d.ts dist/ && cp src/global.d.ts dist/",
+    "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:stream --external:webdriverio --external:@wdio/types --external:@wdio/logger --external:fs --external:sharp",
+    "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:stream --external:webdriverio --external:@wdio/types --external:@wdio/logger --external:fs --external:sharp",
+    "build:cli": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outdir=dist/cli --metafile=dist/meta-cli.json --external:fsevents --external:chokidar --external:glob --external:esbuild --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:otplib --external:picocolors --external:punycode --external:https --external:http --external:net --external:tls --external:crypto --external:mailosaur --external:webdriverio --external:@wdio/types --external:@wdio/logger --external:sharp",
     "dev": "pnpm build:types --watch",
     "test:ai": "tsx tests/test-ai.ts",
     "test:browser": "tsx tests/test-browser.ts",
@@ -43,7 +43,8 @@
     "chromium-bidi": "^0.5.2",
     "glob": "^10.3.10",
     "otplib": "^12.0.1",
-    "picocolors": "^1.0.0"
+    "picocolors": "^1.0.0",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -61,7 +62,10 @@
     "dotenv": "^16.4.5",
     "esbuild": "^0.20.1",
     "expect": "^29.7.0",
-    "playwright": "^1.48.2"
+    "playwright": "^1.48.2",
+    "webdriverio": "^8.0.0",
+    "@wdio/types": "^8.0.0",
+    "@wdio/logger": "^9.0.0"
   },
   "author": "Antiwork",
   "license": "MIT",

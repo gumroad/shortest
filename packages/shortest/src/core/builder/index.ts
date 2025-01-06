@@ -12,14 +12,14 @@ export class TestBuilder {
 
     lines.push(
       "Steps:",
-      `1. Execute test function${hasCallback ? " [HAS_CALLBACK]" : " [NO_CALLBACK]"}`,
+      `1. Execute test function${hasCallback ? " [HAS_CALLBACK]" : " [NO_CALLBACK]"}`
     );
 
     if (test.expectations && test.expectations.length > 0) {
       lines.push("Expected Results:");
       test.expectations.forEach((exp) => {
         lines.push(
-          `- ${exp.description}${exp.fn ? " [HAS_CALLBACK]" : " [NO_CALLBACK]"}`,
+          `- ${exp.description}${exp.fn ? " [HAS_CALLBACK]" : " [NO_CALLBACK]"}`
         );
       });
     }
@@ -29,7 +29,10 @@ export class TestBuilder {
 
   static async parseModule(_compiledModule: any): Promise<TestFunction[]> {
     // Get tests from global registry
-    const registry = (global as any).__shortest__.registry;
+    const registry = global.__shortest__.registry;
+    if (!registry) {
+      throw new Error("Registry not found");
+    }
     const tests = Array.from(registry.tests.values()).flat();
 
     // Clear registry after getting tests

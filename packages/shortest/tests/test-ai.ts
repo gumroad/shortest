@@ -13,7 +13,6 @@ async function testAI() {
   const browserManager = new BrowserManager(getConfig());
 
   try {
-    await initialize();
     console.log("🚀 Launching browser...");
     const context = await browserManager.launch();
     const page = context.pages()[0];

@@ -19,7 +19,6 @@ async function testBrowser() {
   });
 
   try {
-    await initialize();
     console.log("🚀 Launching browser...");
     const context = await browserManager.launch();
     const page = context.pages()[0];
@@ -109,7 +108,7 @@ async function testBrowser() {
                           text: result.output || "",
                         },
                       ],
-                }) as Anthropic.Beta.Messages.BetaToolResultBlockParam,
+                }) as Anthropic.Beta.Messages.BetaToolResultBlockParam
             ),
           });
 

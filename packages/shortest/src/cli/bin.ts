@@ -2,7 +2,8 @@
 
 import pc from "picocolors";
 import { GitHubTool } from "../browser/integrations/github";
-import { TestRunner } from "../core/runner";
+import { RunnerImpl } from "../core/runner";
+import { initialize } from "..";
 
 process.removeAllListeners("warning");
 process.on("warning", (warning) => {
@@ -65,7 +66,7 @@ ${pc.bold("Environment Setup:")}
 
 ${pc.bold("Documentation:")}
   Visit ${pc.cyan(
-    "https://github.com/anti-work/shortest",
+    "https://github.com/anti-work/shortest"
   )} for detailed setup and usage
 `);
 }
@@ -82,7 +83,7 @@ async function handleGitHubCode(args: string[]) {
     console.log(pc.cyan("Code: ") + pc.bold(code));
     console.log(pc.cyan("Expires in: ") + pc.bold(`${timeRemaining}s`));
     console.log(
-      pc.dim(`Using secret from: ${secret ? "CLI flag" : ".env file"}\n`),
+      pc.dim(`Using secret from: ${secret ? "CLI flag" : ".env file"}\n`)
     );
 
     process.exit(0);
@@ -137,16 +138,13 @@ async function main() {
   const noCache = args.includes("--no-cache");
 
   try {
-    const runner = new TestRunner(
+    const runner = new RunnerImpl(
       process.cwd(),
-      true,
-      headless,
-      targetUrl,
-      debugAI,
-      noCache,
+      { headless, baseUrl: targetUrl, debugAI, noCache },
+      true
     );
-    await runner.initialize();
 
+    await initialize();
     if (testPattern) {
       await runner.runFile(testPattern);
     } else {
@@ -154,13 +152,14 @@ async function main() {
     }
   } catch (error) {
     if (error instanceof Error) {
+      console.log({ error });
       if (error.message.includes("Config")) {
         console.error(pc.red("\nConfiguration Error:"));
         console.error(pc.dim(error.message));
         console.error(
           pc.dim(
-            "\nMake sure you have a valid shortest.config.ts with all required fields:",
-          ),
+            "\nMake sure you have a valid shortest.config.ts with all required fields:"
+          )
         );
         console.error(pc.dim("  - headless: boolean"));
         console.error(pc.dim("  - baseUrl: string"));

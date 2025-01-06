@@ -4,10 +4,6 @@ import type * as playwright from "playwright";
 import type { ShortestConfig } from "./dist/types/config";
 import type { TestAPI, TestContext } from "./dist/types/test";
 
-declare global {
-  const expect: Expect;
-}
-
 declare module "@antiwork/shortest" {
   export type TestContextProps = {
     page: Page;
@@ -26,12 +22,12 @@ declare module "@antiwork/shortest" {
     expect(description: string): TestChain;
     expect(
       description: string,
-      fn?: (context: TestContextProps) => Promise<void>,
+      fn?: (context: TestContextProps) => Promise<void>
     ): TestChain;
     expect(
       description: string,
       payload?: any,
-      fn?: (context: TestContextProps) => Promise<void>,
+      fn?: (context: TestContextProps) => Promise<void>
     ): TestChain;
     after(fn: (context: TestContextProps) => void | Promise<void>): TestChain;
   };
@@ -41,36 +37,36 @@ declare module "@antiwork/shortest" {
     (name: string): TestChain;
     (
       name: string,
-      fn?: (context: TestContextProps) => Promise<void>,
+      fn?: (context: TestContextProps) => Promise<void>
     ): TestChain;
     (
       name: string,
       payload?: any,
-      fn?: (context: TestContextProps) => Promise<void>,
+      fn?: (context: TestContextProps) => Promise<void>
     ): TestChain;
 
     beforeAll(fn: (context: TestContextProps) => Promise<void>): void;
     beforeAll(
       name: string,
-      fn: (context: TestContextProps) => Promise<void>,
+      fn: (context: TestContextProps) => Promise<void>
     ): void;
 
     afterAll(fn: (context: TestContextProps) => Promise<void>): void;
     afterAll(
       name: string,
-      fn: (context: TestContextProps) => Promise<void>,
+      fn: (context: TestContextProps) => Promise<void>
     ): void;
 
     beforeEach(fn: (context: TestContextProps) => Promise<void>): void;
     beforeEach(
       name: string,
-      fn: (context: TestContextProps) => Promise<void>,
+      fn: (context: TestContextProps) => Promise<void>
     ): void;
 
     afterEach(fn: (context: TestContextProps) => Promise<void>): void;
     afterEach(
       name: string,
-      fn: (context: TestContextProps) => Promise<void>,
+      fn: (context: TestContextProps) => Promise<void>
     ): void;
   };
 

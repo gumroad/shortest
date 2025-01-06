@@ -3,7 +3,7 @@ import { TestContext, Page } from "./test";
 export interface BrowserToolInterface {
   waitForSelector(
     selector: string,
-    options?: { timeout: number },
+    options?: { timeout: number }
   ): Promise<void>;
   fill(selector: string, value: string): Promise<void>;
   press(selector: string, key: string): Promise<void>;
@@ -33,6 +33,40 @@ export enum BrowserActionEnum {
 }
 
 export type BrowserAction = `${BrowserActionEnum}`;
+
+export namespace BrowserActionNs {
+  // todo complete it
+  export interface MouseMove {
+    action: BrowserActionEnum.MouseMove;
+    input: { x: number; y: number };
+  }
+
+  // Define specific input types for each action
+  export type MouseMoveInput = { x: number; y: number };
+  export type LeftClickInput = {};
+  export type LeftClickDragInput = {
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  };
+  export type RightClickInput = { x: number; y: number };
+  export type NavigateInput = { url: string };
+  export type TypeInput = { text: string };
+  export type SleepInput = { duration: number };
+  export type CheckMailInput = { email: string; password: string };
+
+  // Map each action to its unique input type
+  export type Input =
+    | { action: BrowserActionEnum.MouseMove; input: MouseMoveInput }
+    | { action: BrowserActionEnum.LeftClick; input: LeftClickInput }
+    | { action: BrowserActionEnum.LeftClickDrag; input: LeftClickDragInput }
+    | { action: BrowserActionEnum.RightClick; input: RightClickInput }
+    | { action: BrowserActionEnum.Navigate; input: NavigateInput }
+    | { action: BrowserActionEnum.Type; input: TypeInput }
+    | { action: BrowserActionEnum.Sleep; input: SleepInput }
+    | { action: BrowserActionEnum.CheckMail; input: CheckMailInput };
+}
 
 export interface BrowserToolOptions {
   width: number;

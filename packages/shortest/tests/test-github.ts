@@ -9,7 +9,6 @@ async function testGithubLogin() {
   const githubTool = new GitHubTool();
 
   try {
-    await initialize();
     console.log(pc.cyan("\n🚀 First browser launch..."));
     let context = await browserManager.launch();
     let page = context.pages()[0];
@@ -57,7 +56,7 @@ async function testGithubLogin() {
 
     // Launch fresh browser
     console.log(
-      pc.cyan("\n🚀 Launching fresh browser to verify clean state..."),
+      pc.cyan("\n🚀 Launching fresh browser to verify clean state...")
     );
     const newContext = await browserManager.launch();
     const newPage = newContext.pages()[0];

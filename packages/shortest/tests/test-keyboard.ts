@@ -7,7 +7,6 @@ async function testKeyboard() {
   const browserManager = new BrowserManager(getConfig());
 
   try {
-    await initialize();
     console.log(pc.cyan("\n🚀 Launching browser..."));
     const context = await browserManager.launch();
     const page = context.pages()[0];
