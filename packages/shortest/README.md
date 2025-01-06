@@ -8,14 +8,6 @@ AI-powered natural language end-to-end testing framework.
 - Built on Playwright
 - GitHub integration with 2FA support
 
-Shortest allows non-engineers such as designers, marketers, and PMs to write tests. Here are some examples:
-
-```typescript
-shortest("visit every page and ensure no typos")
-shortest("visit every page and ensure mobile layout isn't janky")
-shortest("visit every page and ensure dark mode is considered")
-```
-
 ### Installation
 
 ```bash
@@ -143,6 +135,14 @@ const allAppActions = ["send invoice to company", "view invoices"];
 // Combine flows with spread operator
 shortest([loginAsLawyer, ...allAppActions]);
 shortest([loginAsContractor, ...allAppActions]);
+```
+
+Shortest allows non-engineers such as designers, marketers, and PMs to write tests. Here are some examples:
+
+```typescript
+shortest("visit every page and ensure no typos")
+shortest("visit every page and ensure mobile layout isn't janky")
+shortest("visit every page and ensure dark mode is considered")
 ```
 
 ### API Testing
