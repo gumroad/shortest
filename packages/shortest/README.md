@@ -137,6 +137,14 @@ shortest([loginAsLawyer, ...allAppActions]);
 shortest([loginAsContractor, ...allAppActions]);
 ```
 
+Shortest's style allows non-engineers such as designers, marketers, and PMs to write tests. Here are some examples:
+
+```typescript
+shortest("visit every page and ensure no typos");
+shortest("visit every page and ensure mobile layout isn't janky");
+shortest("visit every page and ensure dark mode is considered");
+```
+
 ### API Testing
 
 Test API endpoints using natural language
