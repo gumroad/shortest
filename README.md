@@ -151,7 +151,7 @@ shortest([loginAsLawyer, ...allAppActions]);
 shortest([loginAsContractor, ...allAppActions]);
 ```
 
-### API Testing
+### API testing
 
 Test API endpoints using natural language
 
@@ -191,9 +191,13 @@ pnpm shortest --headless                   # Run in headless mode using cli
 
 You can find example tests in the [`examples`](./examples) directory.
 
+### CI setup
+
+You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
+
 ### GitHub 2FA login setup
 
-Shortest currently supports login using Github 2FA. For GitHub authentication tests:
+Shortest supports login using GitHub 2FA. For GitHub authentication tests:
 
 1. Go to your repository settings
 2. Navigate to "Password and Authentication"
@@ -215,10 +219,6 @@ Required in `.env.local`:
 ANTHROPIC_API_KEY=your_api_key
 GITHUB_TOTP_SECRET=your_secret  # Only for GitHub auth tests
 ```
-
-### CI setup
-
-You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
 ## Web app development
 
