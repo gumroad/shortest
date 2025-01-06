@@ -137,7 +137,7 @@ shortest([loginAsLawyer, ...allAppActions]);
 shortest([loginAsContractor, ...allAppActions]);
 ```
 
-Shortest allows non-engineers such as designers, marketers, and PMs to write tests. Here are some examples:
+Shortest's style allows non-engineers such as designers, marketers, and PMs to write tests. Here are some examples:
 
 ```typescript
 shortest("visit every page and ensure no typos")
