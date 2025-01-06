@@ -141,7 +141,7 @@ Shortest's style allows non-engineers such as designers, marketers, and PMs to w
 
 ```typescript
 shortest("visit every page and ensure no typos");
-shortest("visit every page and ensure mobile layout isn't janky")
+shortest("visit every page and ensure mobile layout isn't janky");
 shortest("visit every page and ensure dark mode is considered")
 ```
 
