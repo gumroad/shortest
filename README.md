@@ -238,18 +238,13 @@ jobs:
       - name: Start dev server
         run: pnpm dev & sleep 1
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           PORT: 3000
 
       - name: Run Shortest tests
         run: npx shortest src/__tests__/**/*.test.ts --headless
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           PLAYWRIGHT_TEST_BASE_URL: "http://localhost:8080"
-          SHORTEST_DISABLE_SCREENSHOTS: "true"
           # Add these if you're using GitHub auth in your tests
           # GITHUB_USERNAME: ${{ secrets.TEST_GITHUB_USERNAME }}
           # GITHUB_PASSWORD: ${{ secrets.TEST_GITHUB_PASSWORD }}
