@@ -3,15 +3,27 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.
-org/spec/v2.0.0.html).
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.4.1] - 2025-01-07
+
+### Added
+- Update readme with CLI example by @Harry Roper
+- Update README with non-engineer introduction and example tests by @devin-ai-integration[bot]
+- Add token usage details in summary by @khalatevarun
+- Add baseURL configuration to BrowserManager context by @PedroAVJ
+- Update test command example with directory path by @devin-ai-integration[bot]
+- Move AI processing logic to more appropriate location by @PedroAVJ
+
+### Fixed
+- Improve AI handling of newly opened tabs by @rmarescu
 
 ## [0.4.0] - 2025-01-02
 
 ### Added
-- Added chained tests by @crabest
-- Added 'before' function by @slavingia
-- Added Bash tool by @gladyshcodes
+- Chained testing by @crabest
+- 'before' function support by @slavingia
+- Bash tool by @gladyshcodes
 
 ### Changed
 - Adjusted the prompt to expect successful test execution by @crabest
@@ -29,12 +41,12 @@ org/spec/v2.0.0.html).
 ## [0.3.0] - 2024-12-30
 
 ### Changes
-- Added Caching 
+- Added Caching
 
 ## [0.2.1] - 2024-12-27
 
 ## Added
-- Mailosaur integration with error handling for email validation 
+- Mailosaur integration with error handling for email validation
 - Browser-based email preview functionality
 - Test execution delay utility (sleep_milliseconds)
 
@@ -46,7 +58,7 @@ org/spec/v2.0.0.html).
 
 ## [0.1.0] - 2024-12-19
 
-### Added 
+### Added
 - Added mouse tracking and click animations for better user experience
 
 ## [0.0.9] - 2024-12-17
@@ -57,8 +69,8 @@ org/spec/v2.0.0.html).
 ## [0.0.8] - 2024-12-16
 
 ### Added
-- Added support for playwright's browser and playwright object model 
-- Rename test namespace to shortest 
+- Added support for playwright's browser and playwright object model
+- Rename test namespace to shortest
 - Added new lifecycle method called .after() that will only run after the specific test case
 - Improve system prompt to be more robust and structured
 - Added Windows support for playwright install command
@@ -95,7 +107,7 @@ org/spec/v2.0.0.html).
 
 ### Changed
 - Simplified test writing with a more intuitive API
-- Moved screenshots to `.shortest/screenshots` directory with auto-cleanup 
+- Moved screenshots to `.shortest/screenshots` directory with auto-cleanup
 - Removed browser session persistence
 
 ## [0.0.3] - 2024-12-01
@@ -136,4 +148,4 @@ org/spec/v2.0.0.html).
 - Anthropic AI SDK 0.32.0
 - esbuild ^0.20.1
 - expect ^29.7.0
-- dotenv ^16.4.5 
+- dotenv ^16.4.5
