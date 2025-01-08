@@ -11,10 +11,10 @@ jobs:
     timeout-minutes: 10
 
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_2 }}
       CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-      _MAILOSAUR_API_KEY: ${{ secrets.MAILOSAUR_API_KEY }}
+      MAILOSAUR_API_KEY: ${{ secrets.MAILOSAUR_API_KEY }}
       MAILOSAUR_SERVER_ID: ${{ secrets.MAILOSAUR_SERVER_ID }}
 
     steps:
@@ -49,3 +49,13 @@ jobs:
         env:
           SHORTEST_TEST_BASE_URL: ${{ steps.waitFor.outputs.url }}
         run: pnpm shortest --headless --target=${{ steps.waitFor.outputs.url }}
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: .shortest
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7

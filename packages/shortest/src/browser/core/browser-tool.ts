@@ -472,15 +472,24 @@ export class BrowserTool extends BaseBrowserTool {
               process.env.MAILOSAUR_SERVER_ID;
 
             if (!mailosaurAPIKey) {
-              throw new ToolError("Mailosaur API key is required");
+              return {
+                output: "Mailosaur API key is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
 
             if (!mailosaurServerId) {
-              throw new ToolError("Mailosaur server ID is required");
+              return {
+                output: "Mailosaur server ID is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
 
             if (!input.email) {
-              throw new ToolError("Mailosaur email address is required");
+              return {
+                output: "Mailosaur email address is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
 
             this.mailosaurTool = new MailosaurTool({

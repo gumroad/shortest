@@ -104,7 +104,7 @@ export class AIClient {
           messages,
           system: SYSTEM_PROMPT,
           tools: [...AITools],
-          betas: ["computer-use-2024-10-22"],
+          betas: ["computer-use-2024-10-11"],
         });
         // Log AI response and tool usage
 
