@@ -195,6 +195,8 @@ You can find example tests in the [`examples`](./examples) directory.
 
 You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
+![See example here](https://github.com/anti-work/shortest/blob/main/.github/workflows/shortest.yml)
+
 ### GitHub 2FA login setup
 
 Shortest supports login using GitHub 2FA. For GitHub authentication tests:
