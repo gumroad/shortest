@@ -195,62 +195,7 @@ You can find example tests in the [`examples`](./examples) directory.
 
 You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
-Example CLI YML script:
-```
-name: Shortest Tests
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Install Playwright
-        run: |
-          npm install -g playwright
-          playwright install chromium
-
-      - name: Setup Shortest directory
-        run: |
-          mkdir -p .shortest
-          chmod -R 777 .shortest
-
-      - name: Start dev server
-        run: pnpm dev & sleep 1
-        env:
-          PORT: 3000
-
-      - name: Run Shortest tests
-        run: npx shortest src/__tests__/**/*.test.ts --headless
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          PLAYWRIGHT_TEST_BASE_URL: "http://localhost:8080"
-          # Add these if you're using GitHub auth in your tests
-          # GITHUB_USERNAME: ${{ secrets.TEST_GITHUB_USERNAME }}
-          # GITHUB_PASSWORD: ${{ secrets.TEST_GITHUB_PASSWORD }}
-          # GITHUB_TOTP_SECRET: ${{ secrets.GITHUB_TOTP_SECRET }}
-
-```
+![See example here](https://github.com/anti-work/shortest/blob/main/.github/workflows/shortest.yml)
 
 ### GitHub 2FA login setup
 
