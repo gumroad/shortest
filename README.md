@@ -330,6 +330,7 @@ You'll need to set up the following services for local development. If you're no
 <summary>GitHub OAuth</summary>
 
 1. Create a GitHub OAuth App:
+
    - Go to your GitHub account settings.
    - Navigate to `Developer settings` > `OAuth Apps` > `New OAuth App`.
    - Fill in the application details:
@@ -345,7 +346,7 @@ You'll need to set up the following services for local development. If you're no
    - Enter your `Client ID` and `Client Secret` from the GitHub OAuth app you just created.
    - Add `repo` to the `Scopes`
    ![Clerk Custom Credentials](https://github.com/user-attachments/assets/31d414e1-4e1e-4725-8649-ec1826c6e53e)
-</details>
+   </details>
 
 <details>
 <summary>Mailosaur</summary>
@@ -354,12 +355,13 @@ You'll need to set up the following services for local development. If you're no
 2. Create a new Inbox/Server.
 3. Go to [API Keys](https://mailosaur.com/app/keys) and create a standard key.
 4. Update the environment variables:
-    - `MAILOSAUR_API_KEY`: Your API key
-    - `MAILOSAUR_SERVER_ID`: Your server ID
+   - `MAILOSAUR_API_KEY`: Your API key
+   - `MAILOSAUR_SERVER_ID`: Your server ID
 
 The email used to test the login flow will have the format `shortest@<MAILOSAUR_SERVER_ID>.mailosaur.net`, where
 `MAILOSAUR_SERVER_ID` is your server ID.
 Make sure to add the email as a new user under the Clerk app.
+
 </details>
 
 ### Running locally
@@ -372,10 +374,10 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
-Run package in development mode (from `/packages/shortest`):
+Run package in development mode:
 
 ```bash
-pnpm dev
+pnpm dev:pkg
 ```
 
 This will automatically rebuild the project whenever you save changes.
