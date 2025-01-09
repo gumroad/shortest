@@ -177,7 +177,7 @@ export class TestRunner {
       },
     });
 
-    // this may never happen as the config is initlized before this code is executed
+    // this may never happen as the config is initialized before this code is executed
     if (!this.config.anthropicKey) {
       throw new Error("ANTHROPIC_KEY is not set");
     }
