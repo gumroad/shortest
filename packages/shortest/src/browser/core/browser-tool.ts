@@ -683,7 +683,7 @@ export class BrowserTool extends BaseBrowserTool {
     });
 
     writeFileSync(filePath, buffer);
-    console.log(`Screenshot saved to: ${filePath}`);
+    console.log(`  Screenshot saved to: ${filePath}`);
 
     return {
       output: "Screenshot taken",

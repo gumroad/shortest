@@ -56,7 +56,7 @@ export class AIClient {
         attempts++;
         if (attempts === maxRetries) throw error;
 
-        console.log(`Retry attempt ${attempts}/${maxRetries}`);
+        console.log(`  Retry attempt ${attempts}/${maxRetries}`);
         await new Promise((r) => setTimeout(r, 5000 * attempts));
       }
     }
@@ -104,7 +104,7 @@ export class AIClient {
           messages,
           system: SYSTEM_PROMPT,
           tools: [...AITools],
-          betas: ["computer-use-2024-10-11"],
+          betas: ["computer-use-2024-10-22"],
         });
         // Log AI response and tool usage
 

@@ -1,5 +1,5 @@
 import pc from "picocolors";
-import { AssertionError } from "../types";
+import { AssertionError, TestFunction } from "../types";
 
 export type TestStatus = "pending" | "running" | "passed" | "failed";
 
@@ -17,29 +17,49 @@ interface TestResult {
 
 export class Logger {
   private currentFile: string = "";
-  private testResults: TestResult[] = [];
+  private testResults: Record<string, TestResult> = {};
   private startTime: number = Date.now();
+  private currentTest: TestResult | null = null;
 
   // token pricing (Claude 3.5 Sonnet)
   private readonly COST_PER_1K_INPUT_TOKENS = 0.003;
   private readonly COST_PER_1K_OUTPUT_TOKENS = 0.015;
 
-  startFile(file: string) {
-    this.currentFile = file.split("/").pop() || file;
-    console.log(pc.blue(`\n📄 ${pc.bold(this.currentFile)}`));
+  initializeTest(test: TestFunction) {
+    const testKey = test.name || "Unnamed Test";
+    this.currentTest = {
+      name: testKey,
+      status: "pending",
+    };
+    this.testResults[testKey] = this.currentTest;
   }
 
-  reportTest(
-    name: string | undefined,
+  startFile(file: string) {
+    this.currentFile = file;
+    console.log("📄", pc.blue(pc.bold(this.currentFile)));
+  }
+
+  startTest(test: TestFunction) {
+    console.log(this.getStatusIcon("running"), test.name);
+  }
+
+  endTest(
     status: "passed" | "failed",
     error?: Error,
     tokenUsage?: TokenMetrics,
   ) {
-    const testName = name || "Unnamed Test";
+    if (!this.currentTest) {
+      throw new Error("Current test not initialized");
+    }
+
+    this.testResults[this.currentTest.name].status = status;
+    this.testResults[this.currentTest.name].error = error;
+    this.testResults[this.currentTest.name].tokenUsage = tokenUsage;
+
     const symbol = status === "passed" ? "✓" : "✗";
     const color = status === "passed" ? pc.green : pc.red;
 
-    console.log(`  ${color(symbol)} ${testName}`);
+    console.log(`  ${color(`${symbol} ${status}`)}`);
 
     if (tokenUsage) {
       const totalTokens = tokenUsage.input + tokenUsage.output;
@@ -53,10 +73,10 @@ export class Logger {
     }
 
     if (error) {
-      console.log(pc.red(`    ${error.message}`));
+      this.reportError("Test Execution", error.message);
     }
 
-    this.testResults.push({ name: testName, status, error, tokenUsage });
+    this.currentTest = null;
   }
 
   private calculateCost(inputTokens: number, outputTokens: number): number {
@@ -73,7 +93,7 @@ export class Logger {
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
 
-    this.testResults.forEach((result) => {
+    Object.values(this.testResults).forEach((result) => {
       if (result.tokenUsage) {
         totalInputTokens += result.tokenUsage.input;
         totalOutputTokens += result.tokenUsage.output;
@@ -104,8 +124,8 @@ export class Logger {
 
   summary() {
     const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
-    const totalTests = this.testResults.length;
-    const failedTests = this.testResults.filter(
+    const totalTests = Object.keys(this.testResults).length;
+    const failedTests = Object.values(this.testResults).filter(
       (t) => t.status === "failed",
     ).length;
     const passedTests = totalTests - failedTests;
@@ -114,33 +134,39 @@ export class Logger {
       this.calculateTotalTokenUsage();
     const totalTokens = totalInputTokens + totalOutputTokens;
 
-    console.log(pc.dim("⎯".repeat(50)));
+    console.log(pc.dim("⎯".repeat(50)), "\n");
 
+    const LABEL_WIDTH = 15;
     console.log(
-      pc.bold("\n Tests "),
-      failedTests ? pc.red(`${failedTests} failed`) : "",
-      failedTests && passedTests ? " | " : "",
-      pc.green(`${passedTests} passed`),
+      pc.bold(" Tests".padEnd(LABEL_WIDTH)),
+      failedTests
+        ? `${pc.red(`${failedTests} failed`)} | ${pc.green(`${passedTests} passed`)}`
+        : pc.green(`${passedTests} passed`),
       pc.dim(`(${totalTests})`),
     );
 
-    console.log(pc.bold(" Duration  "), pc.dim(`${duration}s`));
     console.log(
-      pc.bold(" Start at  "),
+      pc.bold(" Duration".padEnd(LABEL_WIDTH)),
+      pc.dim(`${duration}s`),
+    );
+    console.log(
+      pc.bold(" Started at".padEnd(LABEL_WIDTH)),
       pc.dim(new Date(this.startTime).toLocaleTimeString()),
     );
     console.log(
-      pc.bold(" Tokens    "),
+      pc.bold(" Tokens".padEnd(LABEL_WIDTH)),
       pc.dim(
         `${totalTokens.toLocaleString()} tokens ` +
           `(≈ $${totalCost.toFixed(2)})`,
       ),
     );
-    console.log(pc.dim("\n" + "⎯".repeat(50)));
+    console.log("\n", pc.dim("⎯".repeat(50)));
   }
 
   allTestsPassed(): boolean {
-    return !this.testResults.some((test) => test.status === "failed");
+    return !Object.values(this.testResults).some(
+      (test) => test.status === "failed",
+    );
   }
 
   reportStatus(message: string) {
