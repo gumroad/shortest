@@ -1,9 +1,8 @@
 name: "Shortest Tests"
 
 on:
-  push:
-    branches:
-      - '**'
+  pull_request:
+    branches: [main]
 
 jobs:
   shortest:
