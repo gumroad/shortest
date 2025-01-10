@@ -6,20 +6,23 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "build:pkg": "cd packages/shortest && pnpm build",
-    "setup": "npx tsx lib/setup.ts",
     "db:seed": "npx tsx lib/db/seed.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:cleanup": "tsx lib/db/cleanup.ts",
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
+    "setup": "npx tsx lib/setup.ts",
+
+    "pkg:build": "cd packages/shortest && pnpm build",
+    "pkg:dev": "cd packages/shortest && pnpm dev",
+    "pkg:test": "cd packages/shortest && pnpm shortest",
+    "pkg:test:src": "npx tsx packages/shortest/src/cli/bin.ts",
+
     "test": "pnpm shortest",
-    "prepare": "cd packages/shortest && pnpm build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit --incremental",
-    "shortest:dev": "npx tsx packages/shortest/src/cli/bin.ts"
+    "typecheck": "tsc --noEmit --incremental"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.50",

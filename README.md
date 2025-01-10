@@ -239,17 +239,16 @@ This guide will help you set up the Shortest web app for local development.
 ### Getting started
 
 1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/anti-work/shortest.git
-   cd shortest
-   ```
+```bash
+git clone https://github.com/anti-work/shortest.git
+cd shortest
+```
 
 2. Install dependencies:
-   ```bash
-   npm install -g pnpm
-   pnpm install
-   ```
+```bash
+npm install -g pnpm
+pnpm install
+```
 
 ### Environment setup
 
@@ -345,6 +344,7 @@ You'll need to set up the following services for local development. If you're no
    - Enter your `Client ID` and `Client Secret` from the GitHub OAuth app you just created.
    - Add `repo` to the `Scopes`
    ![Clerk Custom Credentials](https://github.com/user-attachments/assets/31d414e1-4e1e-4725-8649-ec1826c6e53e)
+
 </details>
 
 <details>
@@ -354,12 +354,13 @@ You'll need to set up the following services for local development. If you're no
 2. Create a new Inbox/Server.
 3. Go to [API Keys](https://mailosaur.com/app/keys) and create a standard key.
 4. Update the environment variables:
-    - `MAILOSAUR_API_KEY`: Your API key
-    - `MAILOSAUR_SERVER_ID`: Your server ID
+   - `MAILOSAUR_API_KEY`: Your API key
+   - `MAILOSAUR_SERVER_ID`: Your server ID
 
 The email used to test the login flow will have the format `shortest@<MAILOSAUR_SERVER_ID>.mailosaur.net`, where
 `MAILOSAUR_SERVER_ID` is your server ID.
 Make sure to add the email as a new user under the Clerk app.
+
 </details>
 
 ### Running locally
@@ -377,26 +378,29 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 1. Make changes to the package source code in `packages/shortest/`
 
 2. Test changes instantly during development (no build needed):
-
 ```bash
-pnpm shortest:dev -h
+pnpm pkg:test:src -h
 ```
 
 3. To test the actual built package:
-
 ```bash
-pnpm build:pkg
+# One-time build
+pnpm pkg:build
+
+# Watch mode (rebuilds on changes)
+pnpm pkg:dev
+
+# Test changes
 pnpm shortest --help
 ```
 
 4. To test in another project:
-
 ```bash
 # In Shortest package directory
 cd packages/shortest
 pnpm pack
 
 # In your test project
-npm install /path/to/antiwork-shortest-{version}.tgz.tgz
+npm install /path/to/antiwork-shortest-{version}.tgz
 npx shortest -h
 ```
