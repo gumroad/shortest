@@ -379,7 +379,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 
 2. Test changes instantly during development (no build needed):
 ```bash
-pnpm shortest:dev -h
+pnpm pkg:test:src -h
 ```
 
 3. To test the actual built package:
