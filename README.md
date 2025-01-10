@@ -373,8 +373,6 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
 
-This will automatically rebuild the project whenever you save changes.
-
 ## Shortest CLI development
 
 1. Make changes to the package source code in `packages/shortest/`
