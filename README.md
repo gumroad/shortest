@@ -186,7 +186,7 @@ shortest(`
 ```bash
 pnpm shortest                              # Run all tests
 pnpm shortest __tests__/login.test.ts      # Run specific test
-pnpm shortest --headless                   # Run in headless mode using cli
+pnpm shortest --headless                   # Run in headless mode using CLI
 ```
 
 You can find example tests in the [`examples`](./examples) directory.
@@ -195,7 +195,7 @@ You can find example tests in the [`examples`](./examples) directory.
 
 You can run Shortest in your CI/CD pipeline by running tests in headless mode. Make sure to add your Anthropic API key to your CI/CD pipeline secrets.
 
-![See example here](https://github.com/anti-work/shortest/blob/main/.github/workflows/shortest.yml)
+[See example here](https://github.com/anti-work/shortest/blob/main/.github/workflows/shortest.yml)
 
 ### GitHub 2FA login setup
 

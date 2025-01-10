@@ -338,7 +338,8 @@ export class TestRunner {
       registry.tests.clear();
       registry.currentFileTests = [];
 
-      this.logger.startFile(file);
+      const filePathWithoutCwd = file.replace(this.cwd + "/", "");
+      this.logger.startFile(filePathWithoutCwd);
       const compiledPath = await this.compiler.compileFile(file);
       await import(compiledPath);
 
@@ -358,9 +359,10 @@ export class TestRunner {
             await hook(testContext);
           }
 
+          this.logger.initializeTest(test);
+          this.logger.startTest(test);
           const result = await this.executeTest(test, context);
-          this.logger.reportTest(
-            test.name,
+          this.logger.endTest(
             result.result === "pass" ? "passed" : "failed",
             result.result === "fail" ? new Error(result.reason) : undefined,
             result.tokenUsage,
@@ -387,7 +389,7 @@ export class TestRunner {
     } catch (error) {
       this.testContext = null; // Reset on error
       if (error instanceof Error) {
-        this.logger.reportError("Test Execution", error.message);
+        this.logger.endTest("failed", error);
       }
     }
   }
@@ -423,7 +425,7 @@ export class TestRunner {
   ): Promise<TestResult> {
     const cachedTest = await this.cache.get(test);
     if (this.debugAI) {
-      console.log(pc.green(`Executing cached test ${hashData(test)}`));
+      console.log(pc.green(`  Executing cached test ${hashData(test)}`));
     }
 
     const steps = cachedTest?.data.steps

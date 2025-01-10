@@ -56,7 +56,7 @@ export class AIClient {
         attempts++;
         if (attempts === maxRetries) throw error;
 
-        console.log(`Retry attempt ${attempts}/${maxRetries}`);
+        console.log(`  Retry attempt ${attempts}/${maxRetries}`);
         await new Promise((r) => setTimeout(r, 5000 * attempts));
       }
     }
