@@ -1,16 +1,17 @@
 import pc from "picocolors";
-import pw from "playwright";
-import * as wdio from "webdriverio";
-import { WebDriver } from "../../browser/core/web-driver";
-import { UIAutomator2Driver } from "../../mobile/core/uiautomator2-driver";
-// import { XCUITestDriver } from "../../mobile/core/xcuitest-driver";
-import { Driver, DriverConfig } from "./driver";
+import { Driver } from "./driver";
+import { CoreDriverForPlatform, DriverConfig } from "./interfaces";
+import { UIAutomator2Driver } from "./uiautomator2-driver";
+import { WebDriver } from "./web-driver";
+import { XCUITestDriver } from "./xcuitest-driver";
 
 export class DriverFactory {
   static async getInstance({
     platform,
     coreDriver,
-  }: DriverConfig): Promise<Driver<pw.Browser | wdio.Browser>> {
+  }: DriverConfig): Promise<
+    Driver<CoreDriverForPlatform.Web | CoreDriverForPlatform.Mobile>
+  > {
     console.log(pc.blue(`Initializing driver for ${platform} platform`));
     try {
       switch (platform) {
@@ -23,14 +24,15 @@ export class DriverFactory {
           await androidDriver.init();
           console.log(pc.blue(`Driver initialized`));
           return androidDriver;
-        // case "ios":
-        //   const IOSDriver = new XCUITestDriver(coreDriverConfig);
-        //   console.log(pc.blue(`Driver initialized`));
-        //   return IOSDriver;
+        case "ios":
+          const IOSDriver = new XCUITestDriver(coreDriver);
+          console.log(pc.blue(`Driver initialized`));
+          return IOSDriver;
         default:
           throw new Error(`Unsupported platform: ${platform}`);
       }
     } catch (error) {
+      console.log({ error });
       console.error("Driver initialization failed.");
       throw error;
     }

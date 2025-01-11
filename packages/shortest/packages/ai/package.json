@@ -1,0 +1,13 @@
+{
+  "name": "@shortest/ai",
+  "version": "0.1.0",
+  "description": "Internal AI module for the Shortest framework",
+  "type": "module",
+  "main": "./src/index.ts",
+  "author": "Internal",
+  "license": "MIT",
+  "peerDependencies": {
+    "@shortest/browser": "workspace:*",
+    "@shortest/driver": "workspace:*"
+  }
+}

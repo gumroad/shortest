@@ -1,10 +1,9 @@
 import { join } from "path";
+import { Platform, PlatformType, DriverFactory } from "@shortest/driver";
 import dotenv from "dotenv";
 import { expect as jestExpect } from "expect";
 // import { APIRequest } from "./browser/core/api-request";
 import { TestCompiler } from "./core/compiler";
-import { Platform, PlatformType } from "./core/driver/driver";
-import { DriverFactory } from "./core/driver/factory";
 import {
   TestFunction,
   TestAPI,

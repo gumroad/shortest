@@ -110,6 +110,7 @@ export class TestCompiler {
       outfile: outputPath,
       alias: {
         shortest: resolve(process.cwd(), "packages/shortest/src/index.ts"),
+        "@shortest": "./packages",
         // "./node.js": join(loggerPackagePath, "node.js"),
       },
       resolveExtensions: [".ts", ".js", ".mjs"],

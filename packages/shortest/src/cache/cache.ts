@@ -1,9 +1,7 @@
 import * as fs from "fs";
 import path from "path";
+import { merge, hashData, Logger } from "@shortest/util";
 import { CacheEntry, CacheStore } from "../types/cache";
-import { hashData } from "../utils/crypto";
-import { Logger } from "../utils/logger";
-import * as objects from "../utils/objects";
 
 export class BaseCache<T extends CacheEntry> {
   private readonly CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -37,7 +35,7 @@ export class BaseCache<T extends CacheEntry> {
     if (fs.existsSync(this.cacheFile)) {
       try {
         return JSON.parse(
-          fs.readFileSync(this.cacheFile, "utf-8"),
+          fs.readFileSync(this.cacheFile, "utf-8")
         ) as CacheStore;
       } catch {
         return {};
@@ -66,7 +64,7 @@ export class BaseCache<T extends CacheEntry> {
 
   public async set(
     key: Record<string, any>,
-    value: Partial<T["data"]>,
+    value: Partial<T["data"]>
   ): Promise<void> {
     if (!(await this.acquireLock())) {
       this.logger.error("Cache", "Failed to acquire lock for set operation");
@@ -80,7 +78,7 @@ export class BaseCache<T extends CacheEntry> {
         cache[hashedKey] = { data: {} } as T;
       }
 
-      cache[hashedKey].data = objects.mergeDeep(cache[hashedKey].data, {
+      cache[hashedKey].data = merge(cache[hashedKey].data, {
         ...value,
         timestamp: Date.now(),
       }) as T["data"];
@@ -182,7 +180,7 @@ export class BaseCache<T extends CacheEntry> {
     if (this.lockAcquireFailures >= 3) {
       this.logger.error(
         "Cache",
-        "Failed to acquire lock 3 times in a row. Releasing lock manually.",
+        "Failed to acquire lock 3 times in a row. Releasing lock manually."
       );
       this.releaseLock();
     }

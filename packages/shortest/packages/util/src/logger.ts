@@ -1,5 +1,13 @@
 import pc from "picocolors";
-import { AssertionError } from "../types";
+
+interface AssertionError extends Error {
+  matcherResult?: {
+    message: string;
+    pass: boolean;
+    actual: any;
+    expected: any;
+  };
+}
 
 export type TestStatus = "pending" | "running" | "passed" | "failed";
 
@@ -22,7 +30,7 @@ export class Logger {
   reportTest(
     name: string | undefined,
     status: "passed" | "failed",
-    error?: Error,
+    error?: Error
   ) {
     const testName = name || "Unnamed Test";
     const symbol = status === "passed" ? "✓" : "✗";
@@ -54,7 +62,7 @@ export class Logger {
     const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
     const totalTests = this.testResults.length;
     const failedTests = this.testResults.filter(
-      (t) => t.status === "failed",
+      (t) => t.status === "failed"
     ).length;
     const passedTests = totalTests - failedTests;
 
@@ -65,13 +73,13 @@ export class Logger {
       failedTests ? pc.red(`${failedTests} failed`) : "",
       failedTests && passedTests ? " | " : "",
       pc.green(`${passedTests} passed`),
-      pc.dim(`(${totalTests})`),
+      pc.dim(`(${totalTests})`)
     );
 
     console.log(pc.bold(" Duration  "), pc.dim(`${duration}s`));
     console.log(
       pc.bold(" Start at  "),
-      pc.dim(new Date(this.startTime).toLocaleTimeString()),
+      pc.dim(new Date(this.startTime).toLocaleTimeString())
     );
     console.log(pc.dim("\n" + "⎯".repeat(50)));
   }
@@ -95,7 +103,7 @@ export class Logger {
   reportAssertion(
     step: string,
     status: "passed" | "failed",
-    error?: AssertionError,
+    error?: AssertionError
   ): void {
     const icon = status === "passed" ? "✓" : "✗";
     const color = status === "passed" ? "green" : "red";

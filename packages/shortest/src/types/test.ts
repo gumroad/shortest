@@ -1,4 +1,4 @@
-import { Browser } from "../core/browser/browser";
+import { Browser } from "@shortest/browser";
 
 export interface AssertionError extends Error {
   matcherResult?: {

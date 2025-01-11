@@ -1,24 +1,24 @@
-import { writeFileSync } from "fs";
-import { join } from "path";
-// import sharp from "sharp";
-import * as wdio from "webdriverio";
+import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { CoreDriverForPlatform } from "@shortest/driver";
+import { Browser } from "./browser";
 import {
-  Browser,
   BrowserActionOptions,
   BrowserActionResult,
   BrowserActions,
   BrowserState,
-} from "../../core/browser/browser";
+} from "./interfaces";
 
 // @ts-expect-error not implemented fully yet
-export class MobileBrowser extends Browser {
+export class IOSBrowser extends Browser {
   private id: string;
-  private driver: wdio.Browser | null = null;
+  private driver: CoreDriverForPlatform.Mobile | null = null;
   private state: DeepPartial<BrowserState>;
 
-  constructor(id: string, driver: wdio.Browser) {
+  constructor(driver: CoreDriverForPlatform.Mobile) {
     super();
-    this.id = id;
+    this.id = randomUUID();
     this.driver = driver;
     this.state = {};
   }
@@ -37,8 +37,8 @@ export class MobileBrowser extends Browser {
   }
 
   async locateAt(
-    x: number,
-    y: number
+    _x: number,
+    _y: number
   ): Promise<BrowserActionResult<BrowserActions.LocateAt>> {
     return await Promise.resolve({
       message: "Not implemented yet",
@@ -58,9 +58,8 @@ export class MobileBrowser extends Browser {
     }
 
     try {
-      this.assertDriver();
-      await this.driver!.executeScript("mobile: clickGesture", [{ x, y }]);
-      await this.driver!.pause(1000);
+      await this.getDriver().executeScript("mobile: clickGesture", [{ x, y }]);
+      await this.getDriver().pause(1000);
 
       let metadata;
       try {
@@ -79,25 +78,18 @@ export class MobileBrowser extends Browser {
   }
 
   async screenshot(): Promise<BrowserActionResult<BrowserActions.Screenshot>> {
-    this.assertDriver();
-
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const outputDir = join(process.cwd(), ".shortest", "screenshots");
     const filePath = join(outputDir, `screenshot-${timestamp}.png`);
 
     try {
-      if (!this.driver) {
-        throw new Error("No driver found.");
-      }
-
-      const screenshot = await this.driver.takeScreenshot();
+      const screenshot = await this.getDriver().takeScreenshot();
 
       // Rotate the screenshot and convert it back to a base64 string
       // const rotatedBuffer = await sharp(Buffer.from(screenshot, "base64"))
       //   .rotate(90)
       //   .toBuffer();
 
-      // Save the original screenshot to a file (optional)
       writeFileSync(filePath, Buffer.from(screenshot, "base64"));
 
       return {
@@ -121,18 +113,18 @@ export class MobileBrowser extends Browser {
   }
 
   public async destroy(): Promise<void> {
-    try {
-      this.assertDriver();
-      await this.driver!.deleteSession();
+    if (this.getDriver()) {
+      await this.getDriver().deleteSession();
       this.driver = null;
-    } catch (error) {
-      throw error;
+    } else {
+      console.warn("No driver to destroy.");
     }
   }
 
-  private assertDriver() {
+  public getDriver(): CoreDriverForPlatform.Mobile {
     if (!this.driver) {
       throw new Error("Driver not initialized.");
     }
+    return this.driver;
   }
 }

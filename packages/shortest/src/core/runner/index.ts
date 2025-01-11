@@ -1,10 +1,11 @@
 import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
+import { Browser } from "@shortest/browser";
+import { hashData, Logger, urlSafe } from "@shortest/util";
 import { glob } from "glob";
 import pc from "picocolors";
 import { AIClient } from "../../ai/core/llm-client";
 import { BaseCache } from "../../cache/cache";
-import { initialize, initialize as loadGlobals } from "../../index";
 import {
   TestFunction,
   TestContext,
@@ -12,10 +13,6 @@ import {
   BrowserActionEnum,
 } from "../../types";
 import { CacheEntry } from "../../types/cache";
-import { hashData } from "../../utils/crypto";
-import { Logger } from "../../utils/logger";
-import { urlSafe } from "../../utils/url";
-import { Browser } from "../browser/browser";
 import { TestCompiler } from "../compiler";
 
 interface TestResult {
@@ -75,8 +72,6 @@ export class RunnerImpl implements Runner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    // await initialize();
-    console.log("shortest is", __shortest__);
     if (!global.__shortest__.config || !global.__shortest__.config.testDir) {
       throw new Error("No configuration found");
     }
@@ -325,6 +320,8 @@ export class RunnerImpl implements Runner {
       // await initialize();
       const driver = global.__shortest__.driver!;
       const registry = global.__shortest__.registry!;
+
+      console.log({ driver });
 
       registry.tests.clear();
       registry.currentFileTests = [];

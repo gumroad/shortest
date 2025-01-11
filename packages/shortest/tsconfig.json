@@ -1,16 +1,20 @@
 {
-    "compilerOptions": {
-      "target": "ES2022",
-      "module": "ESNext",
-      "moduleResolution": "node",
-      "outDir": "./dist",
-      "strict": true,
-      "declaration": true,
-      "esModuleInterop": true,
-      "skipLibCheck": true,
-      "rootDir": "./src",
-      "types": ["node", "jest"]
-    },
-    "include": ["src"],
-    "exclude": ["node_modules", "dist"]
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "strict": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "rootDir": "./src",
+    "types": ["node", "jest"],
+    "baseUrl": "./",
+    "paths": {
+      "@shortest/*": ["src/packages/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

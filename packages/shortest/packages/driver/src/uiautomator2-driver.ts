@@ -1,14 +1,20 @@
-import { randomUUID } from "node:crypto";
+import { Browser, AndroidBrowser } from "@shortest/browser";
+import {
+  Driver,
+  CoreDriverConfig,
+  CoreDriverForPlatform,
+} from "@shortest/driver/src";
+import { merge, retry } from "@shortest/util";
 import pc from "picocolors";
 import * as wdio from "webdriverio";
-import { Browser } from "../../core/browser/browser";
-import { Driver, CoreDriverConfig } from "../../core/driver/driver";
-import * as objects from "../../utils/objects";
-import { MobileBrowser } from "./mobile-browser";
 
-export class UIAutomator2Driver extends Driver<wdio.Browser> {
+/**
+ * Shortest driver for Android platforms
+ */
+// @ts-expect-error Implementation comming
+export class UIAutomator2Driver extends Driver<CoreDriverForPlatform.Mobile> {
   private coreDriverConfig: CoreDriverConfig.Mobile | null = null;
-  private driver: wdio.Browser | null = null;
+  private driver: CoreDriverForPlatform.Mobile | null = null;
   private browsers: Map<string, Browser> = new Map();
 
   constructor(coreDriverConfig?: CoreDriverConfig.Mobile) {
@@ -17,10 +23,11 @@ export class UIAutomator2Driver extends Driver<wdio.Browser> {
   }
 
   public async init() {
-    try {
+    const CONNECT_RETRY_ATTEMPTS = 2;
+    const connect = async function (this: UIAutomator2Driver) {
       if (!this.driver) {
         this.driver = await wdio.remote(
-          objects.mergeDeep(
+          merge(
             {
               // @see https://webdriver.io/docs/configurationfile/
               capabilities: {
@@ -37,38 +44,25 @@ export class UIAutomator2Driver extends Driver<wdio.Browser> {
           )
         );
       }
-    } catch (error) {
-      console.log("Error occured while initializing driver", { error });
-      throw error;
-    }
+    };
 
-    // ensure entry point
-    // const isAppIntalled =
-    //   await this.driver.isAppInstalled("com.gldn.mobileapp");
-    // if (!isAppIntalled) {
-    //   this.driver.installApp(capabilities!["appium:app"]);
-    // }
+    await retry(connect.bind(this), CONNECT_RETRY_ATTEMPTS);
   }
 
-  public async launch(): Promise<void> {
-    return;
+  launch(): Promise<void> {
+    return new Promise((resolve) => resolve());
   }
 
   public async createBrowser(): Promise<Browser> {
-    if (!this.driver) {
-      throw new Error("Driver is not initialized.");
-    }
-    const id = randomUUID();
-    const browser = new MobileBrowser(id, this.driver);
-    this.browsers.set(id, browser);
+    const browser = new AndroidBrowser(this.getDriver());
+    this.browsers.set(browser.getId(), browser);
     return browser;
   }
 
   public async closeBrowser(id: string): Promise<void> {
     const browser = this.browsers.get(id);
-
     if (!browser) {
-      throw new Error(`Context with ID "${id}" not found.`);
+      throw new Error(`Browser session with ID "${id}" not found.`);
     }
 
     await browser.destroy();
@@ -78,22 +72,10 @@ export class UIAutomator2Driver extends Driver<wdio.Browser> {
     );
   }
 
-  async destroy() {
-    if (this.getDriver()) {
-      this.driver = null;
-    } else {
-      console.log("No driver session to close.");
-    }
-  }
-
-  public getDriver(): wdio.Browser {
-    this.assertDriver();
-    return this.driver!;
-  }
-
-  private assertDriver() {
+  public getDriver(): CoreDriverForPlatform.Mobile {
     if (!this.driver) {
       throw new Error("Driver not initialized.");
     }
+    return this.driver;
   }
 }

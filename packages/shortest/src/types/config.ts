@@ -1,4 +1,4 @@
-import { DriverConfig } from "../core/driver/driver";
+import { DriverConfig } from "@shortest/driver";
 
 export interface ShortestConfig {
   driver: DriverConfig;

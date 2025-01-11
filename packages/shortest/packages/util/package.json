@@ -1,0 +1,9 @@
+{
+  "name": "@shortest/util",
+  "version": "0.1.0",
+  "description": "Internal util module for the Shortest framework",
+  "type": "module",
+  "main": "./src/index.ts",
+  "author": "Internal",
+  "license": "MIT"
+}

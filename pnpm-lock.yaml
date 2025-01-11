@@ -255,6 +255,18 @@ importers:
       '@anthropic-ai/sdk':
         specifier: 0.32.0
         version: 0.32.0
+      '@shortest/ai':
+        specifier: workspace:*
+        version: link:packages/ai
+      '@shortest/browser':
+        specifier: workspace:*
+        version: link:packages/browser
+      '@shortest/driver':
+        specifier: workspace:*
+        version: link:packages/driver
+      '@shortest/util':
+        specifier: workspace:*
+        version: link:packages/util
       '@wdio/logger':
         specifier: 9.4.4
         version: 9.4.4
@@ -263,7 +275,7 @@ importers:
         version: 8.41.0
       chromium-bidi:
         specifier: ^0.5.2
-        version: 0.5.24(devtools-protocol@0.0.1232444)
+        version: 0.5.24(devtools-protocol@0.0.1359167)
       dotenv:
         specifier: ^16.4.5
         version: 16.4.7
@@ -310,6 +322,91 @@ importers:
       typescript:
         specifier: ~5.6.2
         version: 5.6.3
+
+  packages/shortest/packages/ai:
+    dependencies:
+      '@shortest/browser':
+        specifier: workspace:*
+        version: link:../browser
+      '@shortest/driver':
+        specifier: workspace:*
+        version: link:../driver
+
+  packages/shortest/packages/browser:
+    dependencies:
+      '@shortest/driver':
+        specifier: workspace:*
+        version: link:../driver
+      '@shortest/util':
+        specifier: workspace:*
+        version: link:../util
+      '@wdio/logger':
+        specifier: 9.4.4
+        version: 9.4.4
+      '@wdio/types':
+        specifier: ^8.0.0
+        version: 8.41.0
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
+      esbuild:
+        specifier: ^0.20.1
+        version: 0.20.2
+      expect:
+        specifier: ^29.7.0
+        version: 29.7.0
+      playwright:
+        specifier: ^1.48.2
+        version: 1.49.1
+      sharp:
+        specifier: ^0.33.5
+        version: 0.33.5
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.24
+        version: 20.17.11
+      typescript:
+        specifier: ^5.6.2
+        version: 5.6.3
+
+  packages/shortest/packages/driver:
+    dependencies:
+      '@shortest/browser':
+        specifier: workspace:*
+        version: link:../browser
+      '@shortest/util':
+        specifier: workspace:*
+        version: link:../util
+      '@wdio/logger':
+        specifier: 9.4.4
+        version: 9.4.4
+      '@wdio/types':
+        specifier: ^8.0.0
+        version: 8.41.0
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
+      esbuild:
+        specifier: ^0.20.1
+        version: 0.20.2
+      expect:
+        specifier: ^29.7.0
+        version: 29.7.0
+      playwright:
+        specifier: ^1.48.2
+        version: 1.49.1
+      webdriverio:
+        specifier: ^8.0.0
+        version: 8.41.0(bufferutil@4.0.9)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.24
+        version: 20.17.11
+      typescript:
+        specifier: ^5.6.2
+        version: 5.6.3
+
+  packages/shortest/packages/util: {}
 
 packages:
 
@@ -7217,7 +7314,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 20.17.11
+      '@types/node': 22.10.5
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -8179,7 +8276,7 @@ snapshots:
 
   '@types/node-fetch@2.6.12':
     dependencies:
-      '@types/node': 20.17.11
+      '@types/node': 22.10.5
       form-data: 4.0.1
 
   '@types/node@18.19.69':
@@ -8274,7 +8371,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 20.17.11
+      '@types/node': 22.10.5
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.19.0(@typescript-eslint/parser@8.19.0(eslint@9.17.0(jiti@1.21.7))(typescript@5.6.3))(eslint@9.17.0(jiti@1.21.7))(typescript@5.6.3)':
@@ -8922,9 +9019,9 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  chromium-bidi@0.5.24(devtools-protocol@0.0.1232444):
+  chromium-bidi@0.5.24(devtools-protocol@0.0.1359167):
     dependencies:
-      devtools-protocol: 0.0.1232444
+      devtools-protocol: 0.0.1359167
       mitt: 3.0.1
       urlpattern-polyfill: 10.0.0
       zod: 3.23.8
@@ -9756,7 +9853,7 @@ snapshots:
 
   extract-zip@2.0.1:
     dependencies:
-      debug: 4.3.4
+      debug: 4.4.0
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -9964,7 +10061,7 @@ snapshots:
     dependencies:
       basic-ftp: 5.0.5
       data-uri-to-buffer: 6.0.2
-      debug: 4.3.4
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10358,7 +10455,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.17.11
+      '@types/node': 22.10.5
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -10827,7 +10924,7 @@ snapshots:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.3
-      debug: 4.3.4
+      debug: 4.4.0
       get-uri: 6.0.4
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
@@ -11030,7 +11127,7 @@ snapshots:
   proxy-agent@6.3.1:
     dependencies:
       agent-base: 7.1.3
-      debug: 4.3.4
+      debug: 4.4.0
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.6
       lru-cache: 7.18.3
@@ -11554,7 +11651,7 @@ snapshots:
   socks-proxy-agent@8.0.5:
     dependencies:
       agent-base: 7.1.3
-      debug: 4.3.4
+      debug: 4.4.0
       socks: 2.8.3
     transitivePeerDependencies:
       - supports-color

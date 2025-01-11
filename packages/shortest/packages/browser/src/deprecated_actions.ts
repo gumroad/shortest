@@ -1,5 +1,5 @@
 /**
- * This file should be eventually deleted and all the functions should be moved to /core/web-browser impl
+ * This file should be eventually deprecated and deleted and all the functions should be moved to Web-browser
  */
 
 import { Page } from "playwright";

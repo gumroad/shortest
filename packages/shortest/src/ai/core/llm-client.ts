@@ -1,11 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { ClaudeAdapter } from "@shortest/ai";
+import { getSystemPrompt } from "@shortest/ai";
+import { Browser } from "@shortest/browser";
 import pc from "picocolors";
-import { Browser } from "../../core/browser/browser";
 import { AIConfig } from "../../types/ai";
 import { CacheAction, CacheStep } from "../../types/cache";
 import { AITools } from "./claude-tools";
-import { LLMAdapter } from "./llm-adapter";
-import { SYSTEM_PROMPT } from "./prompts";
 
 export class AIClient {
   private client: Anthropic;
@@ -87,7 +87,7 @@ export class AIClient {
           model: this.model,
           max_tokens: 1024,
           messages,
-          system: SYSTEM_PROMPT(__shortest__.config?.driver.platform),
+          system: getSystemPrompt(__shortest__.config?.driver.platform),
           tools: [...AITools],
           betas: ["computer-use-2024-10-22"],
         });
@@ -119,13 +119,12 @@ export class AIClient {
           const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
             response.content.filter((block) => block.type === "tool_use");
 
-          const adapter = new LLMAdapter(browser);
-          console.log("this is executed");
+          const adapter = new ClaudeAdapter(browser);
 
           const toolResults = toolBlocks.map((toolBlock) => {
             return {
               toolBlock,
-              result: adapter.transformAndExecute(toolBlock.input as any),
+              result: adapter.execute(toolBlock.input as any),
             };
           });
 

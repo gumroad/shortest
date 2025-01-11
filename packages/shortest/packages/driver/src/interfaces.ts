@@ -1,7 +1,6 @@
 import { Options } from "@wdio/types";
 import pw from "playwright";
 import * as wdio from "webdriverio";
-import { Browser } from "../browser/browser";
 
 export enum Platform {
   Web = "web",
@@ -29,6 +28,12 @@ export namespace CoreDriverConfig {
     Omit<Options.Testrunner, "capabilities" | "rootDir">;
 }
 
+export namespace CoreDriverForPlatform {
+  export type Web = pw.Browser;
+
+  export type Mobile = wdio.Browser;
+}
+
 export type DriverConfig =
   | {
       platform: "web";
@@ -42,34 +47,3 @@ export type DriverConfig =
       platform: "ios";
       coreDriver?: CoreDriverConfig.Mobile;
     };
-
-export abstract class Driver<T extends DriverCore> {
-  /**
-   * Creates a new browser session.
-   * A Browser is isolated context where a test is executed.
-   */
-  abstract createBrowser(): Promise<Browser>;
-
-  /**
-   * Closes an existing Browser with given id.
-   */
-  abstract closeBrowser(id: string): Promise<void>;
-
-  /**
-   * Launches the driver instance.
-   * For web, it initializes Playwright.
-   * For mobile, it initializes WebDriver.
-   */
-  abstract launch(): Promise<void>;
-
-  /**
-   * Cleans up the driver instance and closes every session.
-   */
-  abstract destroy(): Promise<void>;
-
-  /**
-   * Gets the core driver instance.
-   * This method returns the core driver (either Playwright or WebDriver) depending on the platform.
-   */
-  abstract getDriver(): T;
-}

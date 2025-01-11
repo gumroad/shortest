@@ -1,24 +1,25 @@
-import { writeFileSync } from "fs";
+import { randomUUID } from "node:crypto";
+import { writeFileSync } from "node:fs";
 import { join } from "path";
+import { urlSafe } from "@shortest/util";
 import * as pw from "playwright";
+import { Browser } from "./browser";
+import * as actions from "./deprecated_actions";
 import {
-  Browser,
   BrowserActionOptions,
   BrowserActionResult,
   BrowserActions,
   BrowserState,
-} from "../../core/browser/browser";
-import { urlSafe } from "../../utils/url";
-import * as actions from "../actions";
+} from "./interfaces";
 
 export class WebBrowser extends Browser {
   private id: string;
   private driver: pw.BrowserContext | null = null;
   private state: DeepPartial<BrowserState>;
 
-  constructor(id: string, driver: pw.BrowserContext) {
+  constructor(driver: pw.BrowserContext) {
     super();
-    this.id = id;
+    this.id = randomUUID();
     this.driver = driver;
     this.state = {};
   }

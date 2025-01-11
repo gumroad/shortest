@@ -1,6 +1,12 @@
 import { Tabs } from "expo-router";
-import React from "react";
-import { Platform } from "react-native";
+import React, { useRef, useEffect } from "react";
+import {
+  Platform,
+  View,
+  findNodeHandle,
+  UIManager,
+  Dimensions,
+} from "react-native";
 
 import { HapticTab } from "@/components/HapticTab";
 import { IconSymbol } from "@/components/ui/IconSymbol";
@@ -10,6 +16,31 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const homeButtonRef = useRef(null);
+  const exploreButtonRef = useRef(null);
+
+  const logButtonMeasurements = (ref, buttonName) => {
+    if (!ref.current) return;
+
+    const handle = findNodeHandle(ref.current);
+
+    UIManager.measure(handle, (x, y, width, height, pageX, pageY) => {
+      console.log(`${buttonName} button layout relative to viewport:`, {
+        x: pageX, // X position relative to the screen
+        y: pageY, // Y position relative to the screen
+        width, // Button width
+        height, // Button height
+      });
+    });
+  };
+
+  useEffect(() => {
+    // Delay to ensure layout is complete
+    setTimeout(() => {
+      logButtonMeasurements(homeButtonRef, "Home");
+      logButtonMeasurements(exploreButtonRef, "Explore");
+    }, 100); // Adjust delay if needed
+  }, []);
 
   return (
     <Tabs
@@ -20,7 +51,6 @@ export default function TabLayout() {
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: "absolute",
           },
           default: {},
@@ -32,7 +62,9 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <View ref={homeButtonRef}>
+              <IconSymbol size={28} name="house.fill" color={color} />
+            </View>
           ),
         }}
       />
@@ -41,7 +73,9 @@ export default function TabLayout() {
         options={{
           title: "Explore",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="paperplane.fill" color={color} />
+            <View ref={exploreButtonRef}>
+              <IconSymbol size={28} name="paperplane.fill" color={color} />
+            </View>
           ),
         }}
       />

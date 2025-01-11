@@ -1,29 +1,19 @@
-import * as actions from "../../browser/actions/index";
 import {
   Browser,
   BrowserActionOptions,
   BrowserActionResult,
   BrowserActions,
-} from "../../core/browser/browser";
-
-type ClaudeResponse = {
-  action: string;
-  coordinate?: [number, number];
-  text?: string;
-  url?: string;
-  duration?: number;
-};
+  keyboardShortcuts,
+} from "@shortest/browser";
+import { ClaudeResponse } from "./interfaces";
 
 /**
  * Adapter for transforming LLM actions to browser actions
  */
-//maybe worth making it an implementation of Browser interface
-export class LLMAdapter {
+export class ClaudeAdapter {
   constructor(private browser: Browser) {}
 
-  async transformAndExecute(
-    response: ClaudeResponse
-  ): Promise<BrowserActionResult<any>> {
+  async execute(response: ClaudeResponse): Promise<BrowserActionResult<any>> {
     switch (response.action) {
       case "key":
         return this.handleKeyPress(response);
@@ -59,9 +49,9 @@ export class LLMAdapter {
   ): Promise<BrowserActionResult<BrowserActions.Navigate>> {
     if (!response.text) throw new Error("Text required for key press action.");
     const text = response.text.toLowerCase();
-    const toPress = Array.isArray(actions.keyboardShortcuts[text])
-      ? (actions.keyboardShortcuts[text] as string[])
-      : ([actions.keyboardShortcuts[text] || text] as string[]);
+    const toPress = Array.isArray(keyboardShortcuts[text])
+      ? (keyboardShortcuts[text] as string[])
+      : ([keyboardShortcuts[text] || text] as string[]);
 
     return await this.browser.pressKey(toPress);
   }
@@ -85,8 +75,16 @@ export class LLMAdapter {
   private async handleLeftClick(
     response: ClaudeResponse
   ): Promise<BrowserActionResult<BrowserActions.Click>> {
-    const [x, y] = response.coordinate ?? [null, null];
-    return await this.browser.click(x, y);
+    let [x, y] = response.coordinate ?? [null, null];
+
+    // const DEVICE_PIXEL_RATIO = 2.625;
+    // const AI_X_MULTIPLIER = 0.38;
+    // const AI_Y_MULTIPLIER = 0.37;
+    // if (x && y) {
+    //   x = x * 3.5;
+    //   y = y * 3.5;
+    // }
+    return await this.browser.click(Math.round(x! + 300), Math.round(y! + 480));
   }
 
   private async handleLeftClickDrag(

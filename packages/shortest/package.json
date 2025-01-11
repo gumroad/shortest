@@ -44,7 +44,11 @@
     "glob": "^10.3.10",
     "otplib": "^12.0.1",
     "picocolors": "^1.0.0",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "@shortest/driver": "workspace:*",
+    "@shortest/ai": "workspace:*",
+    "@shortest/browser": "workspace:*",
+    "@shortest/util": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
