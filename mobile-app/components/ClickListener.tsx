@@ -1,38 +1,57 @@
-import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Pressable,
-  GestureResponderEvent,
-  Animated,
-  PixelRatio,
-} from "react-native";
+import React, { PropsWithChildren } from "react";
+import { StyleSheet, GestureResponderEvent, View } from "react-native";
 
-interface ClickPosition {
+interface ScreenClick {
   id: number;
   x: number;
   y: number;
 }
 
-export default function ClickListener(): JSX.Element {
-  const pixelRatio = PixelRatio.get();
-  console.log({ pixelRatio });
-  const [clicks, setClicks] = useState<ClickPosition[]>([]);
+export default function ClickListener({
+  children,
+}: PropsWithChildren): JSX.Element {
+  const [clicks, setClicks] = React.useState<ScreenClick[]>([]);
 
-  const handlePress = (event: GestureResponderEvent): void => {
-    const { locationX, locationY } = event.nativeEvent;
+  const handlePress = async (e: GestureResponderEvent): Promise<void> => {
+    const pos = { x: e.nativeEvent.locationX, y: e.nativeEvent.locationY };
 
-    setClicks((prevClicks) => [
-      ...prevClicks,
-      { id: Date.now(), x: locationX, y: locationY },
-    ]);
+    if (e.target !== e.currentTarget) {
+      const offset = await new Promise<{
+        left: number;
+        top: number;
+      }>((resolve, reject) => {
+        e.target.measureLayout(
+          e.currentTarget,
+          (left, top) => resolve({ left, top }),
+          reject
+        );
+      });
+
+      pos.x += offset.left;
+      pos.y += offset.top;
+    }
+
+    console.log(`Clicked at x: ${pos.x}, y: ${pos.y}`);
+
+    setClicks((prevClicks) => {
+      const newClicks = [...prevClicks, { id: Date.now(), x: pos.x, y: pos.y }];
+      if (newClicks.length > 3) {
+        newClicks.shift();
+      }
+      return newClicks;
+    });
   };
 
   return (
-    <Pressable style={styles.container} onPress={handlePress}>
+    <View
+      style={styles.container}
+      onTouchStart={async (e) => await handlePress(e)}
+    >
       {clicks.map((click) => (
         <ClickIndicator key={click.id} x={click.x} y={click.y} />
       ))}
-    </Pressable>
+      {children}
+    </View>
   );
 }
 
@@ -42,24 +61,13 @@ interface ClickIndicatorProps {
 }
 
 function ClickIndicator({ x, y }: ClickIndicatorProps): JSX.Element {
-  const animation = new Animated.Value(1);
-
-  useEffect(() => {
-    Animated.timing(animation, {
-      toValue: 0,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, [animation]);
-
   return (
-    <Animated.View
+    <View
       style={[
         styles.indicator,
         {
-          left: x - 10, // center the circle
+          left: x - 10,
           top: y - 10,
-          opacity: animation,
         },
       ]}
     />
@@ -69,19 +77,12 @@ function ClickIndicator({ x, y }: ClickIndicatorProps): JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "green",
-    position: "sticky",
-    left: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    height: 1000,
   },
   indicator: {
     position: "absolute",
     width: 20,
     height: 20,
-    backgroundColor: "red",
+    backgroundColor: "green",
     borderRadius: 10,
     zIndex: 1000,
   },
