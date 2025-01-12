@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CoreDriverForPlatform } from "@shortest/driver";
-import sharp from "sharp";
+// import sharp from "sharp";
 import { Browser } from "./browser";
 import {
   BrowserActionOptions,

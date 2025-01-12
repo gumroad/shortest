@@ -47,3 +47,6 @@ export type DriverConfig =
       platform: "ios";
       coreDriver?: CoreDriverConfig.Mobile;
     };
+
+export type WebPage = pw.Page;
+export type WebBrowserDriver = pw.BrowserContext;

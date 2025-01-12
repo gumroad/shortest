@@ -2,7 +2,7 @@
  * This file should be eventually deprecated and deleted and all the functions should be moved to Web-browser
  */
 
-import { Page } from "playwright";
+import { WebPage } from "@shortest/driver";
 
 export const keyboardShortcuts: Record<string, string | string[]> = {
   "ctrl+l": ["Control", "l"],
@@ -31,7 +31,7 @@ export const scaleRatio = {
 };
 
 export async function mouseMove(
-  page: Page,
+  page: WebPage,
   x: number,
   y: number
 ): Promise<void> {
@@ -66,7 +66,11 @@ export async function mouseMove(
   await page.waitForTimeout(50);
 }
 
-export async function click(page: Page, x: number, y: number): Promise<void> {
+export async function click(
+  page: WebPage,
+  x: number,
+  y: number
+): Promise<void> {
   const scaledX = Math.round(x * scaleRatio.x);
   const scaledY = Math.round(y * scaleRatio.y);
 
@@ -76,7 +80,7 @@ export async function click(page: Page, x: number, y: number): Promise<void> {
 }
 
 export async function dragMouse(
-  page: Page,
+  page: WebPage,
   x: number,
   y: number
 ): Promise<void> {
@@ -89,7 +93,7 @@ export async function dragMouse(
 }
 
 export async function showClickAnimation(
-  page: Page,
+  page: WebPage,
   type: "left" | "right" | "double" = "left"
 ): Promise<void> {
   await page.evaluate((clickType) => {
@@ -119,14 +123,16 @@ export async function showClickAnimation(
   }, type);
 }
 
-export async function getCursorPosition(page: Page): Promise<[number, number]> {
+export async function getCursorPosition(
+  page: WebPage
+): Promise<[number, number]> {
   const position = await page.evaluate(() => {
     return window.cursorPosition || { x: 0, y: 0 };
   });
   return [position.x, position.y];
 }
 
-export async function initializeCursor(page: Page): Promise<void> {
+export async function initializeCursor(page: WebPage): Promise<void> {
   try {
     // Simpler check for page readiness
     await page

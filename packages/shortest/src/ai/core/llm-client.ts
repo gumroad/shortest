@@ -2,9 +2,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import { ClaudeAdapter } from "@shortest/ai";
 import { getSystemPrompt } from "@shortest/ai";
 import { Browser } from "@shortest/browser";
+import { CacheAction, CacheStep } from "@shortest/cache";
 import pc from "picocolors";
 import { AIConfig } from "../../types/ai";
-import { CacheAction, CacheStep } from "../../types/cache";
 import { AITools } from "./claude-tools";
 
 export class AIClient {

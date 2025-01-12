@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "path";
+import { WebBrowserDriver, WebPage } from "@shortest/driver";
 import { urlSafe } from "@shortest/util";
-import * as pw from "playwright";
 import { Browser } from "./browser";
 import * as actions from "./deprecated_actions";
 import {
@@ -14,10 +14,10 @@ import {
 
 export class WebBrowser extends Browser {
   private id: string;
-  private driver: pw.BrowserContext | null = null;
+  private driver: WebBrowserDriver | null = null;
   private state: DeepPartial<BrowserState>;
 
-  constructor(driver: pw.BrowserContext) {
+  constructor(driver: WebBrowserDriver) {
     super();
     this.id = randomUUID();
     this.driver = driver;
@@ -382,7 +382,7 @@ export class WebBrowser extends Browser {
    * Returns the current active page in the browser context.
    * @returns The current page or null if no page is found.
    */
-  getCurrentPage(): pw.Page | null {
+  getCurrentPage(): WebPage | null {
     if (!this.driver) {
       throw new Error("Driver not initialized.");
     }

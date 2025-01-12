@@ -48,7 +48,8 @@
     "@shortest/driver": "workspace:*",
     "@shortest/ai": "workspace:*",
     "@shortest/browser": "workspace:*",
-    "@shortest/util": "workspace:*"
+    "@shortest/util": "workspace:*",
+    "@shortest/cache": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

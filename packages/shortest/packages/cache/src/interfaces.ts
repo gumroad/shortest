@@ -1,9 +1,10 @@
-import { BrowserAction, ActionInput } from "./browser";
+import { ClaudeResponse } from "@shortest/ai";
+import { BrowserAction } from "@shortest/browser";
 
 export interface CacheAction {
   type: "tool_use" | "text";
   name: BrowserAction;
-  input: ActionInput;
+  input: ClaudeResponse;
 }
 
 export interface CacheStep {

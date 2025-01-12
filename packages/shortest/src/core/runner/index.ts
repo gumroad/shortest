@@ -1,18 +1,17 @@
 import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { Browser } from "@shortest/browser";
+import { BaseCache, CacheEntry } from "@shortest/cache";
 import { hashData, Logger, urlSafe } from "@shortest/util";
 import { glob } from "glob";
 import pc from "picocolors";
 import { AIClient } from "../../ai/core/llm-client";
-import { BaseCache } from "../../cache/cache";
 import {
   TestFunction,
   TestContext,
   ShortestConfig,
   BrowserActionEnum,
 } from "../../types";
-import { CacheEntry } from "../../types/cache";
 import { TestCompiler } from "../compiler";
 
 interface TestResult {
@@ -450,10 +449,8 @@ export class RunnerImpl implements Runner {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       if (
         step.action?.input.action === BrowserActionEnum.MouseMove &&
-        // @ts-expect-error Interface and actual values differ
         step.action.input.coordinate
       ) {
-        // @ts-expect-error
         const [x, y] = step.action.input.coordinate;
         const componentStr = (await browser.locateAt(x, y)).payload?.element;
 

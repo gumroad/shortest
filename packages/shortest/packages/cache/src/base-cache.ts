@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import { merge, hashData, Logger } from "@shortest/util";
-import { CacheEntry, CacheStore } from "../types/cache";
+import { CacheEntry, CacheStore } from "./interfaces";
 
 export class BaseCache<T extends CacheEntry> {
   private readonly CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 1 week

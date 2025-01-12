@@ -4,18 +4,7 @@
   "description": "Internal driver module for the Shortest framework",
   "type": "module",
   "main": "./src/index.ts",
-  "scripts": {
-    "test": "echo 'No tests defined for @shortest/driver'"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.6.2",
-    "@types/node": "^20.11.24"
-  },
   "peerDependencies": {
-    "dotenv": "^16.4.5",
-    "esbuild": "^0.20.1",
-    "expect": "^29.7.0",
     "playwright": "^1.48.2",
     "webdriverio": "^8.0.0",
     "@wdio/types": "^8.0.0",
@@ -23,6 +12,6 @@
     "@shortest/browser": "workspace:*",
     "@shortest/util": "workspace:*"
   },
-  "author": "Internal",
+  "author": "Antiwork",
   "license": "MIT"
 }

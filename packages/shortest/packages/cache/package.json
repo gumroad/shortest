@@ -1,13 +1,13 @@
 {
-  "name": "@shortest/ai",
+  "name": "@shortest/cache",
   "version": "0.1.0",
-  "description": "Internal AI module for the Shortest framework",
+  "description": "Internal cache module for the Shortest framework",
   "type": "module",
   "main": "./src/index.ts",
   "author": "Antiwork",
   "license": "MIT",
   "peerDependencies": {
     "@shortest/browser": "workspace:*",
-    "@shortest/driver": "workspace:*"
+    "@shortest/util": "workspace:*"
   }
 }

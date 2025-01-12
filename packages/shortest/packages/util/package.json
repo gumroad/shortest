@@ -4,6 +4,6 @@
   "description": "Internal util module for the Shortest framework",
   "type": "module",
   "main": "./src/index.ts",
-  "author": "Internal",
+  "author": "Antiwork",
   "license": "MIT"
 }

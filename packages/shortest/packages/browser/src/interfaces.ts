@@ -10,6 +10,27 @@ export interface BrowserState {
   };
 }
 
+export enum BrowserActionEnum {
+  MouseMove = "mouse_move",
+  LeftClick = "left_click",
+  LeftClickDrag = "left_click_drag",
+  RightClick = "right_click",
+  MiddleClick = "middle_click",
+  DoubleClick = "double_click",
+  Screenshot = "screenshot",
+  CursorPosition = "cursor_position",
+  GithubLogin = "github_login",
+  ClearSession = "clear_session",
+  Type = "type",
+  Key = "key",
+  RunCallback = "run_callback",
+  Navigate = "navigate",
+  Sleep = "sleep",
+  CheckMail = "check_email",
+}
+
+export type BrowserAction = `${BrowserActionEnum}`;
+
 export namespace BrowserActionOptions {
   export interface Navigate {
     shoultInitialize: boolean;

@@ -84,7 +84,7 @@ export class ClaudeAdapter {
     //   x = x * 3.5;
     //   y = y * 3.5;
     // }
-    return await this.browser.click(Math.round(x! + 300), Math.round(y! + 480));
+    return await this.browser.click(Math.round(x!), Math.round(y!));
   }
 
   private async handleLeftClickDrag(

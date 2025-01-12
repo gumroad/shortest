@@ -261,6 +261,9 @@ importers:
       '@shortest/browser':
         specifier: workspace:*
         version: link:packages/browser
+      '@shortest/cache':
+        specifier: workspace:*
+        version: link:packages/cache
       '@shortest/driver':
         specifier: workspace:*
         version: link:packages/driver
@@ -340,34 +343,15 @@ importers:
       '@shortest/util':
         specifier: workspace:*
         version: link:../util
-      '@wdio/logger':
-        specifier: 9.4.4
-        version: 9.4.4
-      '@wdio/types':
-        specifier: ^8.0.0
-        version: 8.41.0
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.7
-      esbuild:
-        specifier: ^0.20.1
-        version: 0.20.2
-      expect:
-        specifier: ^29.7.0
-        version: 29.7.0
-      playwright:
-        specifier: ^1.48.2
-        version: 1.49.1
-      sharp:
-        specifier: ^0.33.5
-        version: 0.33.5
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.24
-        version: 20.17.11
-      typescript:
-        specifier: ^5.6.2
-        version: 5.6.3
+
+  packages/shortest/packages/cache:
+    dependencies:
+      '@shortest/browser':
+        specifier: workspace:*
+        version: link:../browser
+      '@shortest/util':
+        specifier: workspace:*
+        version: link:../util
 
   packages/shortest/packages/driver:
     dependencies:
@@ -383,28 +367,12 @@ importers:
       '@wdio/types':
         specifier: ^8.0.0
         version: 8.41.0
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.4.7
-      esbuild:
-        specifier: ^0.20.1
-        version: 0.20.2
-      expect:
-        specifier: ^29.7.0
-        version: 29.7.0
       playwright:
         specifier: ^1.48.2
         version: 1.49.1
       webdriverio:
         specifier: ^8.0.0
         version: 8.41.0(bufferutil@4.0.9)
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.24
-        version: 20.17.11
-      typescript:
-        specifier: ^5.6.2
-        version: 5.6.3
 
   packages/shortest/packages/util: {}
 
