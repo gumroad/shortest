@@ -55,9 +55,7 @@ export class WebBrowser extends Browser {
     } catch {
       throw new Error("Invalid URL.");
     }
-    this.assertDriver();
-
-    const page = await this.driver!.newPage();
+    const page = await this.getDriver().newPage();
 
     try {
       await page.goto(urlSafe(url), {
@@ -91,8 +89,6 @@ export class WebBrowser extends Browser {
   }
 
   async screenshot(): Promise<BrowserActionResult<BrowserActions.Screenshot>> {
-    this.assertDriver();
-
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const outputDir = join(process.cwd(), ".shortest", "screenshots");
     const filePath = join(outputDir, `screenshot-${timestamp}.png`);
@@ -338,25 +334,27 @@ export class WebBrowser extends Browser {
   }
 
   async cleanup(): Promise<void> {
-    this.assertDriver();
-
     await Promise.all([
-      this.driver!.clearCookies(),
-      this.driver!.pages().map((page) =>
-        page.evaluate(() => {
-          localStorage.clear();
-          sessionStorage.clear();
-          indexedDB.deleteDatabase("shortest");
-        })
-      ),
-      this.driver!.clearPermissions(),
+      this.getDriver().clearCookies(),
+      this.getDriver()
+        .pages()
+        .map((page) =>
+          page.evaluate(() => {
+            localStorage.clear();
+            sessionStorage.clear();
+            indexedDB.deleteDatabase("shortest");
+          })
+        ),
+      this.getDriver().clearPermissions(),
     ]);
 
     await Promise.all(
-      this.driver!.pages().map((page) => page.goto("about:blank"))
+      this.getDriver()
+        .pages()
+        .map((page) => page.goto("about:blank"))
     );
 
-    const pages = this.driver!.pages();
+    const pages = this.getDriver().pages();
     if (pages.length > 1) {
       await Promise.all(pages.slice(1).map((page) => page.close()));
     }
@@ -364,18 +362,18 @@ export class WebBrowser extends Browser {
 
   async destroy(): Promise<void> {
     try {
-      this.assertDriver();
-      await this.driver!.close();
+      await this.getDriver().close();
       this.driver = null;
     } catch (error) {
       throw error;
     }
   }
 
-  private assertDriver() {
+  public getDriver(): WebBrowserDriver {
     if (!this.driver) {
       throw new Error("Driver not initialized.");
     }
+    return this.driver;
   }
 
   /**
@@ -383,11 +381,7 @@ export class WebBrowser extends Browser {
    * @returns The current page or null if no page is found.
    */
   getCurrentPage(): WebPage | null {
-    if (!this.driver) {
-      throw new Error("Driver not initialized.");
-    }
-
-    const pages = this.driver.pages();
+    const pages = this.getDriver().pages();
     return pages.length > 0 ? pages[pages.length - 1] : null;
   }
 
