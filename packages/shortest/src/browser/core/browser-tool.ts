@@ -62,6 +62,12 @@ export class BrowserTool extends BaseBrowserTool {
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
 
+    // Update active page reference to a newly opened tab
+    this.page.context().on("page", async (newPage) => {
+      await newPage.waitForLoadState("domcontentloaded").catch(() => {});
+      this.page = newPage;
+    });
+
     this.initialize();
     this.cleanupScreenshots();
   }
@@ -466,15 +472,24 @@ export class BrowserTool extends BaseBrowserTool {
               process.env.MAILOSAUR_SERVER_ID;
 
             if (!mailosaurAPIKey) {
-              throw new ToolError("Mailosaur API key is required");
+              return {
+                output: "Mailosaur API key is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
 
             if (!mailosaurServerId) {
-              throw new ToolError("Mailosaur server ID is required");
+              return {
+                output: "Mailosaur server ID is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
 
             if (!input.email) {
-              throw new ToolError("Mailosaur email address is required");
+              return {
+                output: "Mailosaur email address is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
 
             this.mailosaurTool = new MailosaurTool({
@@ -668,7 +683,7 @@ export class BrowserTool extends BaseBrowserTool {
     });
 
     writeFileSync(filePath, buffer);
-    console.log(`Screenshot saved to: ${filePath}`);
+    console.log(`  Screenshot saved to: ${filePath}`);
 
     return {
       output: "Screenshot taken",
