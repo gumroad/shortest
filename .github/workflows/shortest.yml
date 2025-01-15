@@ -10,11 +10,6 @@ jobs:
     timeout-minutes: 10
 
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-      MAILOSAUR_API_KEY: ${{ secrets.MAILOSAUR_API_KEY }}
-      MAILOSAUR_SERVER_ID: ${{ secrets.MAILOSAUR_SERVER_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -36,9 +31,11 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Pull environment variables
-        run: pnpm dlx vercel pull --environment=preview --token=$VERCEL_TOKEN
+        run: |
+          pnpm dlx vercel pull --environment=preview --token=$VERCEL_TOKEN
+          test -f .env.local || (echo ".env.local not created" && exit 1)
 
-      - name: Setup database
+      - name: Set up database
         run: |
           pnpm drizzle-kit generate
           pnpm db:migrate
