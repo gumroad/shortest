@@ -41,7 +41,6 @@ if (!global.__shortest__) {
   // Attach to global scope
   global.expect = global.__shortest__.expect;
 
-  dotenv.config({ path: join(process.cwd(), ".env") });
   dotenv.config({ path: join(process.cwd(), ".env.local") });
 }
 
@@ -65,7 +64,6 @@ function validateConfig(config: Partial<ShortestConfig>) {
 export async function initialize() {
   if (globalConfig) return globalConfig;
 
-  dotenv.config({ path: join(process.cwd(), ".env") });
   dotenv.config({ path: join(process.cwd(), ".env.local") });
 
   const configFiles = [
