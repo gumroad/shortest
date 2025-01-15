@@ -14,10 +14,10 @@
     "stripe:webhooks": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "setup": "npx tsx lib/setup.ts",
 
-    "pkg:build": "cd packages/shortest && pnpm build",
-    "pkg:dev": "cd packages/shortest && pnpm dev",
-    "pkg:test": "cd packages/shortest && pnpm shortest",
-    "pkg:test:src": "npx tsx packages/shortest/src/cli/bin.ts",
+    "cli:build": "cd packages/shortest && pnpm build",
+    "cli:dev": "cd packages/shortest && pnpm dev",
+    "cli:test": "cd packages/shortest && pnpm shortest",
+    "cli:test:src": "npx tsx packages/shortest/src/cli/bin.ts",
 
     "test": "pnpm shortest",
     "lint": "eslint .",
