@@ -19,12 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Setup pnpm first
       - uses: pnpm/action-setup@v2
         with:
           version: 8
 
-      # Then setup Node with pnpm caching
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -37,17 +35,14 @@ jobs:
       - name: Install Playwright
         run: pnpm exec playwright install chromium
 
-      - name: Wait for Vercel preview deployment
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
-        id: waitFor
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 300
+      - name: Build app
+        run: pnpm build
+
+      - name: Start app in background
+        run: pnpm start -p 3000 & sleep 10
 
       - name: Run Shortest tests
-        env:
-          SHORTEST_TEST_BASE_URL: ${{ steps.waitFor.outputs.url }}
-        run: pnpm shortest --headless --target=${{ steps.waitFor.outputs.url }}
+        run: pnpm shortest --headless
 
       - name: Upload artifacts
         if: failure()
