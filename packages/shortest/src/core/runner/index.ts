@@ -1,3 +1,4 @@
+import { pathToFileURL } from "url";
 import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
 import pc from "picocolors";
@@ -341,7 +342,7 @@ export class TestRunner {
       const filePathWithoutCwd = file.replace(this.cwd + "/", "");
       this.logger.startFile(filePathWithoutCwd);
       const compiledPath = await this.compiler.compileFile(file);
-      await import(compiledPath);
+      await import(pathToFileURL(compiledPath).href);
 
       const context = await this.browserManager.launch();
       const testContext = await this.createTestContext(context);
