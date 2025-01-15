@@ -30,9 +30,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Pull environment variables
+      - name: Pull and set up .env.local
         run: |
           pnpm dlx vercel pull --environment=preview --token=$VERCEL_TOKEN
+          cp .vercel/.env.preview.local .env.local
           test -f .env.local || (echo ".env.local not created" && exit 1)
 
       - name: Set up database
