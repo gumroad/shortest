@@ -15,13 +15,9 @@ jobs:
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
       MAILOSAUR_API_KEY: ${{ secrets.MAILOSAUR_API_KEY }}
       MAILOSAUR_SERVER_ID: ${{ secrets.MAILOSAUR_SERVER_ID }}
-      POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
-      POSTGRES_PRISMA_URL: ${{ secrets.POSTGRES_PRISMA_URL }}
-      POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING }}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +35,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Set up database
+      - name: Pull environment variables
+        run: pnpm dlx vercel pull --environment=preview --token=$VERCEL_TOKEN
+
+      - name: Setup database
         run: |
           pnpm drizzle-kit generate
           pnpm db:migrate
