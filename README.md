@@ -379,16 +379,16 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to see the a
 
 2. Test changes instantly during development (no build needed):
 ```bash
-pnpm pkg:test:src -h
+pnpm cli:test:src -h
 ```
 
 3. To test the actual built package:
 ```bash
 # One-time build
-pnpm pkg:build
+pnpm cli:build
 
 # Watch mode (rebuilds on changes)
-pnpm pkg:dev
+pnpm cli:dev
 
 # Test changes
 pnpm shortest --help
