@@ -152,7 +152,7 @@ export class BrowserTool extends BaseBrowserTool {
       }
 
       // Initialize cursor elements with position persistence
-      await this.page.evaluate(`(() => {
+      await this.page.evaluate(() => {
         if (!document.getElementById("ai-cursor")) {
           const cursor = document.createElement("div");
           cursor.id = "ai-cursor";
@@ -173,14 +173,14 @@ export class BrowserTool extends BaseBrowserTool {
           trail.style.top = window.cursorPosition.y + "px";
 
           // Update handler
-          const updateCursor = (x, y) => {
+          const updateCursor = (x: number, y: number) => {
             window.cursorPosition = { x, y };
-            cursor.style.left = \`\${x}px\`;
-            cursor.style.top = \`\${y}px\`;
+            cursor.style.left = `${x}px`;
+            cursor.style.top = `${y}px`;
 
             requestAnimationFrame(() => {
-              trail.style.left = \`\${x}px\`;
-              trail.style.top = \`\${y}px\`;
+              trail.style.left = `${x}px`;
+              trail.style.top = `${y}px`;
             });
           };
 
@@ -189,7 +189,7 @@ export class BrowserTool extends BaseBrowserTool {
             updateCursor(e.clientX, e.clientY);
           });
         }
-      })()`);
+      });
     } catch (error) {
       if (
         error instanceof Error &&
@@ -793,21 +793,21 @@ export class BrowserTool extends BaseBrowserTool {
    */
   async getNormalizedComponentStringByCoords(x: number, y: number) {
     return await this.getPage().evaluate(
-      `(({ x, y, allowedAttr }) => {
+      ({ x, y, allowedAttr }) => {
         const elem = document.elementFromPoint(x, y);
         if (elem) {
           // todo: test func below
-          const clone = elem.cloneNode(true);
+          const clone = elem.cloneNode(true) as HTMLElement;
 
           /**
            * Gets deepest nested child node
            * If several nodes are on the same depth, the first node would be returned
            */
-          function getDeepestChildNode(element) {
-            let deepestChild = element.cloneNode(true);
+          function getDeepestChildNode(element: Element): HTMLElement {
+            let deepestChild = element.cloneNode(true) as HTMLElement;
             let maxDepth = 0;
 
-            function traverse(node, depth) {
+            function traverse(node: any, depth: number) {
               if (depth > maxDepth) {
                 maxDepth = depth;
                 deepestChild = node;
@@ -835,8 +835,8 @@ export class BrowserTool extends BaseBrowserTool {
            * Recursively delete attributes from Nodes
            */
           function cleanAttributesRecursively(
-            element,
-            options
+            element: Element,
+            options: { exceptions: string[] },
           ) {
             Array.from(element.attributes).forEach((attr) => {
               if (!options.exceptions.includes(attr.name)) {
@@ -854,11 +854,11 @@ export class BrowserTool extends BaseBrowserTool {
           });
 
           // trim and remove white spaces
-          return node.outerHTML.trim().replace(/\\s+/g, " ");
+          return node.outerHTML.trim().replace(/\s+/g, " ");
         } else {
           return "";
         }
-      })`,
+      },
       {
         x,
         y,
