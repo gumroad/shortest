@@ -53,6 +53,7 @@ export class BrowserManager {
 
     this.context = await this.browser.newContext({
       viewport: { width: 1920, height: 1080 },
+      baseURL: this.config.baseUrl,
     });
 
     const page = await this.context.newPage();

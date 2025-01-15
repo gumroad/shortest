@@ -1,14 +1,22 @@
-import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { glob } from "glob";
+import pc from "picocolors";
 import { APIRequest, BrowserContext } from "playwright";
 import * as playwright from "playwright";
 import { request, APIRequestContext } from "playwright";
 import { AIClient } from "../../ai/client";
 import { BrowserTool } from "../../browser/core/browser-tool";
 import { BrowserManager } from "../../browser/manager";
+import { BaseCache } from "../../cache/cache";
 import { initialize, getConfig } from "../../index";
-import { TestFunction, TestContext, ShortestConfig } from "../../types";
+import {
+  TestFunction,
+  TestContext,
+  ShortestConfig,
+  BrowserActionEnum,
+} from "../../types";
+import { CacheEntry } from "../../types/cache";
+import { hashData } from "../../utils/crypto";
 import { Logger } from "../../utils/logger";
 import { TestCompiler } from "../compiler";
 
@@ -27,7 +35,9 @@ export class TestRunner {
   private browserManager!: BrowserManager;
   private logger: Logger;
   private debugAI: boolean;
+  private noCache: boolean;
   private testContext: TestContext | null = null;
+  private cache: BaseCache<CacheEntry>;
 
   constructor(
     cwd: string,
@@ -35,14 +45,17 @@ export class TestRunner {
     forceHeadless = false,
     targetUrl?: string,
     debugAI = false,
+    noCache = false,
   ) {
     this.cwd = cwd;
     this.exitOnSuccess = exitOnSuccess;
     this.forceHeadless = forceHeadless;
     this.targetUrl = targetUrl;
     this.debugAI = debugAI;
+    this.noCache = noCache;
     this.compiler = new TestCompiler();
     this.logger = new Logger();
+    this.cache = new BaseCache();
   }
 
   async initialize() {
@@ -69,37 +82,17 @@ export class TestRunner {
   }
 
   private async findTestFiles(pattern?: string): Promise<string[]> {
-    const testDirs = Array.isArray(this.config.testDir)
-      ? this.config.testDir
-      : [this.config.testDir || "__tests__"];
+    const testPattern = pattern || this.config.testPattern || "**/*.test.ts";
 
-    const files = [];
-    for (const dir of testDirs) {
-      if (pattern) {
-        const cleanPattern = pattern
-          .replace(/\.ts$/, "")
-          .replace(/\.test$/, "")
-          .split("/")
-          .pop();
-
-        const globPattern = `${dir}/**/${cleanPattern}.test.ts`;
-        const matches = await glob(globPattern, {
-          cwd: this.cwd,
-          absolute: true,
-        });
-
-        files.push(...matches);
-      } else {
-        const globPattern = `${dir}/**/*.test.ts`;
-        const matches = await glob(globPattern, { cwd: this.cwd });
-        files.push(...matches.map((f) => resolve(this.cwd, f)));
-      }
-    }
+    const files = await glob(testPattern, {
+      cwd: this.cwd,
+      absolute: true,
+    });
 
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found in directories: ${testDirs.join(", ")}`,
+        `No test files found matching: ${testPattern}`,
       );
       process.exit(1);
     }
@@ -143,7 +136,15 @@ export class TestRunner {
     return this.testContext;
   }
 
-  private async executeTest(test: TestFunction, context: BrowserContext) {
+  private async executeTest(
+    test: TestFunction,
+    context: BrowserContext,
+    config: { noCache: boolean } = { noCache: false },
+  ): Promise<{
+    result: "pass" | "fail";
+    reason: string;
+    tokenUsage: { input: number; output: number };
+  }> {
     // If it's direct execution, skip AI
     if (test.directExecution) {
       try {
@@ -152,12 +153,14 @@ export class TestRunner {
         return {
           result: "pass" as const,
           reason: "Direct execution successful",
+          tokenUsage: { input: 0, output: 0 },
         };
       } catch (error) {
         return {
           result: "fail" as const,
           reason:
             error instanceof Error ? error.message : "Direct execution failed",
+          tokenUsage: { input: 0, output: 0 },
         };
       }
     }
@@ -173,6 +176,11 @@ export class TestRunner {
         currentStepIndex: 0,
       },
     });
+
+    // this may never happen as the config is initialized before this code is executed
+    if (!this.config.anthropicKey) {
+      throw new Error("ANTHROPIC_KEY is not set");
+    }
 
     const aiClient = new AIClient(
       {
@@ -201,10 +209,12 @@ export class TestRunner {
             "\nExpect:",
             ...test.expectations.map(
               (exp, i) =>
-                `${i + 1}. ${exp.description}${exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"}`,
+                `${i + 1}. ${exp.description}${
+                  exp.fn ? " [HAS_CALLBACK]" : "[NO_CALLBACK]"
+                }`,
             ),
           ]
-        : []),
+        : ["\nExpect:", `1. "${test.name}" expected to be successful`]),
 
       "\nCurrent Page State:",
       `URL: ${initialState.metadata?.window_info?.url || "unknown"}`,
@@ -212,6 +222,58 @@ export class TestRunner {
     ]
       .filter(Boolean)
       .join("\n");
+
+    // check if CLI option is not specified
+    if (!this.noCache && !config.noCache) {
+      // if test hasn't changed and is already in cache, replay steps from cache
+      if (await this.cache.get(test)) {
+        try {
+          const result = await this.runCachedTest(test, browserTool);
+
+          if (test.afterFn) {
+            try {
+              await test.afterFn(testContext);
+            } catch (error) {
+              return {
+                result: "fail" as const,
+                reason:
+                  result?.result === "fail"
+                    ? `AI: ${result.reason}, After: ${
+                        error instanceof Error ? error.message : String(error)
+                      }`
+                    : error instanceof Error
+                      ? error.message
+                      : String(error),
+                tokenUsage: { input: 0, output: 0 },
+              };
+            }
+          }
+          return { ...result, tokenUsage: { input: 0, output: 0 } };
+        } catch {
+          // delete stale cached test entry
+          await this.cache.delete(test);
+          // reset window state
+          const page = browserTool.getPage();
+          await page.goto(initialState.metadata?.window_info?.url!);
+          await this.executeTest(test, context, {
+            noCache: true,
+          });
+        }
+      }
+    }
+
+    // Execute before function if present
+    if (test.beforeFn) {
+      try {
+        await test.beforeFn(testContext);
+      } catch (error) {
+        return {
+          result: "fail" as const,
+          reason: error instanceof Error ? error.message : String(error),
+          tokenUsage: { input: 0, output: 0 },
+        };
+      }
+    }
 
     // Execute test with enhanced prompt
     const result = await aiClient.processAction(prompt, browserTool);
@@ -222,7 +284,7 @@ export class TestRunner {
 
     // Parse AI result first
     const finalMessage = result.finalResponse.content.find(
-      (block) =>
+      (block: any) =>
         block.type === "text" &&
         (block as Anthropic.Beta.Messages.BetaTextBlock).text.includes(
           '"result":',
@@ -251,15 +313,22 @@ export class TestRunner {
           result: "fail" as const,
           reason:
             aiResult.result === "fail"
-              ? `AI: ${aiResult.reason}, After: ${error instanceof Error ? error.message : String(error)}`
+              ? `AI: ${aiResult.reason}, After: ${
+                  error instanceof Error ? error.message : String(error)
+                }`
               : error instanceof Error
                 ? error.message
                 : String(error),
+          tokenUsage: result.tokenUsage,
         };
       }
     }
 
-    return aiResult;
+    if (aiResult.result === "pass") {
+      // batch set new chache if test is successful
+      await this.cache.set(test, result.pendingCache);
+    }
+    return { ...aiResult, tokenUsage: result.tokenUsage };
   }
 
   private async executeTestFile(file: string) {
@@ -269,7 +338,8 @@ export class TestRunner {
       registry.tests.clear();
       registry.currentFileTests = [];
 
-      this.logger.startFile(file);
+      const filePathWithoutCwd = file.replace(this.cwd + "/", "");
+      this.logger.startFile(filePathWithoutCwd);
       const compiledPath = await this.compiler.compileFile(file);
       await import(compiledPath);
 
@@ -289,11 +359,13 @@ export class TestRunner {
             await hook(testContext);
           }
 
+          this.logger.initializeTest(test);
+          this.logger.startTest(test);
           const result = await this.executeTest(test, context);
-          this.logger.reportTest(
-            test.name,
+          this.logger.endTest(
             result.result === "pass" ? "passed" : "failed",
             result.result === "fail" ? new Error(result.reason) : undefined,
+            result.tokenUsage,
           );
 
           // Execute afterEach hooks with shared context
@@ -317,19 +389,19 @@ export class TestRunner {
     } catch (error) {
       this.testContext = null; // Reset on error
       if (error instanceof Error) {
-        this.logger.reportError("Test Execution", error.message);
+        this.logger.endTest("failed", error);
       }
     }
   }
 
-  async runFile(pattern: string) {
+  async runTests(pattern?: string) {
     await this.initialize();
     const files = await this.findTestFiles(pattern);
 
     if (files.length === 0) {
       this.logger.error(
         "Test Discovery",
-        `No test files found matching: ${pattern}`,
+        `No test files found matching the pattern: ${pattern || this.config.testPattern}`,
       );
       process.exit(1);
     }
@@ -347,20 +419,59 @@ export class TestRunner {
     }
   }
 
-  async runAll() {
-    await this.initialize();
-    const files = await this.findTestFiles();
-
-    for (const file of files) {
-      await this.executeTestFile(file);
+  private async runCachedTest(
+    test: TestFunction,
+    browserTool: BrowserTool,
+  ): Promise<TestResult> {
+    const cachedTest = await this.cache.get(test);
+    if (this.debugAI) {
+      console.log(pc.green(`  Executing cached test ${hashData(test)}`));
     }
 
-    this.logger.summary();
+    const steps = cachedTest?.data.steps
+      // do not take screenshots in cached mode
+      ?.filter(
+        (step) =>
+          step.action?.input.action !== BrowserActionEnum.Screenshot.toString(),
+      );
 
-    if (this.exitOnSuccess && this.logger.allTestsPassed()) {
-      process.exit(0);
-    } else {
-      process.exit(1);
+    if (!steps) {
+      throw new Error("No steps to execute, running test in normal mode");
     }
+    for (const step of steps) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (
+        step.action?.input.action === BrowserActionEnum.MouseMove &&
+        // @ts-expect-error Interface and actual values differ
+        step.action.input.coordinate
+      ) {
+        // @ts-expect-error
+        const [x, y] = step.action.input.coordinate;
+
+        const componentStr =
+          await browserTool.getNormalizedComponentStringByCoords(x, y);
+
+        if (componentStr !== step.extras.componentStr) {
+          throw new Error(
+            "Component UI elements are different, running test in normal mode",
+          );
+        }
+      }
+      if (step.action?.input) {
+        try {
+          await browserTool.execute(step.action.input);
+        } catch (error) {
+          console.error(
+            `Failed to execute step with input ${step.action.input}`,
+            error,
+          );
+        }
+      }
+    }
+
+    return {
+      result: "pass",
+      reason: "All actions successfully replayed from cache",
+    };
   }
 }

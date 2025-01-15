@@ -43,7 +43,7 @@ pnpm test:assertion
 
 3. Build Package
 ```bash
-pnpm build:pkg
+pnpm pkg:build
 ```
 
 ## Pull Request Process
@@ -82,4 +82,4 @@ feat(browser): add support for iframe handling
 
 - Open an issue for bugs
 - Start a discussion for features
-- Check existing issues and PRs 
+- Check existing issues and PRs

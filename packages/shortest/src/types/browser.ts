@@ -13,24 +13,27 @@ export interface BrowserToolInterface {
   getPage(): Page;
 }
 
-export type BrowserAction =
-  | "mouse_move"
-  | "left_click"
-  | "left_click_drag"
-  | "right_click"
-  | "middle_click"
-  | "double_click"
-  | "screenshot"
-  | "cursor_position"
-  | "github_login"
-  | "clear_session"
-  | "type"
-  | "key"
-  | "run_callback"
-  | "navigate"
-  | "upload_file"
-  | "sleep"
-  | "check_email";
+export enum BrowserActionEnum {
+  MouseMove = "mouse_move",
+  LeftClick = "left_click",
+  LeftClickDrag = "left_click_drag",
+  RightClick = "right_click",
+  MiddleClick = "middle_click",
+  DoubleClick = "double_click",
+  Screenshot = "screenshot",
+  CursorPosition = "cursor_position",
+  GithubLogin = "github_login",
+  ClearSession = "clear_session",
+  Type = "type",
+  Key = "key",
+  RunCallback = "run_callback",
+  Navigate = "navigate",
+  UpoadFile = "upload_file",
+  Sleep = "sleep",
+  CheckMail = "check_email",
+}
+
+export type BrowserAction = `${BrowserActionEnum}`;
 
 export interface BrowserToolOptions {
   width: number;

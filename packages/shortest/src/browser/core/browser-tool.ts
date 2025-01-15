@@ -62,6 +62,12 @@ export class BrowserTool extends BaseBrowserTool {
     this.viewport = { width: config.width, height: config.height };
     this.testContext = config.testContext;
 
+    // Update active page reference to a newly opened tab
+    this.page.context().on("page", async (newPage) => {
+      await newPage.waitForLoadState("domcontentloaded").catch(() => {});
+      this.page = newPage;
+    });
+
     this.initialize();
     this.cleanupScreenshots();
   }
@@ -465,12 +471,36 @@ export class BrowserTool extends BaseBrowserTool {
 
         case "check_email": {
           if (!this.mailosaurTool) {
-            if (!this.config.mailosaur) {
-              throw new ToolError("Mailosaur configuration required");
+            const mailosaurAPIKey =
+              this.config.mailosaur?.apiKey || process.env.MAILOSAUR_API_KEY;
+            const mailosaurServerId =
+              this.config.mailosaur?.serverId ||
+              process.env.MAILOSAUR_SERVER_ID;
+
+            if (!mailosaurAPIKey) {
+              return {
+                output: "Mailosaur API key is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
             }
+
+            if (!mailosaurServerId) {
+              return {
+                output: "Mailosaur server ID is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
+            }
+
+            if (!input.email) {
+              return {
+                output: "Mailosaur email address is required",
+                error: "MAILOSAUR_CONFIG_ERROR",
+              };
+            }
+
             this.mailosaurTool = new MailosaurTool({
-              apiKey: this.config.mailosaur.apiKey,
-              serverId: this.config.mailosaur.serverId,
+              apiKey: mailosaurAPIKey,
+              serverId: mailosaurServerId,
               emailAddress: input.email,
             });
           }
@@ -659,7 +689,7 @@ export class BrowserTool extends BaseBrowserTool {
     });
 
     writeFileSync(filePath, buffer);
-    console.log(`Screenshot saved to: ${filePath}`);
+    console.log(`  Screenshot saved to: ${filePath}`);
 
     return {
       output: "Screenshot taken",
@@ -759,5 +789,96 @@ export class BrowserTool extends BaseBrowserTool {
       if (cursor) cursor.style.display = "none";
       if (trail) trail.style.display = "none";
     });
+  }
+
+  /**
+   * Retrieves normalized component string by X and Y coordinates
+   * This is primarily used to determine change in UI
+   * Playwright currently does not support such functionality
+   * @see https://github.com/microsoft/playwright/issues/13273
+   */
+  async getNormalizedComponentStringByCoords(x: number, y: number) {
+    return await this.getPage().evaluate(
+      ({ x, y, allowedAttr }) => {
+        const elem = document.elementFromPoint(x, y);
+        if (elem) {
+          // todo: test func below
+          const clone = elem.cloneNode(true) as HTMLElement;
+
+          /**
+           * Gets deepest nested child node
+           * If several nodes are on the same depth, the first node would be returned
+           */
+          function getDeepestChildNode(element: Element): HTMLElement {
+            let deepestChild = element.cloneNode(true) as HTMLElement;
+            let maxDepth = 0;
+
+            function traverse(node: any, depth: number) {
+              if (depth > maxDepth) {
+                maxDepth = depth;
+                deepestChild = node;
+              }
+
+              Array.from(node.children).forEach((child) => {
+                traverse(child, depth + 1);
+              });
+            }
+
+            traverse(deepestChild, 0);
+            return deepestChild;
+          }
+
+          const deepestNode = getDeepestChildNode(clone);
+
+          // get several parents if present
+          const node = deepestNode.parentElement
+            ? deepestNode.parentElement.parentElement
+              ? deepestNode.parentElement.parentElement
+              : deepestNode.parentElement
+            : deepestNode;
+
+          /**
+           * Recursively delete attributes from Nodes
+           */
+          function cleanAttributesRecursively(
+            element: Element,
+            options: { exceptions: string[] },
+          ) {
+            Array.from(element.attributes).forEach((attr) => {
+              if (!options.exceptions.includes(attr.name)) {
+                element.removeAttribute(attr.name);
+              }
+            });
+
+            Array.from(element.children).forEach((child) => {
+              cleanAttributesRecursively(child, options);
+            });
+          }
+
+          cleanAttributesRecursively(node, {
+            exceptions: allowedAttr,
+          });
+
+          // trim and remove white spaces
+          return node.outerHTML.trim().replace(/\s+/g, " ");
+        } else {
+          return "";
+        }
+      },
+      {
+        x,
+        y,
+        allowedAttr: [
+          "type",
+          "name",
+          "placeholder",
+          "aria-label",
+          "role",
+          "title",
+          "alt",
+          "d", // for <path> tags
+        ],
+      },
+    );
   }
 }

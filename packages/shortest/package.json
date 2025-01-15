@@ -1,36 +1,35 @@
 {
   "name": "@antiwork/shortest",
-  "version": "0.2.1",
+  "version": "0.4.1",
   "description": "AI-powered natural language end-to-end testing framework",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-  "types": "./index.d.ts",
+  "types": "./dist/index.d.ts",
   "bin": {
     "shortest": "./dist/cli/bin.js"
   },
   "exports": {
     ".": {
-      "types": "./index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     }
   },
   "files": [
     "dist",
-    "dist/cli",
-    "index.d.ts"
+    "dist/cli"
   ],
   "scripts": {
     "build": "rm -rf dist && pnpm build:types && pnpm build:js && pnpm build:cli",
     "prepare": "pnpm build",
     "prepublishOnly": "pnpm build",
     "postinstall": "node -e \"if (process.platform !== 'win32') { try { require('child_process').execSync('chmod +x dist/cli/bin.js') } catch (_) {} }\"",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist/types && cp index.d.ts dist/",
+    "build:types": "tsup src/index.ts  --dts-only --format esm --outDir dist",
     "build:js": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
     "build:cjs": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:esbuild --external:punycode --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv",
     "build:cli": "esbuild src/cli/bin.ts --bundle --platform=node --format=esm --outdir=dist/cli --metafile=dist/meta-cli.json --external:fsevents --external:chokidar --external:glob --external:esbuild --external:events --external:path --external:fs --external:util --external:stream --external:os --external:assert --external:url --external:playwright --external:@anthropic-ai/sdk --external:expect --external:dotenv --external:otplib --external:picocolors --external:punycode --external:https --external:http --external:net --external:tls --external:crypto --external:mailosaur",
-    "dev": "pnpm build:types --watch",
+    "dev": "pnpm build --watch",
     "test:ai": "tsx tests/test-ai.ts",
     "test:browser": "tsx tests/test-browser.ts",
     "test:coordinates": "tsx tests/test-coordinates.ts",
@@ -50,7 +49,8 @@
     "@types/node": "^20.11.24",
     "tsx": "^4.7.1",
     "typescript": "~5.6.2",
-    "package-manager-detector": "0.2.8"
+    "package-manager-detector": "0.2.8",
+    "tsup": "8.3.5"
   },
   "engines": {
     "node": ">=18"

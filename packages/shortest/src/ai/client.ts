@@ -1,7 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import pc from "picocolors";
+import { BashTool } from "../browser/core/bash-tool";
 import { BrowserTool } from "../browser/core/browser-tool";
-import { AIConfig } from "../types/ai";
+import { ToolResult } from "../types";
+import { AIConfig, RequestBash, RequestComputer } from "../types/ai";
+import { CacheAction, CacheStep } from "../types/cache";
 import { SYSTEM_PROMPT } from "./prompts";
 import { AITools } from "./tools";
 
@@ -33,7 +36,11 @@ export class AIClient {
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
     toolOutputCallback?: (name: string, input: any) => void,
-  ) {
+  ): Promise<{
+    finalResponse: any;
+    tokenUsage: { input: number; output: number };
+    pendingCache: any;
+  }> {
     const maxRetries = 3;
     let attempts = 0;
 
@@ -49,10 +56,15 @@ export class AIClient {
         attempts++;
         if (attempts === maxRetries) throw error;
 
-        console.log(`Retry attempt ${attempts}/${maxRetries}`);
+        console.log(`  Retry attempt ${attempts}/${maxRetries}`);
         await new Promise((r) => setTimeout(r, 5000 * attempts));
       }
     }
+    return {
+      finalResponse: null,
+      tokenUsage: { input: 0, output: 0 },
+      pendingCache: null,
+    };
   }
 
   async makeRequest(
@@ -62,8 +74,15 @@ export class AIClient {
       content: Anthropic.Beta.Messages.BetaContentBlockParam,
     ) => void,
     _toolOutputCallback?: (name: string, input: any) => void,
-  ) {
+  ): Promise<{
+    messages: any;
+    finalResponse: any;
+    pendingCache: any;
+    tokenUsage: { input: number; output: number };
+  }> {
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
+    // temp cache store
+    const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
 
     // Log the conversation
     if (this.debugMode) {
@@ -87,8 +106,13 @@ export class AIClient {
           tools: [...AITools],
           betas: ["computer-use-2024-10-22"],
         });
-
         // Log AI response and tool usage
+
+        const tokenUsage = {
+          input: response.usage.input_tokens,
+          output: response.usage.output_tokens,
+        };
+
         if (this.debugMode) {
           response.content.forEach((block) => {
             if (block.type === "text") {
@@ -96,6 +120,7 @@ export class AIClient {
             } else if (block.type === "tool_use") {
               const toolBlock =
                 block as Anthropic.Beta.Messages.BetaToolUseBlock;
+
               console.log(pc.yellow("\n🔧 Tool Request:"), {
                 tool: toolBlock.name,
                 input: toolBlock.input,
@@ -110,58 +135,123 @@ export class AIClient {
           content: response.content,
         });
 
-        // Check for tool use
-        if (response.stop_reason === "tool_use") {
-          const toolResults = response.content
-            .filter((block) => block.type === "tool_use")
-            .map((block) => {
-              const toolBlock =
-                block as Anthropic.Beta.Messages.BetaToolUseBlock;
-              return {
-                toolBlock,
-                result: browserTool.execute(toolBlock.input as any),
-              };
-            });
+        // Collect executable tool actions
+        const toolRequests = response.content.filter(
+          (block) => block.type === "tool_use",
+        ) as Anthropic.Beta.Messages.BetaToolUseBlock[];
 
-          const results = await Promise.all(toolResults.map((t) => t.result));
+        if (toolRequests.length > 0) {
+          const toolResults = await Promise.all(
+            toolRequests.map(async (toolRequest) => {
+              switch (toolRequest.name) {
+                case "bash":
+                  try {
+                    const toolResult = await new BashTool().execute(
+                      (toolRequest as RequestBash).input.command,
+                    );
+                    return { toolRequest, toolResult };
+                  } catch (error) {
+                    console.error("Error executing bash command:", error);
+                    throw error;
+                  }
+                default:
+                  try {
+                    const toolResult = await browserTool.execute(
+                      (toolRequest as RequestComputer).input,
+                    );
 
-          // Log tool results
-          if (this.debugMode) {
-            results.forEach((result) => {
-              const { ...logResult } = result;
-              console.log(pc.blue("\n🔧 Tool Result:"), logResult);
-            });
-          }
+                    let extras: any = {};
+                    if ((toolRequest.input as unknown as any).coordinate) {
+                      const [x, y] = (toolRequest.input as unknown as any)
+                        .coordinate;
+                      const componentStr =
+                        await browserTool.getNormalizedComponentStringByCoords(
+                          x,
+                          y,
+                        );
+                      extras = { componentStr };
+                    }
 
-          // Add tool results to message history
-          messages.push({
-            role: "user",
-            content: results.map((result, index) => ({
-              type: "tool_result" as const,
-              tool_use_id: toolResults[index].toolBlock.id,
-              content: result.base64_image
-                ? [
-                    {
-                      type: "image" as const,
-                      source: {
-                        type: "base64" as const,
-                        media_type: "image/jpeg" as const,
-                        data: result.base64_image,
+                    // Update the cache
+                    pendingCache.steps = [
+                      ...(pendingCache.steps || []),
+                      {
+                        action: toolRequest as CacheAction,
+                        reasoning: toolResult.output || "",
+                        result: toolResult.output || null,
+                        extras,
+                        timestamp: Date.now(),
                       },
-                    },
-                  ]
-                : [
-                    {
-                      type: "text" as const,
-                      text: result.output || "",
-                    },
-                  ],
-            })),
+                    ];
+
+                    return { toolRequest, toolResult };
+                  } catch (error) {
+                    console.error("Error executing browser tool:", error);
+                    throw error;
+                  }
+              }
+            }),
+          );
+
+          toolResults.forEach((result) => {
+            if (result) {
+              const { toolRequest, toolResult } = result;
+
+              switch (toolRequest.name) {
+                case "bash":
+                  messages.push({
+                    role: "user",
+                    content: [
+                      {
+                        type: "tool_result",
+                        tool_use_id: toolRequest.id,
+                        content: [
+                          {
+                            type: "text",
+                            text: JSON.stringify(toolResult),
+                          },
+                        ],
+                      },
+                    ],
+                  });
+                  break;
+                default:
+                  messages.push({
+                    role: "user",
+                    content: [
+                      {
+                        type: "tool_result",
+                        tool_use_id: toolRequest.id,
+                        content: (toolResult as ToolResult).base64_image
+                          ? [
+                              {
+                                type: "image" as const,
+                                source: {
+                                  type: "base64" as const,
+                                  media_type: "image/jpeg" as const,
+                                  data: (toolResult as ToolResult)
+                                    .base64_image!,
+                                },
+                              },
+                            ]
+                          : [
+                              {
+                                type: "text" as const,
+                                text: (toolResult as ToolResult).output || "",
+                              },
+                            ],
+                      },
+                    ],
+                  });
+              }
+            }
           });
         } else {
           return {
             messages,
             finalResponse: response,
+            pendingCache,
+            tokenUsage,
           };
         }
       } catch (error: any) {
