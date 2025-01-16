@@ -54,6 +54,15 @@ jobs:
       - name: Run Shortest tests
         run: pnpm shortest --headless
 
+      - name: Display Screenshots in Action Log
+        if: always()
+        run: |
+          echo "## Test Screenshots" >> $GITHUB_STEP_SUMMARY
+          for f in .shortest/screenshots/*.png; do
+            echo "### $(basename $f)" >> $GITHUB_STEP_SUMMARY
+            base64 $f | awk '{print "![Screenshot](data:image/png;base64,"$1")"}' >> $GITHUB_STEP_SUMMARY
+          done
+
       - name: Upload artifacts
         if: failure()
         uses: actions/upload-artifact@v4
@@ -63,3 +72,29 @@ jobs:
           if-no-files-found: error
           include-hidden-files: true
           retention-days: 7
+
+      - name: Post Screenshots as Comments
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const screenshotsDir = '.shortest/screenshots';
+            const files = fs.readdirSync(screenshotsDir);
+
+            let comment = '### Test Failure Screenshots\n\n';
+            for (const file of files) {
+              if (file.endsWith('.png')) {
+                const base64 = fs.readFileSync(path.join(screenshotsDir, file)).toString('base64');
+                comment += `#### ${file}\n![${file}](data:image/png;base64,${base64})\n\n`;
+              }
+            }
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
