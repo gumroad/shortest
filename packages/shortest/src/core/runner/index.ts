@@ -24,6 +24,7 @@ import { TestCompiler } from "../compiler";
 interface TestResult {
   result: "pass" | "fail";
   reason: string;
+  tokenUsage?: { input: number; output: number };
 }
 
 export class TestRunner {
@@ -180,7 +181,11 @@ export class TestRunner {
 
     // this may never happen as the config is initialized before this code is executed
     if (!this.config.anthropicKey) {
-      throw new Error("ANTHROPIC_KEY is not set");
+      return {
+        result: "fail" as const,
+        reason: "ANTHROPIC_KEY is not set",
+        tokenUsage: { input: 0, output: 0 },
+      };
     }
 
     const aiClient = new AIClient(
@@ -437,7 +442,11 @@ export class TestRunner {
       );
 
     if (!steps) {
-      throw new Error("No steps to execute, running test in normal mode");
+      return {
+        result: "fail" as const,
+        reason: "No steps to execute, running test in normal mode",
+        tokenUsage: { input: 0, output: 0 },
+      };
     }
     for (const step of steps) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -453,9 +462,12 @@ export class TestRunner {
           await browserTool.getNormalizedComponentStringByCoords(x, y);
 
         if (componentStr !== step.extras.componentStr) {
-          throw new Error(
-            "Component UI elements are different, running test in normal mode",
-          );
+          return {
+            result: "fail" as const,
+            reason:
+              "Component UI elements are different, running test in normal mode",
+            tokenUsage: { input: 0, output: 0 },
+          };
         }
       }
       if (step.action?.input) {
