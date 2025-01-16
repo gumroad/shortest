@@ -280,7 +280,11 @@ export class TestRunner {
     const result = await aiClient.processAction(prompt, browserTool);
 
     if (!result) {
-      throw new Error("AI processing failed: no result returned");
+      return {
+        result: "fail" as const,
+        reason: "AI processing failed: no result returned",
+        tokenUsage: { input: 0, output: 0 },
+      };
     }
 
     // Parse AI result first
@@ -293,14 +297,22 @@ export class TestRunner {
     );
 
     if (!finalMessage || finalMessage.type !== "text") {
-      throw new Error("No test result found in AI response");
+      return {
+        result: "fail" as const,
+        reason: "No test result found in AI response",
+        tokenUsage: result.tokenUsage,
+      };
     }
 
     const jsonMatch = (
       finalMessage as Anthropic.Beta.Messages.BetaTextBlock
     ).text.match(/{[\s\S]*}/);
     if (!jsonMatch) {
-      throw new Error("Invalid test result format");
+      return {
+        result: "fail" as const,
+        reason: "Invalid test result format",
+        tokenUsage: result.tokenUsage,
+      };
     }
 
     const aiResult = JSON.parse(jsonMatch[0]) as TestResult;
