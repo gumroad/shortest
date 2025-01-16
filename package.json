@@ -1,4 +1,5 @@
 {
+  "name": "shortest-monorepo",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.7.1",
