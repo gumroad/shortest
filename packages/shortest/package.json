@@ -64,9 +64,10 @@
     "mailosaur": "^8.7.0",
     "playwright": "^1.48.2"
   },
-  "author": "Antiwork",
+  "author": "Anti-Work",
   "license": "MIT",
   "repository": {
+    "directory": "packages/shortest",
     "type": "git",
     "url": "https://github.com/anti-work/shortest"
   },
