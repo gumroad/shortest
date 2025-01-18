@@ -1,6 +1,6 @@
 name: Feature request
 description: Request a feature to make Shortest better
-labels: ["enhancement"]
+type: feature
 body:
   - type: markdown
     attributes:
