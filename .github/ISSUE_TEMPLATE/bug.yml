@@ -1,0 +1,112 @@
+name: Bug report
+description: Create a bug report to make Shortest better
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: |
+        The version of Shortest used.
+        Please check if you're using the [latest version](https://github.com/anti-work/shortest/releases) - your issue might be already resolved.
+      placeholder: ex. 0.4.2
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to reproduce
+      description: Please link to a repository with a minimal reproduction, or share the steps to reproduce the bug.
+      placeholder: |
+        Example steps:
+        1. Create a new directory and run `pnpm init`
+        2. Install shortest: `pnpm add @antiwork/shortest`
+        3. Create a minimal file that demonstrates the issue
+        4. Run the command that triggers the bug
+        5. Share the exact error message or unexpected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      description: A description of what you expect to happen.
+      placeholder: When I do [action], I expect [specific outcome] to happen
+    validations:
+      required: true
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual behavior
+      description: |
+        What actually happened? Include any error messages or unexpected output.
+        Screenshots are welcome, but text is strongly encouraged for searchability.
+      placeholder: A bug happened!
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that might be relevant
+    validations:
+      required: false
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Info
+      description: Output of `npx envinfo --system --npmPackages '@antiwork/*' --binaries --browsers`
+      placeholder: |
+        System:
+          OS: macOS 15.2
+          CPU: (16) arm64 Apple M3 Max
+          Memory: 3.17 GB / 128.00 GB
+          Shell: 3.6.4 - /opt/homebrew/bin/fish
+        Binaries:
+          Node: 22.5.1 - ~/.asdf/installs/nodejs/22.5.1/bin/node
+          npm: 10.8.2 - ~/.asdf/plugins/nodejs/shims/npm
+          pnpm: 9.7.1 - ~/.asdf/shims/pnpm
+        Browsers:
+          Brave Browser: 131.1.73.105
+          Chrome: 132.0.6834.83
+          Safari: 18.2
+        npmPackages:
+          @antiwork/shortest: workspace:* => 0.4.2
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Optional when reproduction is provided. Please paste the log text directly instead of using a screenshot.
+
+        1. Execute `pnpm shortest` with the `--debug-ai` flag.
+        2. Provide the error log here in the format below.
+
+        ````
+        <details>
+        <summary>Log details!</summary>
+
+        ```shell
+        // paste the log text here
+        ```
+        </details>
+        ````
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: Validations
+      description: Before submitting the issue, please make sure you do the following
+      options:
+        - label: Read the [contributing guidelines](https://github.com/anti-work/shortest/blob/main/packages/shortest/CONTRIBUTING.md).
+          required: true
+        - label: Check that there isn't [already an issue](https://github.com/anti-work/shortest/issues) that reports the same bug to avoid creating a duplicate.
+          required: true
+        - label: Check that this is a concrete bug. For Q&A open a [discussion](https://github.com/anti-work/shortest/discussions).
+          required: true
+        - label: The provided reproduction is a [minimal reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) of the bug.
+          required: true
