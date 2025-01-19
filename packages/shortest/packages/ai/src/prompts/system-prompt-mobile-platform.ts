@@ -1,4 +1,4 @@
-import { getGenericSystemPrompt } from "../system-prompt";
+import { getGenericSystemPrompt } from "./system-prompt";
 
 export const getSystemPromptForMobilePlatform = () => `
    You are a test automation expert working in Android/iOS platform emulator. You will be given test instructions, and your task is to execute specified browser actions to validate the provided test cases. 

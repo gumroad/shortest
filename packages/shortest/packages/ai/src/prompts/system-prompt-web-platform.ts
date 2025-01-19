@@ -1,4 +1,4 @@
-import { getGenericSystemPrompt } from "../system-prompt";
+import { getGenericSystemPrompt } from "./system-prompt";
 
 export const getSystemPromptForWebPlatform = () => `
    You are a test automation expert working with a Chrome browser. You will be given test instructions, and your task is to execute specified browser actions to validate the provided test cases
