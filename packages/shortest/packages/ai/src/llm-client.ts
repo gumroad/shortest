@@ -1,11 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { ClaudeAdapter } from "@shortest/ai";
-import { getSystemPrompt } from "@shortest/ai";
+import {
+  ClaudeAdapter,
+  ClaudeResponse,
+  ClaudeResponseMouseMove,
+  ClaudeToolsMobile,
+  ClaudeToolsWeb,
+  getSystemPromptForMobilePlatform,
+  getSystemPromptForWebPlatform,
+} from "@shortest/ai";
 import { Browser } from "@shortest/browser";
 import { CacheAction, CacheStep } from "@shortest/cache";
+import { Platform } from "@shortest/driver";
+import { sleep } from "@shortest/util";
 import pc from "picocolors";
-import { AIConfig } from "../../types/ai";
-import { AITools } from "./claude-tools";
 
 export class AIClient {
   private client: Anthropic;
@@ -13,15 +20,15 @@ export class AIClient {
   private maxMessages: number;
   private debugMode: boolean;
 
-  constructor(config: AIConfig, debugMode: boolean = false) {
-    if (!config.apiKey) {
+  constructor(debugMode: boolean = false) {
+    if (!__shortest__.config!.anthropicKey) {
       throw new Error(
         "Anthropic API key is required. Set it in shortest.config.ts or ANTHROPIC_API_KEY env var"
       );
     }
 
     this.client = new Anthropic({
-      apiKey: config.apiKey,
+      apiKey: __shortest__.config!.anthropicKey,
     });
     this.model = "claude-3-5-sonnet-20241022";
     this.maxMessages = 10;
@@ -65,6 +72,7 @@ export class AIClient {
     ) => void,
     _toolOutputCallback?: (name: string, input: any) => void
   ) {
+    const platform = __shortest__.config?.driver.platform;
     const messages: Anthropic.Beta.Messages.BetaMessageParam[] = [];
     // temp cache store
     const pendingCache: Partial<{ steps?: CacheStep[] }> = {};
@@ -79,17 +87,24 @@ export class AIClient {
       content: prompt,
     });
 
+    const adapter = new ClaudeAdapter(browser);
+
     while (true) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await sleep(1000);
 
         const response = await this.client.beta.messages.create({
           model: this.model,
           max_tokens: 1024,
           messages,
-          system: getSystemPrompt(__shortest__.config?.driver.platform),
-          tools: [...AITools],
+          system:
+            platform === Platform.Web
+              ? getSystemPromptForWebPlatform()
+              : getSystemPromptForMobilePlatform(),
           betas: ["computer-use-2024-10-22"],
+          tools: [
+            ...(platform === Platform.Web ? ClaudeToolsWeb : ClaudeToolsMobile),
+          ],
         });
 
         // Log AI response and tool usage
@@ -119,12 +134,10 @@ export class AIClient {
           const toolBlocks: Anthropic.Beta.Messages.BetaToolUseBlock[] =
             response.content.filter((block) => block.type === "tool_use");
 
-          const adapter = new ClaudeAdapter(browser);
-
           const toolResults = toolBlocks.map((toolBlock) => {
             return {
               toolBlock,
-              result: adapter.execute(toolBlock.input as any),
+              result: adapter.execute(toolBlock.input as ClaudeResponse),
             };
           });
 
@@ -135,9 +148,7 @@ export class AIClient {
           ) => {
             let extras: any = {};
 
-            // @ts-expect-error Incorrect interface on our side leads to this error
-            // @see https://docs.anthropic.com/en/docs/build-with-claude/computer-use#computer-tool:~:text=%2C%0A%20%20%20%20%20%20%20%20%7D%2C-,%22coordinate%22,-%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%22description
-            if (toolBlock.input.coordinate) {
+            if ((toolBlock.input as ClaudeResponseMouseMove).coordinate) {
               // @ts-expect-error
               const [x, y] = toolBlock.input.coordinate;
 
@@ -148,7 +159,6 @@ export class AIClient {
 
             return extras;
           };
-          console.log({ results });
 
           const newCacheSteps = await Promise.all(
             toolBlocks.map(async (_toolBlock, i) => {
@@ -178,8 +188,6 @@ export class AIClient {
               console.log(pc.blue("\n🔧 Tool Result:"), logResult);
             });
           }
-
-          console.log({ received: JSON.stringify(results) });
 
           console.log({
             pl: JSON.stringify(__shortest__.config!.driver.platform),
@@ -223,7 +231,7 @@ export class AIClient {
       } catch (error: any) {
         if (error.message?.includes("rate_limit")) {
           console.log("⏳ Rate limited, waiting 60s...");
-          await new Promise((resolve) => setTimeout(resolve, 60000));
+          await sleep(60000);
           continue;
         }
         throw error;

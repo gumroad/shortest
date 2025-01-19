@@ -1,17 +1,12 @@
 import { resolve } from "path";
 import Anthropic from "@anthropic-ai/sdk";
-import { Browser } from "@shortest/browser";
+import { AIClient } from "@shortest/ai";
+import { Browser, BrowserActionEnum } from "@shortest/browser";
 import { BaseCache, CacheEntry } from "@shortest/cache";
-import { hashData, Logger, urlSafe } from "@shortest/util";
+import { hashData, Logger, sleep, urlSafe } from "@shortest/util";
 import { glob } from "glob";
 import pc from "picocolors";
-import { AIClient } from "../../ai/core/llm-client";
-import {
-  TestFunction,
-  TestContext,
-  ShortestConfig,
-  BrowserActionEnum,
-} from "../../types";
+import { TestFunction, TestContext, ShortestConfig } from "../../types";
 import { TestCompiler } from "../compiler";
 
 interface TestResult {
@@ -182,15 +177,7 @@ export class RunnerImpl implements Runner {
     //   },
     // });
 
-    const aiClient = new AIClient(
-      {
-        apiKey: __shortest__.config!.anthropicKey,
-        model: "claude-3-5-sonnet-20241022",
-        maxMessages: 10,
-        debug: this.CLIOpts.debugAI,
-      },
-      this.CLIOpts.debugAI
-    );
+    const aiClient = new AIClient(this.CLIOpts.debugAI);
 
     // First get page state
     const initialState = await browser.screenshot();
@@ -333,7 +320,7 @@ export class RunnerImpl implements Runner {
       const browser = await driver.createBrowser();
       console.log({ browser });
       await browser.navigate(__shortest__.config!.baseUrl!, {
-        shoultInitialize: true,
+        shouldInitialize: true,
       });
 
       try {
@@ -446,7 +433,7 @@ export class RunnerImpl implements Runner {
       throw new Error("No steps to execute running test in a normal mode");
     }
     for (const step of steps) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await sleep(1000);
       if (
         step.action?.input.action === BrowserActionEnum.MouseMove &&
         step.action.input.coordinate

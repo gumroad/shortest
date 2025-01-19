@@ -1,7 +1,13 @@
 import {
+  MobileBrowserDriver,
+  WebBrowserDriver,
+  WebPage,
+} from "@shortest/driver";
+import {
   BrowserActionOptions,
   BrowserActionResult,
   BrowserActions,
+  BrowserAutomation,
 } from "./interfaces";
 
 export abstract class Browser {
@@ -61,12 +67,27 @@ export abstract class Browser {
 
   /**
    * Pauses the browser for a specified duration.
-   * @default Pauses for 1 minute if no duration is provided.
+   * @default 60s pause if no duration is provided.
    */
   abstract sleep(
     ms: number | null
   ): Promise<BrowserActionResult<BrowserActions.Sleep>>;
 
-  abstract cleanup(): Promise<void>;
+  /**
+   * Executes a pre-defined automation.
+   */
+  abstract runAutomation(
+    automation: BrowserAutomation,
+    options: BrowserActionOptions.Automation
+  ): Promise<BrowserActionResult<BrowserActions.Automation>>;
+
+  /**
+   * Executes callback function.
+   */
+  abstract runCallback(): Promise<BrowserActionResult<BrowserActions.Callback>>;
+
+  abstract getDriver(): WebBrowserDriver | MobileBrowserDriver;
+  abstract getCurrentPage(): WebPage | null; // todo: add mobile as well
+  abstract cleanup(): Promise<BrowserActionResult<BrowserActions.Cleanup>>;
   abstract destroy(): Promise<void>;
 }

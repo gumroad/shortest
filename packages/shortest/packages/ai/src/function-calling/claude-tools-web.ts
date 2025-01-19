@@ -1,4 +1,4 @@
-export const AITools = [
+export const ClaudeToolsWeb = [
   {
     type: "computer_20241022",
     name: "computer",
@@ -104,4 +104,4 @@ export const AITools = [
   },
 ] as const;
 
-export type AITool = (typeof AITools)[number]["name"];
+export type ClaudeWebTool = (typeof ClaudeToolsWeb)[number]["name"];

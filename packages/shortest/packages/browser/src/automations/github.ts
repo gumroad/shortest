@@ -1,8 +1,12 @@
+import {
+  Browser,
+  BrowserAutomation,
+  BrowserAutomationOptions,
+} from "@shortest/browser";
 import dotenv from "dotenv";
 import { authenticator } from "otplib";
-import { BrowserToolInterface } from "../../types/browser";
 
-export class GitHubTool {
+export class GitHubTool implements BrowserAutomation {
   private totpSecret: string;
   private readonly selectors = {
     loginForm: "#login form",
@@ -23,7 +27,7 @@ export class GitHubTool {
 
     if (!this.totpSecret) {
       throw new Error(
-        "GITHUB_TOTP_SECRET is required in .env file or via --secret flag",
+        "GITHUB_TOTP_SECRET is required in .env file or via --secret flag"
       );
     }
   }
@@ -31,7 +35,7 @@ export class GitHubTool {
   private validateSecret() {
     if (!this.totpSecret) {
       throw new Error(
-        "GITHUB_TOTP_SECRET is required in .env file or via --secret flag",
+        "GITHUB_TOTP_SECRET is required in .env file or via --secret flag"
       );
     }
   }
@@ -47,63 +51,58 @@ export class GitHubTool {
     }
   }
 
-  async GithubLogin(
-    browserTool: BrowserToolInterface,
-    credentials: { username: string; password: string },
-  ): Promise<{ success: boolean; error?: string }> {
+  async execute(browser: Browser, options: BrowserAutomationOptions) {
+    const [credentials] = options.args;
+    const page = browser.getCurrentPage();
+    if (!page)
+      return {
+        success: false,
+      };
     try {
       // Wait for login form
-      await browserTool.waitForSelector(this.selectors.loginForm, {
+      await page.waitForSelector(this.selectors.loginForm, {
         timeout: 10000,
       });
 
       // Fill credentials
-      await browserTool.fill(
-        this.selectors.usernameInput,
-        credentials.username,
-      );
-      await browserTool.fill(
-        this.selectors.passwordInput,
-        credentials.password,
-      );
+      await page.fill(this.selectors.usernameInput, credentials.username);
+      await page.fill(this.selectors.passwordInput, credentials.password);
 
       // Submit form
-      await browserTool.click(this.selectors.submitButton);
+      await page.click(this.selectors.submitButton);
 
       try {
-        await browserTool.waitForSelector(
-          this.selectors.useAuthenticatorButton,
-          { timeout: 5000 },
-        );
-        await browserTool.click(this.selectors.useAuthenticatorButton);
-      } catch {
-        // If button not found, try the link
-        await browserTool.waitForSelector(this.selectors.useAuthenticatorLink, {
+        await page.waitForSelector(this.selectors.useAuthenticatorButton, {
           timeout: 5000,
         });
-        await browserTool.click(this.selectors.useAuthenticatorLink);
+        await page.click(this.selectors.useAuthenticatorButton);
+      } catch {
+        // If button not found, try the link
+        await page.waitForSelector(this.selectors.useAuthenticatorLink, {
+          timeout: 5000,
+        });
+        await page.click(this.selectors.useAuthenticatorLink);
       }
 
       // Wait for OTP input to be visible
-      await browserTool.waitForSelector(this.selectors.otpInput, {
+      await page.waitForSelector(this.selectors.otpInput, {
         timeout: 1000,
       });
 
       // Generate and enter TOTP code
       const { code } = this.generateTOTPCode();
-      await browserTool.fill(this.selectors.otpInput, code);
+      await page.fill(this.selectors.otpInput, code);
 
       // Start navigation promise before pressing Enter
-      const navigationPromise = browserTool.waitForNavigation({
+      const navigationPromise = page.waitForNavigation({
         timeout: 3000,
       });
 
       // Press Enter and wait for navigation
-      await browserTool.press(this.selectors.otpInput, "Enter");
+      await page.press(this.selectors.otpInput, "Enter");
       await navigationPromise;
 
-      const isLoggedIn =
-        (await browserTool.findElement(this.selectors.loginForm)) === null;
+      const isLoggedIn = (await page.$(this.selectors.loginForm)) === null;
 
       return {
         success: isLoggedIn,
@@ -112,7 +111,7 @@ export class GitHubTool {
     } catch (error) {
       // Check if we're actually logged in despite the error
       try {
-        const currentUrl = await browserTool.getPage().url();
+        const currentUrl = await page.url();
         if (!currentUrl.includes("github.com")) {
           return {
             success: true,
@@ -132,3 +131,5 @@ export class GitHubTool {
     }
   }
 }
+
+export const githubAutomation = new GitHubTool();

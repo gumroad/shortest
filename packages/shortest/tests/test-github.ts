@@ -1,6 +1,6 @@
+import { GitHubTool } from "@shortest/browser";
 import pc from "picocolors";
 import { BrowserTool } from "../src/browser/core/browser-tool";
-import { GitHubTool } from "../src/browser/integrations/github";
 import { BrowserManager } from "../src/browser/manager";
 import { getConfig, initialize } from "../src/index";
 

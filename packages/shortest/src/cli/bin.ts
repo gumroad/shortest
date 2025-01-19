@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { GitHubTool } from "@shortest/browser";
 import pc from "picocolors";
-import { GitHubTool } from "../browser/integrations/github";
+import { initialize } from "src";
 import { RunnerImpl } from "../core/runner";
-import { initialize } from "..";
 
 process.removeAllListeners("warning");
 process.on("warning", (warning) => {

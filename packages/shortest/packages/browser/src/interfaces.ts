@@ -1,3 +1,5 @@
+import { Browser } from "./browser";
+
 export type ElementIdentifier = string;
 export interface BrowserState {
   window: {
@@ -33,7 +35,11 @@ export type BrowserAction = `${BrowserActionEnum}`;
 
 export namespace BrowserActionOptions {
   export interface Navigate {
-    shoultInitialize: boolean;
+    shouldInitialize: boolean;
+  }
+
+  export interface Automation {
+    args: any[];
   }
 }
 
@@ -58,6 +64,12 @@ export namespace BrowserActions {
   export interface Type {}
   export interface PressKey {}
   export interface Sleep {}
+  export interface Automation {
+    reason?: string;
+  }
+
+  export interface Cleanup {}
+  export interface Callback {}
 }
 
 export interface BrowserActionResult<
@@ -71,7 +83,10 @@ export interface BrowserActionResult<
     | BrowserActions.Navigate
     | BrowserActions.Type
     | BrowserActions.PressKey
-    | BrowserActions.Sleep,
+    | BrowserActions.Sleep
+    | BrowserActions.Automation
+    | BrowserActions.Cleanup
+    | BrowserActions.Callback,
 > {
   /**
    * One-liner message about the result (will be sent to LLM)
@@ -90,4 +105,30 @@ export interface BrowserActionResult<
     browserState?: DeepPartial<BrowserState>;
     [key: string]: any;
   };
+}
+
+/**
+ * Represents the options required for executing a browser automation task.
+ */
+export type BrowserAutomationOptions = BrowserActionOptions.Automation;
+
+export interface BrowserAutomationResult {
+  success: boolean;
+  /**
+   * An optional message providing additional details about the outcome,
+   * whether it's a success or failure.
+   */
+  reason?: string;
+}
+export interface BrowserAutomation {
+  /**
+   * Executes the automation on the given browser instance.
+   * @param browser The browser instance where the automation will be executed.
+   * @param options Additional options for the automation, including arguments required for execution.
+   * @returns A promise resolving to the result of the automation.
+   */
+  execute(
+    browser: Browser,
+    options: Partial<BrowserActionOptions.Automation>
+  ): Promise<BrowserAutomationResult>;
 }

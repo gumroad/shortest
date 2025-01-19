@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
-import { join } from "path";
+import { join } from "node:path";
 import { WebBrowserDriver, WebPage } from "@shortest/driver";
 import { urlSafe } from "@shortest/util";
 import { Browser } from "./browser";
@@ -9,6 +9,7 @@ import {
   BrowserActionOptions,
   BrowserActionResult,
   BrowserActions,
+  BrowserAutomation,
   BrowserState,
 } from "./interfaces";
 
@@ -46,15 +47,9 @@ export class WebBrowser extends Browser {
 
   async navigate(
     url: string,
-    options: BrowserActionOptions.Navigate = { shoultInitialize: true }
+    options: BrowserActionOptions.Navigate = { shouldInitialize: true }
   ): Promise<BrowserActionResult<BrowserActions.Navigate>> {
     const NATIGATION_TIMEOUT_MS = 30000;
-    try {
-      if (new URL(url)) {
-      }
-    } catch {
-      throw new Error("Invalid URL.");
-    }
     const page = await this.getDriver().newPage();
 
     try {
@@ -63,7 +58,7 @@ export class WebBrowser extends Browser {
         // maybe wait for networkidle?
       });
 
-      if (options?.shoultInitialize) {
+      if (options?.shouldInitialize) {
         await this.initPage();
       }
 
@@ -120,7 +115,7 @@ export class WebBrowser extends Browser {
   }
 
   async getState(): Promise<BrowserActionResult<BrowserActions.GetState>> {
-    const page = await this.getCurrentPage();
+    const page = this.getCurrentPage();
     const state: BrowserActions.GetState["state"] = {
       window: {
         url: page?.url() ?? "unknown",
@@ -333,7 +328,12 @@ export class WebBrowser extends Browser {
     };
   }
 
-  async cleanup(): Promise<void> {
+  /**
+   * Cleans up the browser by clearing cookies, local storage, session storage,
+   * and indexedDB. It also resets permissions, navigates pages to `about:blank`,
+   * and closes any remaining open pages to ensure a clean state.
+   */
+  async cleanup(): Promise<BrowserActionResult<BrowserActions.Cleanup>> {
     await Promise.all([
       this.getDriver().clearCookies(),
       this.getDriver()
@@ -358,6 +358,34 @@ export class WebBrowser extends Browser {
     if (pages.length > 1) {
       await Promise.all(pages.slice(1).map((page) => page.close()));
     }
+
+    return {
+      message: "Successfully cleanup current Browser",
+    };
+  }
+
+  async runAutomation(
+    automation: BrowserAutomation,
+    options: BrowserActionOptions.Automation
+  ): Promise<BrowserActionResult<BrowserActions.Automation>> {
+    const automationName = automation.constructor.name;
+    const result = await automation.execute(this, options);
+
+    return {
+      message: result.success
+        ? `${automationName} automation was successfully completed`
+        : `${automationName} automation failed: ${result.reason || "unknown error"}`,
+      payload: {
+        reason: result.reason,
+      },
+      metadata: {
+        browserState: (await this.getState()).payload?.state,
+      },
+    };
+  }
+
+  async runCallback(): Promise<BrowserActionResult<BrowserActions.Callback>> {
+    throw new Error("IMPLEMENT ME");
   }
 
   async destroy(): Promise<void> {

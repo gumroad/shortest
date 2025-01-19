@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Shim to provide `__filename` and `__dirname` in ES Modules.
+ *
+ * - `globalThis.require` enables `require()` in ES Modules.
+ * - `globalThis.__filename` and `globalThis.__dirname` simulate CommonJS path functionality.
+ */
+
 import { createRequire } from "node:module";
 import path from "node:path";
 import url from "node:url";

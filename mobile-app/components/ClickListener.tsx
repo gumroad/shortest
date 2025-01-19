@@ -31,7 +31,9 @@ export default function ClickListener({
       pos.y += offset.top;
     }
 
-    console.log(`Clicked at x: ${pos.x}, y: ${pos.y}`);
+    console.log(
+      `${new Date().toISOString()} Clicked at x: ${pos.x}, y: ${pos.y}`
+    );
 
     setClicks((prevClicks) => {
       const newClicks = [...prevClicks, { id: Date.now(), x: pos.x, y: pos.y }];

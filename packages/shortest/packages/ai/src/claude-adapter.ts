@@ -1,11 +1,38 @@
+/**
+ * @fileoverview
+ * This file consolidates and adapts Claude responses into
+ * browser input interfaces. It transforms actions described
+ * by Claude into corresponding browser automation commands.
+ *
+ * @see {@link ClaudeResponse} for the structure of the Claude response.
+ * @see {@link Browser} for the Browser interface definition.
+ */
+
 import {
   Browser,
   BrowserActionOptions,
   BrowserActionResult,
   BrowserActions,
   keyboardShortcuts,
+  MailosaurTool,
+  githubAutomation,
 } from "@shortest/browser";
-import { ClaudeResponse } from "./interfaces";
+import {
+  ClaudeResponse,
+  ClaudeResponseDoubleClick,
+  ClaudeResponseGithubAutomation,
+  ClaudeResponseKeyPress,
+  ClaudeResponseLeftClick,
+  ClaudeResponseLeftClickDrag,
+  ClaudeResponseMailosaurAutomation,
+  ClaudeResponseMiddleClick,
+  ClaudeResponseMouseMove,
+  ClaudeResponseNavigate,
+  ClaudeResponseRightClick,
+  ClaudeResponseSleep,
+  ClaudeResponseTypeText,
+  ClaudeResponseVerbose,
+} from "./interfaces";
 
 /**
  * Adapter for transforming LLM actions to browser actions
@@ -31,21 +58,31 @@ export class ClaudeAdapter {
         return this.handleMiddleClick(response);
       case "double_click":
         return this.handleDoubleClick(response);
+      case "sleep":
+        this.handleSleep(response);
       case "screenshot":
         return this.handleScreenshot();
       case "cursor_position":
         return this.handleCursorPosition();
       case "navigate":
         return this.handleNavigate(response);
-      case "sleep":
-        this.handleSleep(response);
+      case "check_email":
+        return this.handleMailosaurAutomation(response);
+      case "github_tool":
+        return this.handleGithubAutomation(response);
+      case "clear_session":
+        return this.handleClearSession();
+      case "run_callback":
+        return this.handleRunCallback();
       default:
-        throw new Error(`Unsupported action: ${response.action}`);
+        throw new Error(
+          `Unsupported action: ${(response as ClaudeResponseVerbose).action}`
+        );
     }
   }
 
   private async handleKeyPress(
-    response: ClaudeResponse
+    response: ClaudeResponseKeyPress
   ): Promise<BrowserActionResult<BrowserActions.Navigate>> {
     if (!response.text) throw new Error("Text required for key press action.");
     const text = response.text.toLowerCase();
@@ -57,14 +94,14 @@ export class ClaudeAdapter {
   }
 
   private async handleTypeText(
-    response: ClaudeResponse
+    response: ClaudeResponseTypeText
   ): Promise<BrowserActionResult<BrowserActions.Navigate>> {
     if (!response.text) throw new Error("Text required for type action.");
     return await this.browser.type(response.text);
   }
 
   private async handleMouseMove(
-    response: ClaudeResponse
+    response: ClaudeResponseMouseMove
   ): Promise<BrowserActionResult<BrowserActions.MoveCursor>> {
     if (!response.coordinate)
       throw new Error("Coordinate required for mouse_move action.");
@@ -73,7 +110,7 @@ export class ClaudeAdapter {
   }
 
   private async handleLeftClick(
-    response: ClaudeResponse
+    response: ClaudeResponseLeftClick
   ): Promise<BrowserActionResult<BrowserActions.Click>> {
     let [x, y] = response.coordinate ?? [null, null];
 
@@ -84,11 +121,14 @@ export class ClaudeAdapter {
     //   x = x * 3.5;
     //   y = y * 3.5;
     // }
-    return await this.browser.click(Math.round(x!), Math.round(y!));
+    return await this.browser.click(
+      Math.round(x! + 200 * 2.625),
+      Math.round(y! + 200 * 2.625)
+    );
   }
 
   private async handleLeftClickDrag(
-    response: ClaudeResponse
+    response: ClaudeResponseLeftClickDrag
   ): Promise<BrowserActionResult<BrowserActions.Drag>> {
     if (!response.coordinate)
       throw new Error("Coordinate required for left_click_drag action.");
@@ -97,24 +137,27 @@ export class ClaudeAdapter {
   }
 
   private async handleRightClick(
-    _response: ClaudeResponse
+    _response: ClaudeResponseRightClick
   ): Promise<BrowserActionResult<BrowserActions.Click>> {
     throw new Error("Right click not supported yet.");
   }
 
   private async handleMiddleClick(
-    _response: ClaudeResponse
+    _response: ClaudeResponseMiddleClick
   ): Promise<BrowserActionResult<BrowserActions.Click>> {
     throw new Error("Right click not supported yet.");
   }
 
   private async handleDoubleClick(
-    response: ClaudeResponse
+    response: ClaudeResponseDoubleClick
   ): Promise<BrowserActionResult<BrowserActions.Click>> {
     console.warn(
       "Double click not supported yet, left click will be used instead."
     );
-    return await this.handleLeftClick(response);
+    return await this.handleLeftClick(
+      // currently, ClaudeResponseDoubleClick is the same as ClaudeResponseLeftClick
+      response as unknown as ClaudeResponseLeftClick
+    );
   }
 
   private async handleScreenshot(): Promise<
@@ -136,18 +179,64 @@ export class ClaudeAdapter {
   }
 
   private async handleNavigate(
-    response: ClaudeResponse
+    response: ClaudeResponseNavigate
   ): Promise<BrowserActionResult<BrowserActions.Navigate>> {
     if (!response.url) throw new Error("URL required for navigate action.");
     const options: BrowserActionOptions.Navigate = {
-      shoultInitialize: true,
+      shouldInitialize: true,
     };
     return await this.browser.navigate(response.url, options);
   }
 
   private async handleSleep(
-    response: ClaudeResponse
+    response: ClaudeResponseSleep
   ): Promise<BrowserActionResult<BrowserActions.Sleep>> {
-    return this.browser.sleep(response.duration ?? null);
+    return await this.browser.sleep(response.duration ?? null);
+  }
+
+  private async handleGithubAutomation(
+    response: ClaudeResponseGithubAutomation
+  ): Promise<BrowserActionResult<BrowserActions.Automation>> {
+    const credentials = {
+      username: response.username,
+      password: response.password,
+    };
+    return await this.browser.runAutomation(githubAutomation, {
+      args: [credentials],
+    });
+  }
+
+  private async handleMailosaurAutomation(
+    response: ClaudeResponseMailosaurAutomation
+  ): Promise<BrowserActionResult<BrowserActions.Automation>> {
+    const mailosaurAPIKey =
+      __shortest__.config?.mailosaur?.apiKey || process.env.MAILOSAUR_API_KEY;
+    const mailosaurServerId =
+      __shortest__.config?.mailosaur?.serverId ||
+      process.env.MAILOSAUR_SERVER_ID;
+
+    if (!response.email)
+      throw new Error("Email is requered to perform Mailosaur automation.");
+
+    const mailosaurAutomation = new MailosaurTool({
+      apiKey: mailosaurAPIKey,
+      serverId: mailosaurServerId,
+    });
+
+    return await this.browser.runAutomation(mailosaurAutomation, {
+      args: [response.email],
+    });
+  }
+
+  private async handleClearSession(): Promise<
+    BrowserActionResult<BrowserActions.Cleanup>
+  > {
+    return await this.browser.cleanup();
+  }
+
+  private async handleRunCallback(): Promise<
+    BrowserActionResult<BrowserActions.Cleanup>
+  > {
+    return await this.browser.runCallback();
   }
 }
